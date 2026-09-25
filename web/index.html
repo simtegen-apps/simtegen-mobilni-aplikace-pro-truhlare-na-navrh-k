@@ -4,336 +4,1632 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#10504b">
-  <title>Produkt SimteGen</title>
+  <title>Kusovník pro truhláře</title>
   <link rel="stylesheet" href="styl.css">
   <style>
-    /* Mobile-first app shell: ~390 px is the design width, desktop only
-       stretches it. Screens swap via .aktivni, animated on transform/opacity
-       so prefers-reduced-motion can turn motion off without breaking layout. */
-    :root {
-      --pozadi: #f4f6f5; --plocha: #ffffff; --inkoust: #1b2423;
-      --inkoust-2: #5a6764; --akcent: #10504b; --akcent-text: #ffffff;
-      --chyba: #9e3527; --okraj: #dbe2e0;
-    }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0; background: var(--pozadi); color: var(--inkoust);
-      font-family: system-ui, sans-serif; line-height: 1.5;
-      display: flex; flex-direction: column;
-      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
-    }
-    main { flex: 1; width: 100%; max-width: 28rem; margin: 0 auto; padding: 1.25rem; position: relative; }
-    .obrazovka {
-      position: absolute; inset: 0; padding: 1.25rem;
-      display: none; flex-direction: column; gap: 1rem;
-      opacity: 0; transform: translateY(8px);
-      transition: opacity 0.22s ease, transform 0.22s ease;
-    }
-    .obrazovka.aktivni { display: flex; opacity: 1; transform: none; }
-    @media (prefers-reduced-motion: reduce) {
-      .obrazovka { transition: none; transform: none; }
-    }
-    h1 { font-size: 1.35rem; margin: 0.5rem 0 0; }
-    p { margin: 0; color: var(--inkoust-2); }
-    label { font-size: 0.9rem; font-weight: 600; }
-    input[type=email] {
-      width: 100%; min-height: 48px; padding: 0 0.9rem; font-size: 1rem;
-      border: 1px solid var(--okraj); border-radius: 10px; background: var(--plocha);
-      color: var(--inkoust);
-    }
-    button {
-      min-height: 48px; padding: 0 1.1rem; font-size: 1rem; font-weight: 600;
-      border: none; border-radius: 10px; cursor: pointer;
-      background: var(--akcent); color: var(--akcent-text);
-      transition: transform 0.12s ease, opacity 0.12s ease;
-    }
-    button:active { transform: scale(0.97); }
-    button.tiche { background: var(--plocha); color: var(--inkoust); border: 1px solid var(--okraj); }
-    button.varovne { background: var(--plocha); color: var(--chyba); border: 1px solid var(--chyba); }
-    .zprava { min-height: 1.4rem; font-size: 0.92rem; }
-    .zprava.chyba { color: var(--chyba); }
-    .karta { background: var(--plocha); border: 1px solid var(--okraj); border-radius: 12px; padding: 1rem; }
-    footer { text-align: center; padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom)); font-size: 0.8rem; }
-    footer a { color: var(--inkoust-2); }
+    /* Jen rozložení obrazovek tohohle produktu. Barvy, písma, rozměry
+       a komponenty jsou v návrhovém systému (styl.css) — tady se z nich
+       jenom skládá. */
+
+    /* Velké číslo, na kterém na obrazovce záleží (dílů, desek, mm). */
+    .cislo { font-size: 2.25rem; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+    .cislo-radek { display: flex; align-items: baseline; gap: var(--mezera-3); flex-wrap: wrap; }
+
+    /* Trojice rozměrů Š/V/H vedle sebe — palcem dosažitelná i na 390 px. */
+    .trojice { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--mezera-2); }
+    .dvojice { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--mezera-2); }
+    .trojice .pole input { font-size: var(--velikost-1); text-align: center; padding: 0 var(--mezera-1); }
+
+    /* Kresba stěny a půdorysu. Výška se řídí poměrem, šířka je vždy 100 %,
+       takže na 390 px nic nepřetéká. */
+    .kresba { width: 100%; height: auto; display: block; border-radius: var(--radius-maly);
+      background: var(--barva-plocha-2); }
+    .kresba-legenda { display: flex; gap: var(--mezera-4); flex-wrap: wrap;
+      font-size: var(--velikost-5); color: var(--barva-text-3); }
+    .kresba-legenda span { display: inline-flex; align-items: center; gap: var(--mezera-1); }
+    .vzorek { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+
+    /* Přepínač dvou pohledů (Pohled / Půdorys). */
+    .prepinac { display: flex; background: var(--barva-plocha-2); border-radius: var(--radius-maly);
+      padding: 3px; gap: 3px; }
+    .prepinac button { flex: 1; min-height: var(--dotyk); border: 0; border-radius: var(--radius-maly);
+      background: none; font: inherit; font-weight: 600; color: var(--barva-text-2); cursor: pointer; }
+    .prepinac button[aria-pressed="true"] { background: var(--barva-plocha); color: var(--barva-text); }
+
+    .radek-hlavicka { display: flex; align-items: baseline; justify-content: space-between;
+      gap: var(--mezera-3); }
+    .patka { text-align: center; font-size: var(--velikost-5); color: var(--barva-text-3);
+      line-height: 2; }
+    .patka a { color: var(--barva-text-2); }
+    /* Kostry načítání mají tvar toho, co přijde: řádek seznamu, karta, nadpis. */
+    .kostra-radek { height: 56px; margin-bottom: 1px; }
+    .kostra-nadpis { height: var(--mezera-6); width: 60%; }
+    .kostra-radka { height: var(--mezera-4); }
+    .kostra-karta { height: 8rem; }
+    .kostra-tabulka { height: 5rem; }
+    .tucne { font-weight: 600; color: var(--barva-text); }
   </style>
+  <!-- aplikace: vykresli_aplikaci.py -->
+  <link rel="manifest" href="/manifest.webmanifest">
 </head>
 <body>
-  <main>
-    <section id="obrazovka-nacitani" class="obrazovka aktivni" aria-live="polite">
-      <p>Načítání…</p>
-    </section>
+  <div class="appka">
+    <header class="hlavicka" id="hlavicka" hidden>
+      <button class="tlacitko tiche ikona" id="zpet" hidden aria-label="Zpět">‹</button>
+      <h1 id="titulek">Kusovník</h1>
+    </header>
 
-    <!-- Úvod = přihlašovací obrazovka: cizí návštěvník sem přijde z odkazu a
-         musí za 10 sekund pochopit, co produkt dělá, co stojí a že to může
-         30 dní zkoušet zdarma. Stavitel nahradí texty produktem; ceník bere
-         ze SCHVÁLENÉ ceny (window.CENIK), bez ní zůstane „ceník sdělí
-         provozovatel“. Zobrazení se počítá anonymně (/api/navsteva). -->
-    <section id="obrazovka-prihlaseni" class="obrazovka">
-      <h1 id="uvod-titulek">Produkt SimteGen</h1>
-      <p id="uvod-podtitulek">Jedna věta, co produkt dělá a pro koho — stavitel ji napíše
-      podle kontraktu kandidáta.</p>
-      <ul id="uvod-prinosy" class="seznam">
-        <li class="radek">Přínos 1 — co zákazník ušetří nebo získá</li>
-        <li class="radek">Přínos 2 — proč se to vyplatí platit i podruhé</li>
-        <li class="radek">Přínos 3 — co je jinak než papír nebo tabulka</li>
-      </ul>
-      <p class="zprava"><strong id="uvod-cena">Ceník sdělí provozovatel.</strong>
-      Prvních 30 dní zdarma, bez karty, bez závazku.</p>
-      <h2>Vyzkoušet zdarma nebo se přihlásit</h2>
-      <p>Zadejte svůj e-mail — pošleme vám jednorázový přihlašovací odkaz.
-      Žádné heslo nepotřebujete.</p>
-      <label for="email">E-mail</label>
-      <input id="email" type="email" autocomplete="email" inputmode="email" placeholder="vas@email.cz">
-      <button id="poslat-odkaz">Poslat přihlašovací odkaz</button>
-      <div id="prihlaseni-zprava" class="zprava" aria-live="polite"></div>
-    </section>
+    <main class="obsah" id="obsah">
+      <section class="obrazovka aktivni" id="o-nacitani" aria-live="polite">
+        <div class="kostra kostra-nadpis"></div>
+        <div class="kostra kostra-radka"></div>
+        <div class="kostra kostra-karta"></div>
+        <p class="popisek">Načítám…</p>
+      </section>
 
-    <section id="obrazovka-aplikace" class="obrazovka">
-      <h1>Produkt SimteGen</h1>
-      <p>Tahle obrazovka je zárodek ze šablony — stavitel ji nahradí skutečným
-      nástrojem. Přihlášení, účet a zásady zůstávají.</p>
-      <div class="karta">
-        <p>Přihlášeni jako <strong id="ucet-email"></strong></p>
-      </div>
-      <!-- Předplatné: tři stavy z /api/ja (zkusebni / aktivni / vyprselo).
-           Ve stavu vyprselo stavitel produktové obrazovky zablokuje; účet,
-           export a smazání zůstávají dostupné vždy — práva nevyprší. -->
-      <div class="karta" id="predplatne-karta" hidden>
-        <p id="predplatne-text" class="zprava"></p>
-      </div>
-      <!-- Objednávka předplatného (obchodní podmínky čl. 3 a 4): rozsah, délka
-           a cena jsou vidět PŘED tlačítkem, tlačítko nese zákonný nápis,
-           spotřebitel dává souhlas se zahájením před 14denní lhůtou zvlášť.
-           Ceník doplní stavitel ze schválené ceny (cenotvorba); bez ní
-           zůstává text „ceník sdělí provozovatel“. -->
-      <div class="karta" id="objednavka-karta" hidden>
-        <label for="objednavka-mesice">Objednat předplatné</label>
-        <p id="objednavka-cenik">Ceník sdělí provozovatel před objednáním.</p>
-        <select id="objednavka-mesice">
-          <option value="1">1 měsíc</option>
-          <option value="3">3 měsíce</option>
-          <option value="12">12 měsíců</option>
-        </select>
-        <textarea id="objednavka-fakturace" rows="3" maxlength="600"
-                  placeholder="Fakturační údaje: název / jméno, adresa, IČO (máte-li)"></textarea>
-        <label><input type="checkbox" id="objednavka-spotrebitel"> Objednávám jako spotřebitel
-          (mimo podnikání)</label>
-        <label id="objednavka-souhlas-radek" hidden><input type="checkbox" id="objednavka-souhlas">
-          Výslovně souhlasím, aby placená služba začala před uplynutím 14denní lhůty pro
-          odstoupení, a beru na vědomí, že tím právo na odstoupení ztrácím
-          (§ 1837 písm. l) občanského zákoníku).</label>
-        <p class="zprava">Celková cena: <strong id="objednavka-celkem">podle ceníku</strong></p>
-        <button id="objednavka-poslat">Objednávka zavazující k platbě</button>
-        <div id="objednavka-zprava" class="zprava" aria-live="polite"></div>
-      </div>
-      <button id="stahnout-data" class="tiche">Stáhnout moje data</button>
-      <button id="odhlasit" class="tiche">Odhlásit se</button>
-      <!-- Schránka: zákazník nám píše z aplikace, odpověď vidí tady. Není
-           vázaná na předplatné — hlásit problém je právo, ne funkce. -->
-      <div class="karta" id="schranka">
-        <label for="hlaseni-text">Napište nám</label>
-        <textarea id="hlaseni-text" rows="3" maxlength="2000"
-                  placeholder="Co nefunguje, co vám chybí, na co se chcete zeptat…"></textarea>
-        <button id="hlaseni-poslat" class="tiche">Odeslat</button>
-        <div id="hlaseni-zprava" class="zprava" aria-live="polite"></div>
-        <ul id="hlaseni-seznam" class="seznam"></ul>
-      </div>
-      <button id="smazat-ucet" class="varovne">Smazat účet a všechna data</button>
-      <div id="aplikace-zprava" class="zprava" aria-live="polite"></div>
-    </section>
-  </main>
-  <footer><a href="zasady.html">Zásady zpracování údajů</a> ·
-  <a href="podminky.html">Obchodní podmínky</a> ·
-  <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a> ·
-  <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a></footer>
+      <section class="obrazovka" id="o-uvod"></section>
+      <section class="obrazovka" id="o-zakazky"></section>
+      <section class="obrazovka" id="o-zakazka"></section>
+      <section class="obrazovka" id="o-stena"></section>
+      <section class="obrazovka" id="o-nahled"></section>
+      <section class="obrazovka" id="o-kusovnik"></section>
+      <section class="obrazovka" id="o-standard"></section>
+      <section class="obrazovka" id="o-ucet"></section>
+    </main>
 
-  <script>
-    "use strict";
+    <div class="lista-dole" id="lista-dole" hidden></div>
+
+    <nav class="navigace" id="navigace" hidden aria-label="Hlavní nabídka">
+      <button type="button" data-cil="zakazky"><span aria-hidden="true">📐</span>Zakázky</button>
+      <button type="button" data-cil="standard"><span aria-hidden="true">⚙️</span>Standard</button>
+      <button type="button" data-cil="ucet"><span aria-hidden="true">👤</span>Účet</button>
+    </nav>
+  </div>
+
+  <div id="panel-misto"></div>
+  <div id="toast-misto" aria-live="polite"></div>
+
+  <script type="module">
+    // Modul, ne klasický skript: pravidla kolizí a svislého rozsahu skříněk
+    // si aplikace bere ze stejného souboru jako server (web/kolize.js), aby
+    // se varování na obrazovce nerozešla s varováními v uloženém kusovníku.
+    import { TYPY_SKRINEK, celeCislo, svislyRozsah, zkontrolujStenu } from "./kolize.js";
+
+    // CENIK doplní stavitel teprve ze SCHVÁLENÉ ceny — ve stejném kroku,
+    // ve kterém se do data-manifest.json zapíše `cena_dph`. Dokud je null,
+    // aplikace nikde neslibuje číslo, které neprošlo bránou majitele, a
+    // obchodní podmínky i úvodní obrazovka mluví stejně.
+    // Tvar: window.CENIK = { mesic: 490, mena: "Kč" };
+    window.CENIK = null;
+    const CENIK = window.CENIK;
+
+    const KLIC_KONCEPTU = "rozpracovana-zakazka";
+
     const $ = (id) => document.getElementById(id);
-    function ukaz(id) {
-      document.querySelectorAll(".obrazovka").forEach((o) =>
-        o.classList.toggle("aktivni", o.id === id));
-    }
+    const esc = (text) => String(text ?? "").replace(/[&<>"']/g, (z) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[z]));
+    const cislo = celeCislo;
+    const datum = (unix) => new Date(unix * 1000).toLocaleDateString("cs-CZ");
 
+    const VYCHOZI_ROZMERY = {
+      spodni: { sirka_mm: 600, vyska_mm: 720, hloubka_mm: 510, pocet_polic: 1, pocet_dvirek: 1 },
+      horni: { sirka_mm: 600, vyska_mm: 720, hloubka_mm: 320, pocet_polic: 1, pocet_dvirek: 1 },
+      vysoka: { sirka_mm: 600, vyska_mm: 2000, hloubka_mm: 560, pocet_polic: 4, pocet_dvirek: 2 },
+      rohova: { sirka_mm: 900, vyska_mm: 720, hloubka_mm: 510, pocet_polic: 1, pocet_dvirek: 1 },
+    };
+
+    const stav = {
+      ja: null,
+      zakazky: null,
+      zakazkyChyba: false,
+      dokument: null,
+      stenaIndex: 0,
+      kusovnik: null,
+      standard: null,
+      ukazka: [],
+      materialy: [],
+      nahledRezim: "pohled",
+      ukladani: "cisto",   // cisto | ceka | chyba
+      hlaseni: [],
+    };
+
+    // ── Komunikace s vlastním API ──────────────────────────────────────
     async function api(cesta, metoda, telo) {
       const odpoved = await fetch(cesta, {
-        method: metoda,
+        method: metoda || "GET",
         headers: telo ? { "Content-Type": "application/json" } : undefined,
         body: telo ? JSON.stringify(telo) : undefined,
       });
-      return { ok: odpoved.ok, data: await odpoved.json().catch(() => ({})) };
-    }
-
-    function datum(unix) {
-      return new Date(unix * 1000).toLocaleDateString("cs-CZ");
-    }
-
-    function ukazPredplatne(p) {
-      const karta = $("predplatne-karta");
-      const text = $("predplatne-text");
-      if (!p) { karta.hidden = true; $("objednavka-karta").hidden = true; return; }
-      karta.hidden = false;
-      // Ordering makes sense once the trial is running out or over.
-      $("objednavka-karta").hidden = !(p.stav === "vyprselo" || (p.stav === "zkusebni" && p.dni_zbyva <= 7));
-      prepocitejObjednavku();
-      text.className = "zprava";
-      if (p.stav === "aktivni") {
-        text.textContent = "Předplatné je aktivní do " + datum(p.plati_do) + ".";
-      } else if (p.stav === "zkusebni") {
-        text.textContent = "Zkušební období: zbývá " + p.dni_zbyva + " dní (do "
-          + datum(p.plati_do) + ").";
-      } else {
-        text.className = "zprava chyba";
-        text.textContent = "Předplatné vypršelo. Pro obnovení nám napište — "
-          + "kontaktní e-mail najdete v zásadách zpracování údajů.";
+      const data = await odpoved.json().catch(() => ({}));
+      if (odpoved.status === 402) {
+        toast("Předplatné vypršelo — podrobnosti najdete u účtu.");
+        jdi("ucet");
       }
+      return { ok: odpoved.ok, status: odpoved.status, data };
+    }
+
+    function toast(text) {
+      const misto = $("toast-misto");
+      misto.innerHTML = "";
+      const bublina = document.createElement("div");
+      bublina.className = "toast";
+      bublina.textContent = text;
+      misto.appendChild(bublina);
+      setTimeout(() => { if (bublina.parentNode) bublina.remove(); }, 3200);
+    }
+
+    // ── Router ─────────────────────────────────────────────────────────
+    // Vlastní historie: aplikace běží bez adresního řádku, takže hardwarové
+    // tlačítko zpět na Androidu musí mít co vracet. Každá obrazovka proto
+    // přidá záznam do history a reaguje na popstate.
+    const OBRAZOVKY = {
+      uvod: { titulek: "Kusovník", navigace: false, vykresli: vykresliUvod },
+      zakazky: { titulek: "Zakázky", navigace: true, vykresli: vykresliZakazky },
+      zakazka: { titulek: "Zakázka", navigace: false, zpet: true, vykresli: vykresliZakazku },
+      stena: { titulek: "Stěna", navigace: false, zpet: true, vykresli: vykresliStenu },
+      nahled: { titulek: "Náhled", navigace: false, zpet: true, vykresli: vykresliNahled },
+      kusovnik: { titulek: "Kusovník", navigace: false, zpet: true, vykresli: vykresliKusovnik },
+      standard: { titulek: "Můj standard", navigace: true, vykresli: vykresliStandard },
+      ucet: { titulek: "Účet", navigace: true, vykresli: vykresliUcet },
+    };
+
+    let aktualni = { nazev: "uvod", parametry: {} };
+
+    function jdi(nazev, parametry, nahradit) {
+      const kam = { nazev, parametry: parametry || {} };
+      const stavHistorie = { obrazovka: nazev, parametry: kam.parametry };
+      if (nahradit) history.replaceState(stavHistorie, "", "#" + nazev);
+      else history.pushState(stavHistorie, "", "#" + nazev);
+      zobraz(kam);
+    }
+
+    function zobraz(kam) {
+      aktualni = kam;
+      const def = OBRAZOVKY[kam.nazev] || OBRAZOVKY.zakazky;
+      document.querySelectorAll(".obrazovka").forEach((o) =>
+        o.classList.toggle("aktivni", o.id === "o-" + kam.nazev));
+      $("hlavicka").hidden = kam.nazev === "uvod";
+      $("titulek").textContent = def.titulek;
+      $("zpet").hidden = !def.zpet;
+      $("navigace").hidden = !def.navigace;
+      $("navigace").querySelectorAll("button").forEach((b) =>
+        b.setAttribute("aria-current", b.dataset.cil === kam.nazev ? "page" : "false"));
+      nastavListu([]);
+      window.scrollTo(0, 0);
+      def.vykresli(kam.parametry);
+    }
+
+    window.addEventListener("popstate", (udalost) => {
+      const s = udalost.state;
+      if (s && s.obrazovka) zobraz({ nazev: s.obrazovka, parametry: s.parametry || {} });
+      else zobraz({ nazev: stav.ja && stav.ja.prihlasen ? "zakazky" : "uvod", parametry: {} });
+    });
+
+    $("zpet").addEventListener("click", () => history.back());
+    $("navigace").querySelectorAll("button").forEach((b) =>
+      b.addEventListener("click", () => jdi(b.dataset.cil)));
+
+    function nastavListu(tlacitka) {
+      const lista = $("lista-dole");
+      lista.innerHTML = "";
+      lista.hidden = !tlacitka.length;
+      for (const t of tlacitka) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tlacitko" + (t.tiche ? " tiche" : "") + (t.varovne ? " varovne" : "");
+        button.textContent = t.popisek;
+        if (t.zakazane) button.disabled = true;
+        button.addEventListener("click", t.akce);
+        lista.appendChild(button);
+      }
+    }
+
+    // ── Spodní panel ───────────────────────────────────────────────────
+    function otevriPanel(titulek, obsahHtml, pripoj) {
+      zavriPanel();
+      const misto = $("panel-misto");
+      const pozadi = document.createElement("div");
+      pozadi.className = "panel-pozadi";
+      pozadi.addEventListener("click", zavriPanel);
+      const panel = document.createElement("div");
+      panel.className = "panel";
+      panel.setAttribute("role", "dialog");
+      panel.setAttribute("aria-label", titulek);
+      panel.innerHTML = `<h2>${esc(titulek)}</h2>${obsahHtml}`;
+      misto.appendChild(pozadi);
+      misto.appendChild(panel);
+      if (pripoj) pripoj(panel);
+      const prvni = panel.querySelector("input, select, textarea, button");
+      if (prvni) prvni.focus({ preventScroll: true });
+    }
+
+    function zavriPanel() {
+      $("panel-misto").innerHTML = "";
+    }
+
+    // ── Rozepsaná zakázka v telefonu ───────────────────────────────────
+    // U zákazníka bývá mizerný signál. Rozepsaná zakázka se proto drží
+    // i v telefonu a po uložení na server se odsud maže.
+    function ulozKoncept() {
+      if (!stav.dokument) return;
+      try {
+        localStorage.setItem(KLIC_KONCEPTU, JSON.stringify({
+          zakazka_id: stav.dokument.zakazka.id,
+          dokument: stav.dokument,
+          cas: Math.floor(Date.now() / 1000),
+        }));
+      } catch { /* plná nebo zakázaná paměť prohlížeče nesmí shodit měření */ }
+    }
+
+    function nactiKoncept(zakazkaId) {
+      try {
+        const text = localStorage.getItem(KLIC_KONCEPTU);
+        if (!text) return null;
+        const koncept = JSON.parse(text);
+        return koncept && koncept.zakazka_id === zakazkaId ? koncept : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function zahodKoncept() {
+      try { localStorage.removeItem(KLIC_KONCEPTU); } catch { /* nevadí */ }
+    }
+
+    // ── Ukládání zakázky ───────────────────────────────────────────────
+    let casovacUlozeni = null;
+
+    function zmeneno() {
+      stav.ukladani = "ceka";
+      ulozKoncept();
+      if (casovacUlozeni) clearTimeout(casovacUlozeni);
+      casovacUlozeni = setTimeout(ulozNaServer, 1200);
+    }
+
+    async function ulozNaServer() {
+      if (!stav.dokument) return;
+      if (casovacUlozeni) { clearTimeout(casovacUlozeni); casovacUlozeni = null; }
+      const id = stav.dokument.zakazka.id;
+      const { ok, data } = await api(`/api/zakazky/${id}`, "PUT", stav.dokument)
+        .catch(() => ({ ok: false, data: {} }));
+      if (!ok) {
+        stav.ukladani = "chyba";
+        prekresliStavUlozeni();
+        return;
+      }
+      stav.dokument = data;
+      stav.ukladani = "cisto";
+      zahodKoncept();
+      prekresliStavUlozeni();
+    }
+
+    function prekresliStavUlozeni() {
+      const misto = document.querySelectorAll("[data-ulozeni]");
+      misto.forEach((prvek) => {
+        if (stav.ukladani === "cisto") {
+          prvek.className = "popisek";
+          prvek.textContent = "Uloženo.";
+        } else if (stav.ukladani === "ceka") {
+          prvek.className = "popisek";
+          prvek.textContent = "Ukládám…";
+        } else {
+          prvek.className = "hlaska varovani";
+          prvek.textContent = "Zatím neuloženo — měření máte v telefonu, "
+            + "uložíme ho, jakmile bude signál.";
+        }
+      });
+    }
+
+    // ── Kresba: pohled na stěnu a půdorys ──────────────────────────────
+    function nakresliPohled(stena, standard, kolizni) {
+      const D = Math.max(1, cislo(stena.delka_mm, 3600));
+      const V = Math.max(1, cislo(stena.vyska_mm, 2600));
+      const okraj = Math.round(Math.max(D, V) * 0.06);
+      const casti = [];
+      casti.push(`<rect x="0" y="0" width="${D}" height="${V}" fill="var(--barva-plocha)"`
+        + ` stroke="var(--barva-okraj)" stroke-width="${Math.round(V / 160)}"/>`);
+
+      for (const o of stena.otvory || []) {
+        const x = cislo(o.odsazeni_mm, 0);
+        const s = cislo(o.sirka_mm, 0);
+        const v = cislo(o.vyska_mm, 0);
+        const dole = o.typ === "dvere" ? 0 : cislo(o.parapet_mm, 0);
+        casti.push(`<rect x="${x}" y="${V - dole - v}" width="${s}" height="${v}"`
+          + ` fill="var(--barva-plocha-2)" stroke="var(--barva-text-3)"`
+          + ` stroke-width="${Math.round(V / 260)}" stroke-dasharray="${Math.round(V / 60)}"/>`);
+      }
+
+      (stena.skrinky || []).forEach((sk, index) => {
+        const x = cislo(sk.odsazeni_mm, 0);
+        const s = cislo(sk.sirka_mm, 0);
+        const [y1, y2] = svislyRozsah(sk, standard);
+        const problem = kolizni.has(index);
+        casti.push(`<rect x="${x}" y="${V - y2}" width="${s}" height="${y2 - y1}"`
+          + ` fill="${problem ? "var(--barva-chyba-pozadi)" : "var(--barva-plocha-2)"}"`
+          + ` stroke="${problem ? "var(--barva-chyba)" : "var(--barva-akcent)"}"`
+          + ` stroke-width="${Math.round(V / 190)}" rx="${Math.round(V / 200)}"/>`);
+        if (s > D / 9) {
+          casti.push(`<text x="${x + s / 2}" y="${V - y1 - (y2 - y1) / 2}"`
+            + ` text-anchor="middle" dominant-baseline="middle"`
+            + ` font-size="${Math.round(V / 22)}" fill="var(--barva-text-2)">${s}</text>`);
+        }
+      });
+
+      return `<svg class="kresba" viewBox="${-okraj} ${-okraj} ${D + 2 * okraj} ${V + 2 * okraj}"`
+        + ` role="img" aria-label="Pohled na stěnu ${esc(stena.nazev || "")},`
+        + ` ${D} krát ${V} milimetrů">${casti.join("")}</svg>`;
+    }
+
+    function nakresliPudorys(steny, standard) {
+      // Stěny se skládají za sebou a po každé se zatáčí o 90° dovnitř —
+      // tak vznikne tvar rovné, L i U kuchyně. Skříňky jsou obdélníky
+      // vysunuté od stěny do místnosti o svou hloubku.
+      let x = 0;
+      let y = 0;
+      let dx = 1;
+      let dy = 0;
+      const body = [];
+      const casti = [];
+      for (const stena of steny) {
+        const D = Math.max(1, cislo(stena.delka_mm, 3600));
+        const x2 = x + dx * D;
+        const y2 = y + dy * D;
+        body.push([x, y], [x2, y2]);
+        casti.push(`<line x1="${x}" y1="${y}" x2="${x2}" y2="${y2}"`
+          + ` stroke="var(--barva-text)" stroke-width="60" stroke-linecap="square"/>`);
+
+        const nx = -dy;
+        const ny = dx;
+        for (const sk of stena.skrinky || []) {
+          const o = cislo(sk.odsazeni_mm, 0);
+          const s = cislo(sk.sirka_mm, 0);
+          const h = cislo(sk.hloubka_mm, 510);
+          const ax = x + dx * o;
+          const ay = y + dy * o;
+          const rohy = [
+            [ax, ay],
+            [ax + dx * s, ay + dy * s],
+            [ax + dx * s + nx * h, ay + dy * s + ny * h],
+            [ax + nx * h, ay + ny * h],
+          ];
+          for (const bod of rohy) body.push(bod);
+          casti.push(`<polygon points="${rohy.map((b) => b.join(",")).join(" ")}"`
+            + ` fill="var(--barva-plocha-2)" stroke="var(--barva-akcent)" stroke-width="40"`
+            + (sk.typ === "horni" ? ' stroke-dasharray="120 80"' : "") + "/>");
+        }
+        x = x2;
+        y = y2;
+        dx = nx;
+        dy = ny;
+      }
+      if (!body.length) return "";
+      const xs = body.map((b) => b[0]);
+      const ys = body.map((b) => b[1]);
+      const minX = Math.min(...xs) - 300;
+      const minY = Math.min(...ys) - 300;
+      const sirka = Math.max(...xs) - minX + 300;
+      const vyska = Math.max(...ys) - minY + 300;
+      return `<svg class="kresba" viewBox="${minX} ${minY} ${sirka} ${vyska}" role="img"`
+        + ` aria-label="Půdorys místnosti">${casti.join("")}</svg>`;
+    }
+
+    function legenda() {
+      return `<div class="kresba-legenda">
+        <span><i class="vzorek" style="background: var(--barva-plocha-2);
+          border: 2px solid var(--barva-akcent)"></i> skříňka</span>
+        <span><i class="vzorek" style="background: var(--barva-plocha-2);
+          border: 2px dashed var(--barva-text-3)"></i> okno / dveře</span>
+        <span><i class="vzorek" style="background: var(--barva-chyba-pozadi);
+          border: 2px solid var(--barva-chyba)"></i> kolize</span>
+      </div>`;
+    }
+
+    // Kontrola stěny je JEDNA funkce sdílená se serverem (web/kolize.js);
+    // tohle je jen zkratka, aby se nemusely pokaždé vypisovat skříňky.
+    function kontrolaSteny(stena) {
+      return zkontrolujStenu(stena, stena.skrinky || [], stav.standard);
+    }
+
+    // ── Obrazovka: úvod a přihlášení ───────────────────────────────────
+    function vykresliUvod() {
+      $("o-uvod").innerHTML = `
+        <h1>Kuchyň změříte u zákazníka, kusovník máte hned</h1>
+        <p>Pro truhláře, kteří měří na místě a objednávají řezané desky
+        v nářezovém centru. Zadáte stěny, okna a skříňky — aplikace spočítá
+        boky, dna, police, záda i dvířka podle standardu vaší dílny.</p>
+        <ul class="seznam">
+          <li class="radek"><span class="hlavni"><strong>Kusovník místo přepisování</strong>
+            <span>Rozměry dílů i olepení hran, hotové k odeslání do nářezového centra.</span></span></li>
+          <li class="radek"><span class="hlavni"><strong>Váš konstrukční standard</strong>
+            <span>Tloušťka desky, záda v drážce, spáry dvířek — nastavíte jednou.</span></span></li>
+          <li class="radek"><span class="hlavni"><strong>Zakázky zůstanou uložené</strong>
+            <span>Dopracujete je v dílně a příští kuchyň začnete kopií té minulé.</span></span></li>
+        </ul>
+        <p class="hlaska"><strong id="uvod-cena">Ceník sdělí provozovatel.</strong>
+        Prvních 30 dní zdarma, bez karty, bez závazku.</p>
+        <h2>Vyzkoušet zdarma nebo se přihlásit</h2>
+        <p class="popisek">Zadejte svůj e-mail — pošleme vám jednorázový přihlašovací
+        odkaz. Žádné heslo nepotřebujete.</p>
+        <div class="pole">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" autocomplete="email" inputmode="email"
+                 placeholder="vas@email.cz" enterkeyhint="send">
+        </div>
+        <div id="uvod-zprava" aria-live="polite"></div>
+        <footer class="patka">
+          <a href="zasady.html">Zásady zpracování údajů</a> ·
+          <a href="podminky.html">Obchodní podmínky</a> ·
+          <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a> ·
+          <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a>
+        </footer>`;
+      if (CENIK) {
+        $("uvod-cena").textContent = `${CENIK.mesic} ${CENIK.mena} měsíčně.`;
+      }
+      $("email").addEventListener("keydown", (u) => { if (u.key === "Enter") posliOdkaz(); });
+      nastavListu([{ popisek: "Poslat přihlašovací odkaz", akce: posliOdkaz }]);
+      zapoctiNavstevu();
     }
 
     let navstevaZapocitana = false;
     function zapoctiNavstevu() {
-      // Anonymous tally of landing views — only for visitors without a
-      // session, once per page load.
       if (navstevaZapocitana) return;
       navstevaZapocitana = true;
       api("/api/navsteva", "POST", { stranka: "uvod" }).catch(() => {});
-      if (CENIK) $("uvod-cena").textContent = `${CENIK.mesic} ${CENIK.mena} měsíčně.`;
     }
 
-    async function obnov() {
-      try {
-        const { data } = await api("/api/ja", "GET");
-        if (data.prihlasen) {
-          $("ucet-email").textContent = data.email;
-          ukazPredplatne(data.predplatne);
-          ukaz("obrazovka-aplikace");
-          nactiHlaseni();
-        } else {
-          ukaz("obrazovka-prihlaseni");
-          zapoctiNavstevu();
-        }
-      } catch {
-        ukaz("obrazovka-prihlaseni");
-      }
-    }
-
-    $("poslat-odkaz").addEventListener("click", async () => {
-      const zprava = $("prihlaseni-zprava");
-      zprava.className = "zprava";
+    async function posliOdkaz() {
+      const zprava = $("uvod-zprava");
+      zprava.className = "hlaska";
       zprava.textContent = "Odesílám…";
-      const { ok, data } = await api("/api/prihlaseni", "POST", { email: $("email").value });
+      const { ok, data } = await api("/api/prihlaseni", "POST", { email: $("email").value })
+        .catch(() => ({ ok: false, data: {} }));
       if (!ok) {
-        zprava.className = "zprava chyba";
-        zprava.textContent = data.chyba || "Něco se nepovedlo. Zkuste to prosím znovu.";
+        zprava.className = "hlaska chyba";
+        zprava.textContent = data.chyba
+          || "E-mail se nepodařilo odeslat, zkuste to prosím znovu.";
         return;
       }
       if (data.odkaz) {
-        // Development deployments hand the link back instead of e-mailing it.
-        zprava.innerHTML = "";
-        const a = document.createElement("a");
-        a.href = data.odkaz;
-        a.textContent = "Vývojový režim — přihlásit tímto odkazem";
-        zprava.appendChild(a);
+        zprava.className = "hlaska";
+        zprava.innerHTML = `<a href="${esc(data.odkaz)}">Vývojový režim — přihlásit tímto odkazem</a>`;
         return;
       }
-      zprava.textContent = "Hotovo — přihlašovací odkaz najdete v e-mailu.";
-    });
-
-    $("odhlasit").addEventListener("click", async () => {
-      await api("/api/odhlaseni", "POST");
-      obnov();
-    });
-
-    $("stahnout-data").addEventListener("click", () => {
-      location.href = "/api/ucet/export";
-    });
-
-    // Price per month for the total line; the builder sets it from the
-    // approved price (window.CENIK = { mesic: 690, mena: "Kč" }). Null = no
-    // approved price yet, the total stays "podle ceníku".
-    const CENIK = window.CENIK || null;
-    function prepocitejObjednavku() {
-      const mesice = Number($("objednavka-mesice").value);
-      $("objednavka-celkem").textContent = CENIK
-        ? `${mesice * CENIK.mesic} ${CENIK.mena} za ${mesice} měs.`
-        : "podle ceníku";
+      zprava.className = "hlaska uspech";
+      zprava.textContent = "Přihlašovací odkaz najdete v e-mailu.";
     }
-    $("objednavka-mesice").addEventListener("change", prepocitejObjednavku);
-    $("objednavka-spotrebitel").addEventListener("change", () => {
-      $("objednavka-souhlas-radek").hidden = !$("objednavka-spotrebitel").checked;
-    });
-    $("objednavka-poslat").addEventListener("click", async () => {
-      const zprava = $("objednavka-zprava");
-      zprava.className = "zprava";
-      zprava.textContent = "Odesílám…";
-      const mesice = Number($("objednavka-mesice").value);
-      const { ok, data } = await api("/api/objednavka", "POST", {
-        mesice,
-        cena_czk: CENIK ? mesice * CENIK.mesic : null,
-        fakturace: $("objednavka-fakturace").value,
-        spotrebitel: $("objednavka-spotrebitel").checked,
-        souhlas_zahajeni: $("objednavka-spotrebitel").checked && $("objednavka-souhlas").checked,
-      });
-      if (!ok) {
-        zprava.className = "zprava chyba";
-        zprava.textContent = data.chyba || "Objednávku se nepodařilo odeslat.";
+
+    // ── Obrazovka: zakázky ─────────────────────────────────────────────
+    async function vykresliZakazky() {
+      const cil = $("o-zakazky");
+      nastavListu([{ popisek: "Nová zakázka", akce: panelNovaZakazka }]);
+      if (stav.zakazky === null) {
+        cil.innerHTML = `<h2>Vaše zakázky</h2><div class="seznam">
+          <div class="kostra kostra-radek"></div><div class="kostra kostra-radek"></div>
+          <div class="kostra kostra-radek"></div></div>`;
+        const { ok, data } = await api("/api/zakazky").catch(() => ({ ok: false, data: {} }));
+        if (!ok) {
+          stav.zakazkyChyba = true;
+          stav.zakazky = [];
+        } else {
+          stav.zakazkyChyba = false;
+          stav.zakazky = data.zakazky || [];
+        }
+        if (aktualni.nazev !== "zakazky") return;
+      }
+
+      if (stav.zakazkyChyba) {
+        cil.innerHTML = `<div class="hlaska chyba">Zakázky se nepodařilo načíst.</div>`;
+        const znovu = document.createElement("button");
+        znovu.type = "button";
+        znovu.className = "tlacitko tiche plne";
+        znovu.textContent = "Zkusit znovu";
+        znovu.addEventListener("click", () => { stav.zakazky = null; vykresliZakazky(); });
+        cil.appendChild(znovu);
         return;
       }
-      zprava.textContent = data.emaily
-        ? "Děkujeme, objednávku máme. Potvrzení a fakturu pošleme e-mailem."
-        : "Děkujeme, objednávku máme. Fakturu pošleme e-mailem.";
-    });
 
-    const STAVY_HLASENI = { nove: "přijato", vyrizuje_se: "řešíme", vyrizeno: "vyřízeno", odlozeno: "odloženo" };
+      if (!stav.zakazky.length) {
+        cil.innerHTML = `<div class="prazdno">
+          <span class="ikona-velka" aria-hidden="true">📐</span>
+          <p>Zatím tu není žádná zakázka. Začněte změřením stěny u zákazníka.</p>
+        </div>`;
+        const zacit = document.createElement("button");
+        zacit.type = "button";
+        zacit.className = "tlacitko plne";
+        zacit.textContent = "Nová zakázka";
+        zacit.addEventListener("click", panelNovaZakazka);
+        cil.querySelector(".prazdno").appendChild(zacit);
+        return;
+      }
+
+      cil.innerHTML = `<h2>Vaše zakázky</h2><div class="seznam" id="seznam-zakazek"></div>`;
+      const seznam = $("seznam-zakazek");
+      for (const z of stav.zakazky) {
+        const radek = document.createElement("button");
+        radek.type = "button";
+        radek.className = "radek";
+        radek.innerHTML = `<span class="hlavni"><strong>${esc(z.nazev)}</strong>
+          <span>${esc(z.oznaceni_zakaznika || "bez označení zákazníka")} · ${datum(z.zmeneno)}</span></span>
+          <span class="vpravo">${z.pocet_dilu ? z.pocet_dilu + " dílů" : "—"}</span>`;
+        radek.addEventListener("click", () => jdi("zakazka", { id: z.id }));
+        seznam.appendChild(radek);
+      }
+    }
+
+    function panelNovaZakazka() {
+      otevriPanel("Nová zakázka", `
+        <div class="pole">
+          <label for="nz-nazev">Název zakázky</label>
+          <input id="nz-nazev" type="text" placeholder="Kuchyň Novákovi" enterkeyhint="done">
+          <span class="napoveda">Podle čeho ji poznáte v seznamu.</span>
+        </div>
+        <div class="pole">
+          <label for="nz-zakaznik">Označení zákazníka (nepovinné)</label>
+          <input id="nz-zakaznik" type="text" placeholder="Novák, Brno">
+          <span class="napoveda">Pište jen to, co opravdu potřebujete — jsou to údaje
+          vašeho zákazníka.</span>
+        </div>
+        <div id="nz-zprava" aria-live="polite"></div>
+        <button type="button" class="tlacitko plne" id="nz-ulozit">Založit zakázku</button>`,
+        (panel) => {
+          panel.querySelector("#nz-ulozit").addEventListener("click", async () => {
+            const zprava = panel.querySelector("#nz-zprava");
+            zprava.className = "hlaska";
+            zprava.textContent = "Zakládám…";
+            const { ok, data } = await api("/api/zakazky", "POST", {
+              nazev: panel.querySelector("#nz-nazev").value,
+              oznaceni_zakaznika: panel.querySelector("#nz-zakaznik").value,
+            }).catch(() => ({ ok: false, data: {} }));
+            if (!ok) {
+              zprava.className = "hlaska chyba";
+              zprava.textContent = data.chyba || "Zakázku se nepodařilo založit.";
+              return;
+            }
+            zavriPanel();
+            stav.zakazky = null;
+            toast("Zakázka založena.");
+            jdi("zakazka", { id: data.id });
+          });
+        });
+    }
+
+    // ── Obrazovka: zakázka ─────────────────────────────────────────────
+    async function vykresliZakazku(parametry) {
+      const cil = $("o-zakazka");
+      const id = Number(parametry.id);
+      if (!stav.dokument || stav.dokument.zakazka.id !== id) {
+        cil.innerHTML = `<div class="kostra kostra-karta"></div>
+          <div class="kostra kostra-radek"></div><div class="kostra kostra-radek"></div>`;
+        nastavListu([]);
+        const { ok, data } = await api(`/api/zakazky/${id}`).catch(() => ({ ok: false, data: {} }));
+        if (!ok) {
+          cil.innerHTML = `<div class="hlaska chyba">${esc(data.chyba
+            || "Zakázku se nepodařilo načíst.")}</div>`;
+          nastavListu([{ popisek: "Zpět na zakázky", tiche: true, akce: () => jdi("zakazky") }]);
+          return;
+        }
+        stav.dokument = data;
+        stav.kusovnik = null;
+        stav.ukladani = "cisto";
+        const koncept = nactiKoncept(id);
+        if (koncept && koncept.cas > (data.zakazka.zmeneno || 0)) {
+          stav.dokument = koncept.dokument;
+          toast("Obnovili jsme neuložené měření z telefonu.");
+          zmeneno();
+        }
+        if (aktualni.nazev !== "zakazka") return;
+      }
+      if (!stav.standard) await nactiStandard();
+
+      const dokument = stav.dokument;
+      $("titulek").textContent = dokument.zakazka.nazev;
+      const skrinek = (dokument.steny || []).reduce((s, x) => s + (x.skrinky || []).length, 0);
+      const posledni = dokument.posledni_kusovnik;
+      const aktualniKusovnik = posledni && posledni.vytvoreno >= (dokument.zakazka.zmeneno || 0);
+
+      const hlavniCislo = aktualniKusovnik
+        ? `<span class="cislo">${posledni.pocet_dilu}</span> <span>dílů · odhad
+           ${posledni.odhad_desek} desek</span>`
+        : `<span class="cislo">${skrinek}</span> <span>${skrinekSlovy(skrinek)}</span>`;
+
+      cil.innerHTML = `
+        <div class="karta">
+          <div class="cislo-radek">${hlavniCislo}</div>
+          <p class="popisek">${esc(dokument.zakazka.oznaceni_zakaznika || "bez označení zákazníka")}</p>
+          ${aktualniKusovnik
+            ? `<p class="popisek">Kusovník z ${datum(posledni.vytvoreno)}.</p>`
+            : (posledni ? `<div class="hlaska varovani">Zakázka se od posledního kusovníku
+                změnila — přepočítejte ho.</div>` : "")}
+          <p data-ulozeni class="popisek">Uloženo.</p>
+        </div>
+        <div class="radek-hlavicka"><h2>Stěny</h2>
+          <button type="button" class="tlacitko tiche" id="pridat-stenu">Přidat stěnu</button></div>
+        <div id="seznam-sten"></div>
+        <h2>Zakázka</h2>
+        <div class="seznam" id="akce-zakazky"></div>`;
+
+      const seznamSten = $("seznam-sten");
+      if (!(dokument.steny || []).length) {
+        seznamSten.innerHTML = `<div class="prazdno">
+          <span class="ikona-velka" aria-hidden="true">📏</span>
+          <p>Zakázka je prázdná — přidejte první stěnu.</p></div>`;
+      } else {
+        const seznam = document.createElement("div");
+        seznam.className = "seznam";
+        dokument.steny.forEach((stena, index) => {
+          const { hlasky } = kontrolaSteny(stena);
+          const radek = document.createElement("button");
+          radek.type = "button";
+          radek.className = "radek";
+          radek.innerHTML = `<span class="hlavni"><strong>${esc(stena.nazev)}</strong>
+            <span>${stena.delka_mm} × ${stena.vyska_mm} mm ·
+            ${(stena.skrinky || []).length} ${skrinekSlovy((stena.skrinky || []).length)}${
+              hlasky.length ? " · ⚠ " + hlasky.length : ""}</span></span>
+            <span class="vpravo">›</span>`;
+          radek.addEventListener("click", () => jdi("stena", { index }));
+          seznam.appendChild(radek);
+        });
+        seznamSten.appendChild(seznam);
+      }
+
+      $("pridat-stenu").addEventListener("click", pridejStenu);
+
+      const akce = $("akce-zakazky");
+      pridejAkci(akce, "Náhled a kontrola", "pohled na stěny, půdorys a varování",
+        () => jdi("nahled"));
+      pridejAkci(akce, "Kopírovat jako šablonu", "nová zakázka se stejnými stěnami",
+        kopirujZakazku);
+      pridejAkci(akce, "Upravit název a poznámku", "", panelUpravZakazku);
+      pridejAkci(akce, "Smazat zakázku", "nevratné", smazZakazku);
+
+      prekresliStavUlozeni();
+      nastavListu([
+        { popisek: "Vygenerovat kusovník", akce: vygenerujKusovnik, zakazane: skrinek === 0 },
+      ]);
+    }
+
+    function skrinekSlovy(n) {
+      if (n === 1) return "skříňka";
+      if (n >= 2 && n <= 4) return "skříňky";
+      return "skříněk";
+    }
+
+    function pridejAkci(seznam, nazev, popis, akce) {
+      const radek = document.createElement("button");
+      radek.type = "button";
+      radek.className = "radek";
+      radek.innerHTML = `<span class="hlavni"><strong>${esc(nazev)}</strong>${
+        popis ? `<span>${esc(popis)}</span>` : ""}</span><span class="vpravo">›</span>`;
+      radek.addEventListener("click", akce);
+      seznam.appendChild(radek);
+    }
+
+    function pridejStenu() {
+      const poradi = (stav.dokument.steny || []).length;
+      stav.dokument.steny.push({
+        nazev: `Stěna ${String.fromCharCode(65 + poradi)}`,
+        delka_mm: 3600, vyska_mm: 2600, roh_vlevo: 0, roh_vpravo: 0,
+        otvory: [], skrinky: [],
+      });
+      zmeneno();
+      jdi("stena", { index: poradi });
+    }
+
+    function panelUpravZakazku() {
+      const z = stav.dokument.zakazka;
+      otevriPanel("Zakázka", `
+        <div class="pole"><label for="uz-nazev">Název</label>
+          <input id="uz-nazev" type="text" value="${esc(z.nazev)}"></div>
+        <div class="pole"><label for="uz-zakaznik">Označení zákazníka</label>
+          <input id="uz-zakaznik" type="text" value="${esc(z.oznaceni_zakaznika || "")}"></div>
+        <div class="pole"><label for="uz-poznamka">Poznámka</label>
+          <textarea id="uz-poznamka" rows="3" maxlength="1000">${esc(z.poznamka || "")}</textarea></div>
+        <button type="button" class="tlacitko plne" id="uz-ulozit">Uložit</button>`,
+        (panel) => {
+          panel.querySelector("#uz-ulozit").addEventListener("click", () => {
+            z.nazev = panel.querySelector("#uz-nazev").value.trim() || z.nazev;
+            z.oznaceni_zakaznika = panel.querySelector("#uz-zakaznik").value.trim();
+            z.poznamka = panel.querySelector("#uz-poznamka").value.trim();
+            zavriPanel();
+            zmeneno();
+            stav.zakazky = null;
+            vykresliZakazku({ id: z.id });
+            toast("Uloženo.");
+          });
+        });
+    }
+
+    async function kopirujZakazku() {
+      const id = stav.dokument.zakazka.id;
+      toast("Kopíruji…");
+      const { ok, data } = await api(`/api/zakazky/${id}/kopie`, "POST", {})
+        .catch(() => ({ ok: false, data: {} }));
+      if (!ok) { toast(data.chyba || "Kopii se nepodařilo vytvořit."); return; }
+      stav.zakazky = null;
+      stav.dokument = null;
+      toast("Kopie je hotová.");
+      jdi("zakazka", { id: data.id });
+    }
+
+    async function smazZakazku() {
+      const z = stav.dokument.zakazka;
+      if (!confirm(`Opravdu smazat zakázku „${z.nazev}“ včetně stěn a kusovníků? `
+        + "Krok je nevratný.")) return;
+      const { ok, data } = await api(`/api/zakazky/${z.id}`, "DELETE")
+        .catch(() => ({ ok: false, data: {} }));
+      if (!ok) { toast(data.chyba || "Smazání se nepovedlo."); return; }
+      zahodKoncept();
+      stav.dokument = null;
+      stav.zakazky = null;
+      toast("Zakázka smazána.");
+      jdi("zakazky", {}, true);
+    }
+
+    // ── Obrazovka: stěna ───────────────────────────────────────────────
+    function vykresliStenu(parametry) {
+      const cil = $("o-stena");
+      if (!stav.dokument) { jdi("zakazky", {}, true); return; }
+      const index = cislo(parametry.index, 0);
+      const stena = (stav.dokument.steny || [])[index];
+      if (!stena) { jdi("zakazka", { id: stav.dokument.zakazka.id }, true); return; }
+      stav.stenaIndex = index;
+      $("titulek").textContent = stena.nazev;
+
+      const { kolizni, hlasky } = kontrolaSteny(stena);
+
+      cil.innerHTML = `
+        <div class="karta">${nakresliPohled(stena, stav.standard, kolizni)}${legenda()}</div>
+        ${hlasky.length ? `<div class="hlaska varovani">${hlasky.map(esc).join("<br>")}</div>` : ""}
+        <div class="dvojice">
+          <div class="pole"><label for="st-delka">Délka stěny (mm)</label>
+            <input id="st-delka" type="number" inputmode="numeric" min="200" max="20000"
+                   value="${cislo(stena.delka_mm, 3600)}"></div>
+          <div class="pole"><label for="st-vyska">Výška (mm)</label>
+            <input id="st-vyska" type="number" inputmode="numeric" min="500" max="5000"
+                   value="${cislo(stena.vyska_mm, 2600)}"></div>
+        </div>
+        <div class="pole"><label for="st-nazev">Název stěny</label>
+          <input id="st-nazev" type="text" value="${esc(stena.nazev)}"></div>
+        <div class="dvojice">
+          <label class="radka"><input type="checkbox" id="st-roh-vlevo"
+            ${stena.roh_vlevo ? "checked" : ""}> Roh vlevo</label>
+          <label class="radka"><input type="checkbox" id="st-roh-vpravo"
+            ${stena.roh_vpravo ? "checked" : ""}> Roh vpravo</label>
+        </div>
+        <div class="radek-hlavicka"><h2>Okna a dveře</h2>
+          <button type="button" class="tlacitko tiche" id="pridat-otvor">Přidat</button></div>
+        <div id="seznam-otvoru"></div>
+        <h2>Skříňky</h2>
+        <div id="seznam-skrinek"></div>
+        <p data-ulozeni class="popisek">Uloženo.</p>
+        <div class="seznam" id="akce-steny"></div>`;
+
+      const napoj = (id, klic, jeCislo) => {
+        const prvek = $(id);
+        prvek.addEventListener("change", () => {
+          stena[klic] = jeCislo ? cislo(prvek.value, stena[klic])
+            : (prvek.type === "checkbox" ? (prvek.checked ? 1 : 0) : prvek.value.trim());
+          zmeneno();
+          vykresliStenu({ index });
+        });
+      };
+      napoj("st-delka", "delka_mm", true);
+      napoj("st-vyska", "vyska_mm", true);
+      napoj("st-nazev", "nazev", false);
+      napoj("st-roh-vlevo", "roh_vlevo", false);
+      napoj("st-roh-vpravo", "roh_vpravo", false);
+
+      const otvory = $("seznam-otvoru");
+      if (!(stena.otvory || []).length) {
+        otvory.innerHTML = `<p class="popisek">Žádné okno ani dveře. Přidejte je, ať vidíte,
+          kam skříňka nesmí.</p>`;
+      } else {
+        const seznam = document.createElement("div");
+        seznam.className = "seznam";
+        stena.otvory.forEach((o, i) => {
+          const radek = document.createElement("button");
+          radek.type = "button";
+          radek.className = "radek";
+          radek.innerHTML = `<span class="hlavni">
+            <strong>${o.typ === "dvere" ? "Dveře" : "Okno"} ${o.sirka_mm} × ${o.vyska_mm} mm</strong>
+            <span>od ${o.odsazeni_mm} mm${o.typ === "dvere" ? "" : ", parapet " + o.parapet_mm + " mm"}</span>
+            </span><span class="vpravo">upravit</span>`;
+          radek.addEventListener("click", () => panelOtvor(stena, i, index));
+          seznam.appendChild(radek);
+        });
+        otvory.appendChild(seznam);
+      }
+      $("pridat-otvor").addEventListener("click", () => panelOtvor(stena, -1, index));
+
+      const skrinky = $("seznam-skrinek");
+      if (!(stena.skrinky || []).length) {
+        skrinky.innerHTML = `<div class="prazdno">
+          <span class="ikona-velka" aria-hidden="true">🗄️</span>
+          <p>Zatím žádná skříňka. Přidejte první — rozměry jsou předvyplněné.</p></div>`;
+      } else {
+        const seznam = document.createElement("div");
+        seznam.className = "seznam";
+        stena.skrinky.forEach((sk, i) => {
+          const radek = document.createElement("button");
+          radek.type = "button";
+          radek.className = "radek";
+          radek.innerHTML = `<span class="hlavni">
+            <strong>${i + 1}. ${esc(TYPY_SKRINEK[sk.typ] || "Skříňka")}
+              ${sk.sirka_mm} × ${sk.vyska_mm} × ${sk.hloubka_mm}</strong>
+            <span>od ${cislo(sk.odsazeni_mm, 0)} mm · ${sk.pocet_polic}× police ·
+              ${sk.pocet_dvirek}× dvířka${sk.pocet_zasuvek ? " · " + sk.pocet_zasuvek + "× zásuvka" : ""}</span>
+            </span><span class="vpravo">${kolizni.has(i) ? "⚠" : "upravit"}</span>`;
+          radek.addEventListener("click", () => panelSkrinka(stena, i, index));
+          seznam.appendChild(radek);
+        });
+        skrinky.appendChild(seznam);
+      }
+
+      pridejAkci($("akce-steny"), "Smazat stěnu", "i se skříňkami na ní", () => {
+        if (!confirm(`Opravdu smazat ${stena.nazev} i se skříňkami?`)) return;
+        stav.dokument.steny.splice(index, 1);
+        zmeneno();
+        toast("Stěna smazána.");
+        jdi("zakazka", { id: stav.dokument.zakazka.id }, true);
+      });
+
+      prekresliStavUlozeni();
+      nastavListu([
+        { popisek: "Přidat skříňku", akce: () => panelSkrinka(stena, -1, index) },
+        { popisek: "Náhled", tiche: true, akce: () => jdi("nahled") },
+      ]);
+    }
+
+    function panelOtvor(stena, poradi, stenaIndex) {
+      const novy = poradi < 0;
+      const o = novy
+        ? { typ: "okno", odsazeni_mm: 1200, sirka_mm: 1200, vyska_mm: 1400, parapet_mm: 900 }
+        : { ...stena.otvory[poradi] };
+      otevriPanel(novy ? "Nové okno nebo dveře" : "Okno nebo dveře", `
+        <div class="pole"><label for="ot-typ">Typ</label>
+          <select id="ot-typ">
+            <option value="okno"${o.typ === "okno" ? " selected" : ""}>Okno</option>
+            <option value="dvere"${o.typ === "dvere" ? " selected" : ""}>Dveře</option>
+          </select></div>
+        <div class="trojice">
+          <div class="pole"><label for="ot-odsazeni">Od kraje</label>
+            <input id="ot-odsazeni" type="number" inputmode="numeric" value="${o.odsazeni_mm}"></div>
+          <div class="pole"><label for="ot-sirka">Šířka</label>
+            <input id="ot-sirka" type="number" inputmode="numeric" value="${o.sirka_mm}"></div>
+          <div class="pole"><label for="ot-vyska">Výška</label>
+            <input id="ot-vyska" type="number" inputmode="numeric" value="${o.vyska_mm}"></div>
+        </div>
+        <div class="pole"><label for="ot-parapet">Parapet nad podlahou (mm)</label>
+          <input id="ot-parapet" type="number" inputmode="numeric" value="${o.parapet_mm}">
+          <span class="napoveda">U dveří se parapet nepoužije.</span></div>
+        <button type="button" class="tlacitko plne" id="ot-ulozit">Uložit</button>
+        ${novy ? "" : `<button type="button" class="tlacitko varovne plne" id="ot-smazat">Smazat</button>`}`,
+        (panel) => {
+          panel.querySelector("#ot-ulozit").addEventListener("click", () => {
+            const novyOtvor = {
+              typ: panel.querySelector("#ot-typ").value,
+              odsazeni_mm: cislo(panel.querySelector("#ot-odsazeni").value, 0),
+              sirka_mm: cislo(panel.querySelector("#ot-sirka").value, 1000),
+              vyska_mm: cislo(panel.querySelector("#ot-vyska").value, 1400),
+              parapet_mm: cislo(panel.querySelector("#ot-parapet").value, 900),
+            };
+            if (novy) stena.otvory.push(novyOtvor);
+            else stena.otvory[poradi] = novyOtvor;
+            zavriPanel();
+            zmeneno();
+            vykresliStenu({ index: stenaIndex });
+            toast("Uloženo.");
+          });
+          const smazat = panel.querySelector("#ot-smazat");
+          if (smazat) {
+            smazat.addEventListener("click", () => {
+              stena.otvory.splice(poradi, 1);
+              zavriPanel();
+              zmeneno();
+              vykresliStenu({ index: stenaIndex });
+              toast("Smazáno.");
+            });
+          }
+        });
+    }
+
+    function panelSkrinka(stena, poradi, stenaIndex) {
+      const novy = poradi < 0;
+      const predchozi = (stena.skrinky || [])[(stena.skrinky || []).length - 1];
+      const sk = novy
+        ? {
+            typ: "spodni",
+            odsazeni_mm: predchozi
+              ? cislo(predchozi.odsazeni_mm, 0) + cislo(predchozi.sirka_mm, 600) : 0,
+            ...VYCHOZI_ROZMERY.spodni,
+            pocet_zasuvek: 0, zasuvka_vyska_mm: 140, zada_typ_prepis: "",
+            material_id: null, poznamka: "",
+          }
+        : { ...stena.skrinky[poradi] };
+
+      const volbyMaterialu = [`<option value="">Výchozí (${esc(stav.standard
+        ? "LTD " + stav.standard.tloustka_mm + " mm" : "LTD")})</option>`]
+        .concat(stav.materialy.map((m) =>
+          `<option value="${m.id}"${Number(sk.material_id) === m.id ? " selected" : ""}>`
+          + `${esc(m.nazev)}</option>`)).join("");
+
+      otevriPanel(novy ? "Nová skříňka" : "Skříňka", `
+        <div class="trojice">
+          <div class="pole"><label for="sk-sirka">Šířka</label>
+            <input id="sk-sirka" type="number" inputmode="numeric" min="100" max="1400"
+                   value="${cislo(sk.sirka_mm, 600)}"></div>
+          <div class="pole"><label for="sk-vyska">Výška</label>
+            <input id="sk-vyska" type="number" inputmode="numeric" min="100" max="2600"
+                   value="${cislo(sk.vyska_mm, 720)}"></div>
+          <div class="pole"><label for="sk-hloubka">Hloubka</label>
+            <input id="sk-hloubka" type="number" inputmode="numeric" min="100" max="900"
+                   value="${cislo(sk.hloubka_mm, 510)}"></div>
+        </div>
+        <p class="napoveda">Rozměry korpusu v mm, hloubka bez dvířek.</p>
+        <div class="pole"><label for="sk-typ">Typ</label>
+          <select id="sk-typ">${Object.keys(TYPY_SKRINEK).map((t) =>
+            `<option value="${t}"${sk.typ === t ? " selected" : ""}>${TYPY_SKRINEK[t]}</option>`).join("")}
+          </select></div>
+        <div class="pole"><label for="sk-odsazeni">Odsazení od levého kraje stěny (mm)</label>
+          <input id="sk-odsazeni" type="number" inputmode="numeric" value="${cislo(sk.odsazeni_mm, 0)}"></div>
+        <div class="trojice">
+          <div class="pole"><label for="sk-police">Police</label>
+            <input id="sk-police" type="number" inputmode="numeric" min="0" max="12"
+                   value="${cislo(sk.pocet_polic, 0)}"></div>
+          <div class="pole"><label for="sk-dvirka">Dvířka</label>
+            <input id="sk-dvirka" type="number" inputmode="numeric" min="0" max="4"
+                   value="${cislo(sk.pocet_dvirek, 0)}"></div>
+          <div class="pole"><label for="sk-zasuvky">Zásuvky</label>
+            <input id="sk-zasuvky" type="number" inputmode="numeric" min="0" max="8"
+                   value="${cislo(sk.pocet_zasuvek, 0)}"></div>
+        </div>
+        <div class="pole"><label for="sk-celo">Výška čela zásuvky (mm)</label>
+          <input id="sk-celo" type="number" inputmode="numeric" min="50" max="600"
+                 value="${cislo(sk.zasuvka_vyska_mm, 140)}">
+          <span class="napoveda">Použije se, když má skříňka zásuvky i dvířka —
+          zásuvky sedí nahoře, dvířka doberou zbytek.</span></div>
+        <div class="pole"><label for="sk-material">Materiál</label>
+          <select id="sk-material">${volbyMaterialu}</select></div>
+        <div class="pole"><label for="sk-zada">Záda</label>
+          <select id="sk-zada">
+            <option value=""${!sk.zada_typ_prepis ? " selected" : ""}>Podle standardu</option>
+            <option value="drazka"${sk.zada_typ_prepis === "drazka" ? " selected" : ""}>Do drážky</option>
+            <option value="nasazena"${sk.zada_typ_prepis === "nasazena" ? " selected" : ""}>Nasazená</option>
+          </select></div>
+        <div id="sk-chyba" aria-live="polite"></div>
+        <button type="button" class="tlacitko plne" id="sk-ulozit">Uložit skříňku</button>
+        ${novy ? "" : `<button type="button" class="tlacitko varovne plne" id="sk-smazat">Smazat skříňku</button>`}`,
+        (panel) => {
+          panel.querySelector("#sk-typ").addEventListener("change", (u) => {
+            const vychozi = VYCHOZI_ROZMERY[u.target.value];
+            if (!vychozi) return;
+            panel.querySelector("#sk-sirka").value = vychozi.sirka_mm;
+            panel.querySelector("#sk-vyska").value = vychozi.vyska_mm;
+            panel.querySelector("#sk-hloubka").value = vychozi.hloubka_mm;
+            panel.querySelector("#sk-police").value = vychozi.pocet_polic;
+            panel.querySelector("#sk-dvirka").value = vychozi.pocet_dvirek;
+          });
+
+          panel.querySelector("#sk-ulozit").addEventListener("click", () => {
+            const chyba = panel.querySelector("#sk-chyba");
+            const sirka = cislo(panel.querySelector("#sk-sirka").value, 0);
+            const vyska = cislo(panel.querySelector("#sk-vyska").value, 0);
+            const hloubka = cislo(panel.querySelector("#sk-hloubka").value, 0);
+            const meze = [
+              [sirka, 100, 1400, "Šířka", "sk-sirka"],
+              [vyska, 100, 2600, "Výška", "sk-vyska"],
+              [hloubka, 100, 900, "Hloubka", "sk-hloubka"],
+            ];
+            panel.querySelectorAll(".pole").forEach((p) => p.classList.remove("chybne"));
+            for (const [hodnota, min, max, nazev, id] of meze) {
+              if (hodnota < min || hodnota > max) {
+                chyba.className = "hlaska chyba";
+                chyba.textContent = `${nazev} musí být ${min}–${max} mm.`;
+                panel.querySelector("#" + id).closest(".pole").classList.add("chybne");
+                return;
+              }
+            }
+            const nova = {
+              typ: panel.querySelector("#sk-typ").value,
+              odsazeni_mm: Math.max(0, cislo(panel.querySelector("#sk-odsazeni").value, 0)),
+              sirka_mm: sirka, vyska_mm: vyska, hloubka_mm: hloubka,
+              pocet_polic: Math.max(0, cislo(panel.querySelector("#sk-police").value, 0)),
+              pocet_dvirek: Math.max(0, cislo(panel.querySelector("#sk-dvirka").value, 0)),
+              pocet_zasuvek: Math.max(0, cislo(panel.querySelector("#sk-zasuvky").value, 0)),
+              zasuvka_vyska_mm: cislo(panel.querySelector("#sk-celo").value, 140),
+              zada_typ_prepis: panel.querySelector("#sk-zada").value,
+              material_id: panel.querySelector("#sk-material").value
+                ? Number(panel.querySelector("#sk-material").value) : null,
+              poznamka: sk.poznamka || "",
+            };
+            if (novy) stena.skrinky.push(nova);
+            else stena.skrinky[poradi] = nova;
+            zavriPanel();
+            zmeneno();
+            vykresliStenu({ index: stenaIndex });
+            toast("Skříňka uložena.");
+          });
+
+          const smazat = panel.querySelector("#sk-smazat");
+          if (smazat) {
+            smazat.addEventListener("click", () => {
+              stena.skrinky.splice(poradi, 1);
+              zavriPanel();
+              zmeneno();
+              vykresliStenu({ index: stenaIndex });
+              toast("Skříňka smazána.");
+            });
+          }
+        });
+    }
+
+    // ── Obrazovka: náhled ──────────────────────────────────────────────
+    function vykresliNahled() {
+      const cil = $("o-nahled");
+      if (!stav.dokument) { jdi("zakazky", {}, true); return; }
+      const steny = stav.dokument.steny || [];
+      if (!steny.length) {
+        cil.innerHTML = `<div class="prazdno"><span class="ikona-velka" aria-hidden="true">👁️</span>
+          <p>Přidejte stěnu, ať je co ukázat.</p></div>`;
+        nastavListu([{ popisek: "Zpět na zakázku", tiche: true,
+          akce: () => jdi("zakazka", { id: stav.dokument.zakazka.id }, true) }]);
+        return;
+      }
+
+      const vsechnyHlasky = [];
+      let kresba = "";
+      if (stav.nahledRezim === "pudorys") {
+        kresba = `<div class="karta">${nakresliPudorys(steny, stav.standard)}
+          <p class="napoveda">Stěny jdou za sebou a po každé se zatáčí o 90° dovnitř
+          místnosti. Čárkovaně jsou horní skříňky.</p></div>`;
+        for (const stena of steny) {
+          for (const h of kontrolaSteny(stena).hlasky) vsechnyHlasky.push(h);
+        }
+      } else {
+        const kusy = [];
+        for (const stena of steny) {
+          const { kolizni, hlasky } = kontrolaSteny(stena);
+          for (const h of hlasky) vsechnyHlasky.push(h);
+          kusy.push(`<div class="karta"><h2>${esc(stena.nazev)}</h2>
+            ${nakresliPohled(stena, stav.standard, kolizni)}</div>`);
+        }
+        kresba = kusy.join("");
+      }
+
+      cil.innerHTML = `
+        <div class="prepinac" role="group" aria-label="Typ náhledu">
+          <button type="button" data-rezim="pohled"
+            aria-pressed="${stav.nahledRezim === "pohled"}">Pohled</button>
+          <button type="button" data-rezim="pudorys"
+            aria-pressed="${stav.nahledRezim === "pudorys"}">Půdorys</button>
+        </div>
+        ${kresba}
+        ${legenda()}
+        <h2>Kontrola</h2>
+        ${vsechnyHlasky.length
+          ? `<div class="hlaska varovani">${vsechnyHlasky.map(esc).join("<br>")}</div>`
+          : `<div class="hlaska uspech">Nic se nepřekrývá a nic nezasahuje do oken.</div>`}`;
+
+      cil.querySelectorAll(".prepinac button").forEach((b) =>
+        b.addEventListener("click", () => {
+          stav.nahledRezim = b.dataset.rezim;
+          vykresliNahled();
+        }));
+
+      nastavListu([
+        { popisek: "Vygenerovat kusovník", akce: vygenerujKusovnik },
+        { popisek: "Zpět", tiche: true, akce: () => history.back() },
+      ]);
+    }
+
+    // ── Obrazovka: kusovník ────────────────────────────────────────────
+    async function vygenerujKusovnik() {
+      if (!stav.dokument) return;
+      if (stav.ukladani !== "cisto") await ulozNaServer();
+      jdi("kusovnik", { pocitat: true });
+    }
+
+    async function vykresliKusovnik(parametry) {
+      const cil = $("o-kusovnik");
+      if (!stav.dokument) { jdi("zakazky", {}, true); return; }
+
+      // Kusovník v paměti musí patřit k otevřené zakázce — jinak by se po
+      // přepnutí zakázky ukázala cizí čísla.
+      const cizi = stav.kusovnik
+        && stav.kusovnik.zakazka.id !== stav.dokument.zakazka.id;
+      if (parametry.pocitat || !stav.kusovnik || cizi) {
+        cil.innerHTML = `<div class="kostra kostra-tabulka"></div>
+          <div class="kostra kostra-radek"></div><div class="kostra kostra-radek"></div>
+          <div class="kostra kostra-radek"></div>`;
+        nastavListu([]);
+        const { ok, data } = await api("/api/kusovnik", "POST",
+          { zakazka_id: stav.dokument.zakazka.id }).catch(() => ({ ok: false, data: {} }));
+        if (!ok) {
+          if (data.chyba && data.chyba.indexOf("skříňku") > -1) {
+            cil.innerHTML = `<div class="prazdno"><span class="ikona-velka" aria-hidden="true">📋</span>
+              <p>Nejdřív přidejte aspoň jednu skříňku.</p></div>`;
+          } else {
+            cil.innerHTML = `<div class="hlaska chyba">${esc(data.chyba
+              || "Kusovník se nepodařilo spočítat.")}</div>`;
+          }
+          nastavListu([{ popisek: "Zpět na zakázku", tiche: true,
+            akce: () => jdi("zakazka", { id: stav.dokument.zakazka.id }, true) }]);
+          return;
+        }
+        stav.kusovnik = data;
+        stav.dokument.posledni_kusovnik = {
+          id: data.id, pocet_dilu: data.souhrn.pocet_dilu,
+          odhad_desek: data.souhrn.odhad_desek, vytvoreno: data.vytvoreno,
+        };
+        toast("Kusovník uložen do zakázky.");
+        if (aktualni.nazev !== "kusovnik") return;
+        // Ať se při návratu tlačítkem zpět/vpřed nepočítá (a neukládá) znovu.
+        aktualni.parametry = {};
+        history.replaceState({ obrazovka: "kusovnik", parametry: {} }, "", "#kusovnik");
+      }
+
+      const k = stav.kusovnik;
+      const plocha = (k.souhrn.plocha_cm2 / 10000).toFixed(2).replace(".", ",");
+      const podleMaterialu = new Map();
+      for (const p of k.polozky) {
+        const klic = `${p.material} · ${p.tloustka_mm} mm`;
+        if (!podleMaterialu.has(klic)) podleMaterialu.set(klic, []);
+        podleMaterialu.get(klic).push(p);
+      }
+
+      const skupiny = [...podleMaterialu.entries()].map(([nazev, polozky]) => `
+        <h2>${esc(nazev)}</h2>
+        <div class="seznam">${polozky.map((p) => `
+          <div class="radek"><span class="hlavni">
+            <strong>${esc(p.nazev)} ${p.a_mm} × ${p.b_mm}</strong>
+            <span>${esc(p.hrany_popis)}${p.vlakno ? " · vlákno po délce" : ""}</span>
+          </span><span class="vpravo tucne">${p.ks}×</span></div>`).join("")}</div>`).join("");
+
+      cil.innerHTML = `
+        <div class="karta">
+          <div class="cislo-radek"><span class="cislo">${k.souhrn.pocet_dilu}</span>
+            <span>dílů · odhad ${k.souhrn.odhad_desek} desek</span></div>
+          <p class="popisek">${esc(k.zakazka.nazev)} · ${plocha} m² plochy ·
+            ${datum(k.vytvoreno)}</p>
+        </div>
+        <div class="hlaska">Rozměry jsou v mm, ${k.standard.rozmer_s_olepenim
+          ? "uvedené rozměry jsou hotové díly po olepení"
+          : "uvedené rozměry jsou řez bez olepení"}. U dílů je uvedeno
+          šířka × výška, jak leží ve skříňce; v CSV je délka po vlákně.
+          <strong>Rozměry před odesláním do nářezového centra zkontrolujte.</strong></div>
+        ${(k.varovani || []).length
+          ? `<div class="hlaska varovani">${k.varovani.map(esc).join("<br>")}</div>` : ""}
+        ${skupiny}
+        <p class="napoveda">Odhad desek je orientační — nářezové centrum si nářez
+        optimalizuje samo a většinou vyjde líp.</p>`;
+
+      nastavListu([
+        { popisek: "Stáhnout CSV", akce: () => stahniCsv(k.id) },
+        { popisek: "Hotovo", tiche: true, akce: oznacHotovou },
+      ]);
+    }
+
+    async function stahniCsv(id) {
+      toast("Připravuji soubor…");
+      const odpoved = await fetch(`/api/kusovnik/${id}/csv`).catch(() => null);
+      if (!odpoved || !odpoved.ok) { toast("Soubor se nepodařilo stáhnout."); return; }
+      const blob = await odpoved.blob();
+      const adresa = URL.createObjectURL(blob);
+      const odkaz = document.createElement("a");
+      odkaz.href = adresa;
+      odkaz.download = `kusovnik-${id}.csv`;
+      document.body.appendChild(odkaz);
+      odkaz.click();
+      odkaz.remove();
+      setTimeout(() => URL.revokeObjectURL(adresa), 10000);
+      toast("Soubor je stažený.");
+    }
+
+    async function oznacHotovou() {
+      if (!stav.dokument) return;
+      stav.dokument.zakazka.stav = "hotova";
+      await ulozNaServer();
+      stav.zakazky = null;
+      toast("Zakázka je označená jako hotová.");
+      jdi("zakazka", { id: stav.dokument.zakazka.id }, true);
+    }
+
+    // ── Obrazovka: standard ────────────────────────────────────────────
+    async function nactiStandard() {
+      const { ok, data } = await api("/api/standard").catch(() => ({ ok: false, data: {} }));
+      if (ok) {
+        stav.standard = data.standard;
+        stav.ukazka = data.ukazka || [];
+      }
+      const m = await api("/api/materialy").catch(() => ({ ok: false, data: {} }));
+      if (m.ok) stav.materialy = m.data.materialy || [];
+      return ok;
+    }
+
+    const POLE_STANDARDU = [
+      ["tloustka_mm", "Tloušťka desky (mm)", "Z ní se počítá světlost korpusu."],
+      ["zada_tloustka_mm", "Tloušťka zad (mm)", "Typicky 3 mm HDF."],
+      ["drazka_hloubka_mm", "Hloubka drážky na záda (mm)", "Platí, když jsou záda v drážce."],
+      ["drazka_odsazeni_mm", "Odsazení drážky od zadní hrany (mm)", ""],
+      ["odskok_police_mm", "Odskok police od hloubky (mm)", "O kolik je police mělčí než korpus."],
+      ["spara_okraj_desetiny", "Spára po obvodu čel (desetiny mm)", "15 = 1,5 mm."],
+      ["spara_mezi_desetiny", "Spára mezi čely (desetiny mm)", "30 = 3 mm."],
+      ["traverza_sirka_mm", "Šířka traverzy (mm)", "Když má spodní skříňka místo víka traverzy."],
+      ["sokl_mm", "Výška soklu (mm)", "Kvůli kresbě a kontrole kolizí."],
+      ["vyska_horni_mm", "Spodní hrana horních skříněk (mm)", "Kvůli kresbě a kontrole kolizí."],
+      ["hrana_pohledova_desetiny", "Pohledová hrana (desetiny mm)",
+        "Dvířka, čela zásuvek a přední hrana boku. 20 = 2 mm ABS."],
+      ["hrana_ostatni_desetiny", "Ostatní hrana (desetiny mm)",
+        "Přední hrana dna, víka a polic. 8 = 0,8 mm ABS."],
+      ["prorez_mm", "Prořez pily (mm)", "Vstupuje jen do odhadu počtu desek."],
+      ["deska_x_mm", "Formát desky — délka (mm)", ""],
+      ["deska_y_mm", "Formát desky — šířka (mm)", ""],
+    ];
+
+    async function vykresliStandard() {
+      const cil = $("o-standard");
+      if (!stav.standard) {
+        cil.innerHTML = `<div class="kostra kostra-tabulka"></div>
+          <div class="kostra kostra-karta"></div>`;
+        nastavListu([]);
+        const ok = await nactiStandard();
+        if (!ok) {
+          cil.innerHTML = `<div class="hlaska chyba">Standard se nepodařilo načíst.</div>`;
+          nastavListu([{ popisek: "Zkusit znovu", tiche: true, akce: vykresliStandard }]);
+          return;
+        }
+        if (aktualni.nazev !== "standard") return;
+      }
+      const s = stav.standard;
+
+      cil.innerHTML = `
+        <div class="karta">
+          <div class="cislo-radek"><span class="cislo">${s.tloustka_mm}</span>
+            <span>mm tloušťka desky</span></div>
+          <p class="popisek">${esc(s.nazev)}</p>
+          <p class="popisek">Podle těchhle parametrů se počítá každý kusovník.
+          Jsou uložené u vašeho účtu, takže je nastavíte jednou.</p>
+        </div>
+        <div class="karta">
+          <h2>Ukázka: skříňka 600 × 720 × 510</h2>
+          <ul class="seznam" id="ukazka"></ul>
+          <p class="napoveda">Rozměry se přepočítají, jakmile parametr změníte.</p>
+        </div>
+        <div class="pole"><label for="std-nazev">Název standardu</label>
+          <input id="std-nazev" type="text" value="${esc(s.nazev)}"></div>
+        <div class="pole"><label for="std-zada-typ">Záda</label>
+          <select id="std-zada-typ">
+            <option value="drazka"${s.zada_typ === "drazka" ? " selected" : ""}>Do drážky</option>
+            <option value="nasazena"${s.zada_typ === "nasazena" ? " selected" : ""}>Nasazená</option>
+          </select></div>
+        <label class="radka"><input type="checkbox" id="std-traverzy"
+          ${s.traverzy_spodni ? "checked" : ""}> Spodní skříňky mají místo víka traverzy</label>
+        <label class="radka"><input type="checkbox" id="std-olepeni"
+          ${s.rozmer_s_olepenim ? "checked" : ""}> Uvedený rozměr je hotový díl po olepení</label>
+        <p class="napoveda">Nezaškrtnuto = kusovník udává rozměr řezu a hranu
+        si nářezové centrum přidá samo. Zaškrtnuto = řez je o tloušťku hrany zmenšený.</p>
+        <div class="dvojice" id="std-pole"></div>
+        <div id="std-zprava" aria-live="polite"></div>
+        <h2>Materiály</h2>
+        <div id="std-materialy"></div>
+        <button type="button" class="tlacitko tiche plne" id="std-pridat-material">
+          Přidat materiál</button>`;
+
+      const poleMisto = $("std-pole");
+      for (const [klic, popisek, napoveda] of POLE_STANDARDU) {
+        const obal = document.createElement("div");
+        obal.className = "pole";
+        obal.innerHTML = `<label for="std-${klic}">${esc(popisek)}</label>
+          <input id="std-${klic}" type="number" inputmode="numeric" value="${cislo(s[klic], 0)}">
+          ${napoveda ? `<span class="napoveda">${esc(napoveda)}</span>` : ""}`;
+        poleMisto.appendChild(obal);
+      }
+
+      vykresliUkazku();
+      cil.querySelectorAll("input, select").forEach((prvek) =>
+        prvek.addEventListener("input", nactiZFormulare));
+      cil.querySelectorAll("select, input[type=checkbox]").forEach((prvek) =>
+        prvek.addEventListener("change", nactiZFormulare));
+
+      vykresliMaterialy();
+      $("std-pridat-material").addEventListener("click", panelMaterial);
+
+      nastavListu([{ popisek: "Uložit standard", akce: ulozStandard }]);
+    }
+
+    function formularStandardu() {
+      const s = { ...stav.standard };
+      s.nazev = $("std-nazev").value.trim() || "Můj standard";
+      s.zada_typ = $("std-zada-typ").value;
+      s.traverzy_spodni = $("std-traverzy").checked ? 1 : 0;
+      s.rozmer_s_olepenim = $("std-olepeni").checked ? 1 : 0;
+      for (const [klic] of POLE_STANDARDU) s[klic] = cislo($("std-" + klic).value, s[klic]);
+      return s;
+    }
+
+    let casovacUkazky = null;
+    function nactiZFormulare() {
+      if (casovacUkazky) clearTimeout(casovacUkazky);
+      casovacUkazky = setTimeout(async () => {
+        const { ok, data } = await api("/api/standard/ukazka", "POST", formularStandardu())
+          .catch(() => ({ ok: false, data: {} }));
+        if (!ok) return;
+        stav.ukazka = data.ukazka || [];
+        vykresliUkazku();
+      }, 400);
+    }
+
+    function vykresliUkazku() {
+      const seznam = $("ukazka");
+      if (!seznam) return;
+      seznam.innerHTML = stav.ukazka.map((radek) =>
+        `<li class="radek"><span class="hlavni">${esc(radek)}</span></li>`).join("");
+    }
+
+    async function ulozStandard() {
+      const zprava = $("std-zprava");
+      zprava.className = "hlaska";
+      zprava.textContent = "Ukládám…";
+      const { ok, data } = await api("/api/standard", "PUT", formularStandardu())
+        .catch(() => ({ ok: false, data: {} }));
+      if (!ok) {
+        zprava.className = "hlaska chyba";
+        zprava.textContent = data.chyba || "Standard se nepodařilo uložit.";
+        return;
+      }
+      stav.standard = data.standard;
+      stav.ukazka = data.ukazka || [];
+      zprava.className = "hlaska uspech";
+      zprava.textContent = "Standard uložen.";
+      toast("Standard uložen.");
+      vykresliUkazku();
+    }
+
+    function vykresliMaterialy() {
+      const misto = $("std-materialy");
+      if (!stav.materialy.length) {
+        misto.innerHTML = `<p class="popisek">Zatím žádný vlastní materiál — díly se počítají
+          na výchozí LTD ${stav.standard.tloustka_mm} mm.</p>`;
+        return;
+      }
+      misto.innerHTML = `<div class="seznam">${stav.materialy.map((m) => `
+        <div class="radek"><span class="hlavni"><strong>${esc(m.nazev)}</strong>
+          <span>${m.tloustka_mm} mm${m.dekor_kod ? " · " + esc(m.dekor_kod) : ""}${
+            m.vlakno ? " · má vlákno" : ""}</span></span>
+        <button type="button" class="tlacitko tiche" data-smazat="${m.id}">Smazat</button>
+        </div>`).join("")}</div>`;
+      misto.querySelectorAll("[data-smazat]").forEach((b) =>
+        b.addEventListener("click", async () => {
+          const { ok } = await api(`/api/materialy?id=${b.dataset.smazat}`, "DELETE")
+            .catch(() => ({ ok: false }));
+          if (!ok) { toast("Materiál se nepodařilo smazat."); return; }
+          stav.materialy = stav.materialy.filter((m) => String(m.id) !== b.dataset.smazat);
+          vykresliMaterialy();
+          toast("Materiál smazán.");
+        }));
+    }
+
+    function panelMaterial() {
+      otevriPanel("Nový materiál", `
+        <div class="pole"><label for="mt-nazev">Název</label>
+          <input id="mt-nazev" type="text" placeholder="LTD 18 mm dub Sonoma"></div>
+        <div class="dvojice">
+          <div class="pole"><label for="mt-kod">Kód dekoru</label>
+            <input id="mt-kod" type="text" placeholder="H1145"></div>
+          <div class="pole"><label for="mt-tloustka">Tloušťka (mm)</label>
+            <input id="mt-tloustka" type="number" inputmode="numeric" value="18"></div>
+        </div>
+        <label class="radka"><input type="checkbox" id="mt-vlakno"> Dekor má směr vlákna</label>
+        <span class="napoveda">Díly se pak neotáčí a v kusovníku je délka po vlákně.</span>
+        <div id="mt-zprava" aria-live="polite"></div>
+        <button type="button" class="tlacitko plne" id="mt-ulozit">Přidat materiál</button>`,
+        (panel) => {
+          panel.querySelector("#mt-ulozit").addEventListener("click", async () => {
+            const zprava = panel.querySelector("#mt-zprava");
+            zprava.className = "hlaska";
+            zprava.textContent = "Ukládám…";
+            const { ok, data } = await api("/api/materialy", "POST", {
+              nazev: panel.querySelector("#mt-nazev").value,
+              dekor_kod: panel.querySelector("#mt-kod").value,
+              tloustka_mm: panel.querySelector("#mt-tloustka").value,
+              vlakno: panel.querySelector("#mt-vlakno").checked,
+            }).catch(() => ({ ok: false, data: {} }));
+            if (!ok) {
+              zprava.className = "hlaska chyba";
+              zprava.textContent = data.chyba || "Materiál se nepodařilo přidat.";
+              return;
+            }
+            zavriPanel();
+            const m = await api("/api/materialy").catch(() => ({ ok: false, data: {} }));
+            if (m.ok) stav.materialy = m.data.materialy || [];
+            vykresliMaterialy();
+            toast("Materiál přidán.");
+          });
+        });
+    }
+
+    // ── Obrazovka: účet ────────────────────────────────────────────────
+    const STAVY_HLASENI = { nove: "přijato", vyrizuje_se: "řešíme",
+      vyrizeno: "vyřízeno", odlozeno: "odloženo" };
+
+    function vykresliUcet() {
+      const cil = $("o-ucet");
+      const ja = stav.ja || {};
+      const p = ja.predplatne;
+      let predplatneHtml = "";
+      if (p && p.stav === "aktivni") {
+        predplatneHtml = `<div class="hlaska uspech">Předplatné je aktivní do
+          ${datum(p.plati_do)}.</div>`;
+      } else if (p && p.stav === "zkusebni") {
+        predplatneHtml = `<div class="hlaska">Zkušební období: zbývá ${p.dni_zbyva} dní
+          (do ${datum(p.plati_do)}).</div>`;
+      } else if (p) {
+        predplatneHtml = `<div class="hlaska chyba">Předplatné vypršelo. Zakázky máte
+          uložené — objednávkou níž se k nim zase dostanete.</div>`;
+      }
+
+      const objednavka = p && (p.stav === "vyprselo"
+        || (p.stav === "zkusebni" && p.dni_zbyva <= 7));
+
+      cil.innerHTML = `
+        <div class="karta">
+          <p class="popisek">Přihlášeni jako</p>
+          <p class="tucne">${esc(ja.email || "")}</p>
+          ${predplatneHtml}
+        </div>
+        ${objednavka ? `<div class="karta">
+          <h2>Objednat předplatné</h2>
+          <div class="pole"><label for="ob-mesice">Délka</label>
+            <select id="ob-mesice">
+              <option value="1">1 měsíc</option>
+              <option value="3">3 měsíce</option>
+              <option value="12">12 měsíců</option>
+            </select></div>
+          <p class="popisek">Rozsah: plný přístup k aplikaci — zakázky, standard,
+          náhled i generování kusovníků.</p>
+          <p>Cena: <strong id="ob-celkem">podle ceníku</strong></p>
+          ${CENIK ? "" : `<div class="hlaska varovani">Ceník zatím není v aplikaci
+            zveřejněný — celkovou cenu vám potvrdíme e-mailem dřív, než vystavíme
+            fakturu, a do té doby vás objednávka k ničemu nezavazuje.</div>`}
+          <div class="pole"><label for="ob-fakturace">Fakturační údaje</label>
+            <textarea id="ob-fakturace" rows="3" maxlength="600"
+              placeholder="Název / jméno, adresa, IČO (máte-li)"></textarea></div>
+          <label class="radka"><input type="checkbox" id="ob-spotrebitel">
+            Objednávám jako spotřebitel (mimo podnikání)</label>
+          <label class="radka" id="ob-souhlas-radek" hidden><input type="checkbox" id="ob-souhlas">
+            Výslovně souhlasím, aby placená služba začala před uplynutím 14denní lhůty
+            pro odstoupení, a beru na vědomí, že tím právo na odstoupení ztrácím
+            (§ 1837 písm. l) občanského zákoníku).</label>
+          <button type="button" class="tlacitko plne" id="ob-poslat">Objednávka zavazující k platbě</button>
+          <div id="ob-zprava" aria-live="polite"></div>
+        </div>` : ""}
+        <div class="karta">
+          <h2>Napište nám</h2>
+          <div class="pole">
+            <label for="hl-text" class="jen-pro-ctecky">Zpráva</label>
+            <textarea id="hl-text" rows="3" maxlength="2000"
+              placeholder="Co nefunguje, co vám chybí, na co se chcete zeptat…"></textarea></div>
+          <button type="button" class="tlacitko tiche plne" id="hl-poslat">Odeslat</button>
+          <div id="hl-zprava" aria-live="polite"></div>
+          <div class="seznam" id="hl-seznam"></div>
+        </div>
+        <h2>Vaše data</h2>
+        <div class="seznam" id="ucet-akce"></div>
+        <footer class="patka">
+          <a href="zasady.html">Zásady zpracování údajů</a> ·
+          <a href="podminky.html">Obchodní podmínky</a> ·
+          <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a> ·
+          <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a>
+        </footer>`;
+
+      if (objednavka) nastavObjednavku();
+
+      $("hl-poslat").addEventListener("click", posliHlaseni);
+      nactiHlaseni();
+
+      const akce = $("ucet-akce");
+      pridejAkci(akce, "Stáhnout moje data", "všechno, co o vás vedeme, v jednom souboru",
+        () => { location.href = "/api/ucet/export"; });
+      pridejAkci(akce, "Odhlásit se", "", async () => {
+        await api("/api/odhlaseni", "POST");
+        zahodKoncept();
+        location.reload();
+      });
+      pridejAkci(akce, "Smazat účet a všechna data", "nevratné", smazUcet);
+
+      nastavListu([]);
+    }
+
+    function nastavObjednavku() {
+      const prepocti = () => {
+        const mesice = Number($("ob-mesice").value);
+        $("ob-celkem").textContent = CENIK
+          ? `${mesice * CENIK.mesic} ${CENIK.mena} za ${mesice} měs. (${CENIK.mesic} ${CENIK.mena} měsíčně)`
+          : "podle ceníku";
+      };
+      prepocti();
+      $("ob-mesice").addEventListener("change", prepocti);
+      $("ob-spotrebitel").addEventListener("change", () => {
+        $("ob-souhlas-radek").hidden = !$("ob-spotrebitel").checked;
+      });
+      $("ob-poslat").addEventListener("click", async () => {
+        const zprava = $("ob-zprava");
+        zprava.className = "hlaska";
+        zprava.textContent = "Odesílám…";
+        const mesice = Number($("ob-mesice").value);
+        const { ok, data } = await api("/api/objednavka", "POST", {
+          mesice,
+          cena_czk: CENIK ? mesice * CENIK.mesic : null,
+          fakturace: $("ob-fakturace").value,
+          spotrebitel: $("ob-spotrebitel").checked,
+          souhlas_zahajeni: $("ob-spotrebitel").checked && $("ob-souhlas").checked,
+        }).catch(() => ({ ok: false, data: {} }));
+        if (!ok) {
+          zprava.className = "hlaska chyba";
+          zprava.textContent = data.chyba || "Objednávku se nepodařilo odeslat.";
+          return;
+        }
+        zprava.className = "hlaska uspech";
+        zprava.textContent = "Děkujeme, objednávku máme. Fakturu pošleme e-mailem.";
+      });
+    }
 
     async function nactiHlaseni() {
-      const { ok, data } = await api("/api/hlaseni", "GET");
-      const seznam = $("hlaseni-seznam");
-      seznam.innerHTML = "";
-      if (!ok) return;
-      for (const h of data.hlaseni || []) {
-        const li = document.createElement("li");
-        li.className = "radek";
-        const kdy = new Date(h.vytvoreno * 1000).toLocaleDateString("cs-CZ");
-        li.textContent = `${kdy} · ${STAVY_HLASENI[h.stav] || h.stav}: ${h.text}`;
-        if (h.odpoved) {
-          const odp = document.createElement("div");
-          odp.className = "hlaska";
-          odp.textContent = "Odpověď: " + h.odpoved;
-          li.appendChild(odp);
-        }
-        seznam.appendChild(li);
-      }
+      const { ok, data } = await api("/api/hlaseni").catch(() => ({ ok: false, data: {} }));
+      const seznam = $("hl-seznam");
+      if (!seznam) return;
+      if (!ok || !(data.hlaseni || []).length) { seznam.innerHTML = ""; return; }
+      seznam.innerHTML = (data.hlaseni || []).map((h) => `
+        <div class="radek"><span class="hlavni">
+          <strong>${esc(h.text)}</strong>
+          <span>${datum(h.vytvoreno)} · ${esc(STAVY_HLASENI[h.stav] || h.stav)}${
+            h.odpoved ? " · odpověď: " + esc(h.odpoved) : ""}</span></span></div>`).join("");
     }
 
-    $("hlaseni-poslat").addEventListener("click", async () => {
-      const zprava = $("hlaseni-zprava");
-      zprava.className = "zprava";
+    async function posliHlaseni() {
+      const zprava = $("hl-zprava");
+      zprava.className = "hlaska";
       zprava.textContent = "Odesílám…";
-      const { ok, data } = await api("/api/hlaseni", "POST", { text: $("hlaseni-text").value });
+      const { ok, data } = await api("/api/hlaseni", "POST", { text: $("hl-text").value })
+        .catch(() => ({ ok: false, data: {} }));
       if (!ok) {
-        zprava.className = "zprava chyba";
+        zprava.className = "hlaska chyba";
         zprava.textContent = data.chyba || "Odeslání se nepovedlo.";
         return;
       }
-      $("hlaseni-text").value = "";
-      zprava.textContent = "Děkujeme, máme to. Odpověď uvidíte zde.";
+      $("hl-text").value = "";
+      zprava.className = "hlaska uspech";
+      zprava.textContent = "Děkujeme, máme to. Odpověď uvidíte tady.";
       nactiHlaseni();
-    });
+    }
 
-    $("smazat-ucet").addEventListener("click", async () => {
-      if (!confirm("Opravdu smazat účet a všechna data? Krok je nevratný.")) return;
-      const { ok, data } = await api("/api/ucet/smazat", "POST");
-      const zprava = $("aplikace-zprava");
-      if (!ok) {
-        zprava.className = "zprava chyba";
-        zprava.textContent = data.chyba || "Smazání se nepovedlo.";
+    async function smazUcet() {
+      if (!confirm("Opravdu smazat účet, všechny zakázky i kusovníky? Krok je nevratný.")) return;
+      const { ok, data } = await api("/api/ucet/smazat", "POST")
+        .catch(() => ({ ok: false, data: {} }));
+      if (!ok) { toast(data.chyba || "Smazání se nepovedlo."); return; }
+      zahodKoncept();
+      location.reload();
+    }
+
+    // ── Start ──────────────────────────────────────────────────────────
+    async function start() {
+      const { data } = await api("/api/ja").catch(() => ({ data: {} }));
+      stav.ja = data;
+      if (!data.prihlasen) {
+        jdi("uvod", {}, true);
         return;
       }
-      obnov();
-    });
+      await nactiStandard();
+      // Obnovit se dá jen kořenová obrazovka — vnitřní obrazovky potřebují
+      // zakázku, kterou z adresy vyčíst nejde.
+      const hash = (location.hash || "").replace("#", "");
+      const korenove = ["zakazky", "standard", "ucet"];
+      jdi(korenove.includes(hash) ? hash : "zakazky", {}, true);
+    }
 
-    obnov();
+    start();
   </script>
+  <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");</script>
 </body>
 </html>

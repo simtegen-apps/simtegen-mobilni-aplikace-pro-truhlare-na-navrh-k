@@ -1,5 +1,5 @@
 <!-- GENEROVANÝ SOUBOR — neupravuj ručně. Zdroj: data-manifest.json, generátor: vykresli_zasady.py. -->
-# Záznam o činnostech zpracování — Produkt SimteGen
+# Záznam o činnostech zpracování — Kusovník pro truhláře
 
 **Verze:** 2.0 · **poslední aktualizace:** (doplnit datum) · **zpracoval:** (doplnit jméno)
 **Přezkoumat:** nejméně 1× ročně a při každé změně zpracování, zpracovatelů nebo účelů.
@@ -27,6 +27,12 @@ správcem, a **B** pro zpracování prováděná pro zákazníky, kde je SimteGe
 | hlaseni | hlášení a dotazy zákazníka k aplikaci a naše odpovědi | zákazníci služby | text hlášení, stav vyřízení, odpověď, číslo záznamu v systému podpory, čas | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
 | platby | evidence zaplacených období předplatného (historie plateb) | zákazníci služby | odkaz na účet, počet zaplacených měsíců, poznámka k platbě, čas zápisu | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu |
 | objednavky | objednávka předplatného a doklad o souhlasu se zahájením služby | zákazníci služby | odkaz na účet, délka a varianta předplatného, cena, fakturační údaje, zda jde o spotřebitele, souhlas se zahájením a jeho čas, stav | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu |
+| standardy | konstrukční standard dílny, podle kterého se počítá kusovník | zákazníci služby | odkaz na účet, název standardu, tloušťka desky a zad, provedení zad (drážka/nasazená) a rozměry drážky, odskok police, spáry dvířek, traverzy místo víka, výška soklu a horních skříněk, tloušťky olepení hran, zda je rozměr uveden po olepení, prořez, formát desky, časy | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
+| materialy | seznam desek a dekorů, které truhlář používá | zákazníci služby | odkaz na účet, název materiálu, kód dekoru, tloušťka, zda má dekor směr vlákna, dekor hrany, čas založení | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
+| zakazky | zakázka truhláře (návrh kuchyně nebo skříně) uložená pro pozdější dopracování a kopírování | zákazníci služby | odkaz na účet, název zakázky, označení koncového zákazníka a poznámka (obsah vkládá zákazník), stav, časy | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
+| steny | naměřené stěny místnosti včetně oken a dveří | zákazníci služby | odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas | čl. 6/1/b — plnění smlouvy | se zakázkou, nejpozději do smazání účtu zákazníkem |
+| skrinky | navržené skříňky a jejich rozměry jako podklad pro kusovník | zákazníci služby | odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas | čl. 6/1/b — plnění smlouvy | se zakázkou, nejpozději do smazání účtu zákazníkem |
+| kusovniky | vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl | zákazníci služby | odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
 | provozní a bezpečnostní logy | provozní a bezpečnostní záznamy (logy) | zákazníci a návštěvníci | IP adresa, čas a typ požadavku, identifikace prohlížeče | čl. 6/1/f — oprávněný zájem | (doplnit skutečnou dobu, typicky 30 dnů) |
 | podpora a komunikace | vyřízení dotazu nebo požadavku podpory | zákazníci, zájemci | e-mailová adresa a obsah komunikace | čl. 6/1/b, u nezákazníků čl. 6/1/f | (doplnit, typicky 1 rok) |
 | účetní a daňové doklady | účetní a daňové doklady | zákazníci | fakturační údaje, částka, datum | čl. 6/1/c — právní povinnost | 10 let; vedeno mimo aplikaci |
@@ -68,10 +74,10 @@ do aplikace vkládají údaje třetích osob. Právním rámcem je
 
 | Položka | Obsah |
 |---|---|
-| **Správci, pro které se zpracovává** | zákazníci služby Produkt SimteGen; jmenný seznam vede správce v evidenci účtů (viz entita `uzivatele`) |
+| **Správci, pro které se zpracovává** | zákazníci služby Kusovník pro truhláře; jmenný seznam vede správce v evidenci účtů (viz entita `uzivatele`) |
 | **Kategorie zpracování** | uložení v databázi, zpřístupnění a zobrazení v aplikaci, zálohování, export na pokyn správce, výmaz |
-| **Kategorie subjektů údajů** | osoby, jejichž údaje správce do služby vloží — typicky jeho zákazníci a kontaktní osoby jeho obchodních partnerů, případně jeho pracovníci |
-| **Kategorie údajů** | identifikační a kontaktní údaje (jméno, adresa, telefon, e-mail), údaje o zakázce nebo objednávce (popis, termíny, cena, místo plnění), fakturační údaje a obsah poznámek a volných textových polí, které správce vyplní |
+| **Kategorie subjektů údajů** | koncoví zákazníci truhláře, u kterých se kuchyň nebo skříň měří a montuje, případně kontaktní osoby na stavbě |
+| **Kategorie údajů** | označení zakázky a koncového zákazníka, které truhlář sám vyplní (typicky jméno nebo název, někdy obec či adresa místa montáže), naměřené rozměry místnosti, stěn, oken a dveří, rozměry a parametry navržených skříněk a volné poznámky k zakázce |
 | **Zvláštní kategorie (čl. 9/10)** | služba k nim není určena; jejich vkládání je smluvně vyloučeno |
 | **Další zpracovatelé** | Cloudflare, Inc.; Resend (Plus Five Five, Inc.); GitHub, Inc. (Microsoft) (viz A.3) |
 | **Předání mimo EU** | jen na pokyn správce nebo v rámci dalších zpracovatelů, se zárukami podle A.3 |

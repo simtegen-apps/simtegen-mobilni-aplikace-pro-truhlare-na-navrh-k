@@ -1,5 +1,5 @@
 {
-  "produkt": "",
+  "produkt": "Kusovník pro truhláře",
   "provozovatel": "SimteGen s.r.o.",
   "kontakt_email": "",
   "ico": "",
@@ -18,8 +18,8 @@
   "zastup": "",
   "ucetni": "",
   "balancni_test": "",
-  "obsah_zakaznika_popis": "",
-  "subjekty_obsahu": "",
+  "obsah_zakaznika_popis": "označení zakázky a koncového zákazníka, které truhlář sám vyplní (typicky jméno nebo název, někdy obec či adresa místa montáže), naměřené rozměry místnosti, stěn, oken a dveří, rozměry a parametry navržených skříněk a volné poznámky k zakázce",
+  "subjekty_obsahu": "koncoví zákazníci truhláře, u kterých se kuchyň nebo skříň měří a montuje, případně kontaktní osoby na stavbě",
   "obsah_zakaznika": "uklada_se",
   "zpracovani": "worker_a_databaze_eu",
   "externi_pozadavky": "jen_deklarovane",
@@ -65,6 +65,42 @@
       "ucel": "objednávka předplatného a doklad o souhlasu se zahájením služby",
       "pole": "odkaz na účet, délka a varianta předplatného, cena, fakturační údaje, zda jde o spotřebitele, souhlas se zahájením a jeho čas, stav",
       "retence": "do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu"
+    },
+    {
+      "entita": "standardy",
+      "ucel": "konstrukční standard dílny, podle kterého se počítá kusovník",
+      "pole": "odkaz na účet, název standardu, tloušťka desky a zad, provedení zad (drážka/nasazená) a rozměry drážky, odskok police, spáry dvířek, traverzy místo víka, výška soklu a horních skříněk, tloušťky olepení hran, zda je rozměr uveden po olepení, prořez, formát desky, časy",
+      "retence": "do smazání účtu zákazníkem"
+    },
+    {
+      "entita": "materialy",
+      "ucel": "seznam desek a dekorů, které truhlář používá",
+      "pole": "odkaz na účet, název materiálu, kód dekoru, tloušťka, zda má dekor směr vlákna, dekor hrany, čas založení",
+      "retence": "do smazání účtu zákazníkem"
+    },
+    {
+      "entita": "zakazky",
+      "ucel": "zakázka truhláře (návrh kuchyně nebo skříně) uložená pro pozdější dopracování a kopírování",
+      "pole": "odkaz na účet, název zakázky, označení koncového zákazníka a poznámka (obsah vkládá zákazník), stav, časy",
+      "retence": "do smazání účtu zákazníkem"
+    },
+    {
+      "entita": "steny",
+      "ucel": "naměřené stěny místnosti včetně oken a dveří",
+      "pole": "odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas",
+      "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem"
+    },
+    {
+      "entita": "skrinky",
+      "ucel": "navržené skříňky a jejich rozměry jako podklad pro kusovník",
+      "pole": "odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas",
+      "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem"
+    },
+    {
+      "entita": "kusovniky",
+      "ucel": "vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl",
+      "pole": "odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas",
+      "retence": "do smazání účtu zákazníkem"
     }
   ],
   "agregaty": [
@@ -90,7 +126,14 @@
       "dpa": "https://github.com/customer-terms/github-data-protection-agreement"
     }
   ],
-  "uloziste_v_prohlizeci": [],
+  "uloziste_v_prohlizeci": [
+    {
+      "nazev": "rozpracovana-zakazka",
+      "ucel": "rozepsané měření zakázky se drží v telefonu, aby se u zákazníka bez signálu neztratilo; po uložení na server se maže",
+      "typ": "localStorage",
+      "trvani": "do uložení zakázky nebo do smazání zákazníkem v prohlížeči"
+    }
+  ],
   "cookies": [
     {
       "nazev": "relace",
@@ -98,5 +141,12 @@
       "trvani": "30 dní"
     }
   ],
+  "aplikace": {
+    "balicek": "cz.simtegen.mobilni_aplikace_pro_truhlare_na_navrh_k",
+    "nazev": "Kusovník pro truhláře",
+    "kratky_nazev": "Kusovník",
+    "popis": "Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.",
+    "otisky": []
+  },
   "poznamka": "Jediny zdroj pravdy o datech produktu. Zasady, obchodni podminky, zpracovatelska smlouva, formular pro odstoupeni, zaznam o zpracovani i postup pri incidentu se GENERUJI z tohoto souboru (python3 vykresli_zasady.py) a kontrola_manifestu.py shazuje build, kdyz se kod nebo vygenerovane soubory s manifestem rozejdou. Kazda nova tabulka = zaznam v ukladame + migrace v db/migrace/ se sloupcem uzivatel_id. Prazdne sloty (ico, sidlo, dic, zapis_or, kontakt_email, ucinnost_od, cena_dph, retence_logy, retence_podpora, odpovedna_osoba, zastup, ucetni, balancni_test) se vykresli cervene jako (doplnit ...) - s nimi se nesmi jit do produkce. obsah_zakaznika_popis a subjekty_obsahu popisuji obsah, ktery do produktu vklada zakaznik (zpracovatelska smlouva, cl. 2) - stavitel je vyplni podle produktu. agregaty = tabulky bez uzivatel_id, ktere smi obsahovat jen souhrnna cisla (den, stranka, pocet) - kontrola hlida, ze v nich neni zadny osobni sloupec."
 }
