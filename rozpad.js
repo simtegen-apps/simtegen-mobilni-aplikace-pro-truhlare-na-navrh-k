@@ -22,12 +22,10 @@
 //    se „rozměr po olepení“ nedá spočítat bez toho, aby se vědělo, KTERÁ
 //    hrana se olepuje.
 
-export const TYPY_SKRINEK = {
-  spodni: "Spodní",
-  horni: "Horní",
-  vysoka: "Vysoká",
-  rohova: "Rohová",
-};
+// Geometrie stěny (svislý rozsah skříňky, kolize, popis skříňky) je ve
+// web/kolize.js — jedna implementace pro prohlížeč i pro server, viz
+// komentář v tom souboru.
+import { popisSkrinky, zkontrolujStenu } from "./web/kolize.js";
 
 export const VYCHOZI_STANDARD = {
   nazev: "Můj standard",
@@ -135,12 +133,6 @@ function desetinyText(desetiny) {
   const cele_ = Math.floor(desetiny / 10);
   const zbytek = desetiny % 10;
   return (zbytek ? `${cele_},${zbytek}` : String(cele_)) + " mm";
-}
-
-export function popisSkrinky(skrinka, poradi) {
-  const typ = TYPY_SKRINEK[skrinka.typ] || "Skříňka";
-  const cislo = poradi === undefined ? "" : `${poradi + 1}. `;
-  return `${cislo}${typ.toLowerCase()} ${skrinka.sirka_mm}×${skrinka.vyska_mm}×${skrinka.hloubka_mm}`;
 }
 
 /**
@@ -353,7 +345,7 @@ export function kusovnikZakazky(dokument, standard, materialy) {
 
   for (const stena of dokument.steny || []) {
     const skrinky = stena.skrinky || [];
-    for (const v of zkontrolujStenu(stena, skrinky, standard)) varovani.push(v);
+    for (const v of zkontrolujStenu(stena, skrinky, standard).hlasky) varovani.push(v);
     skrinky.forEach((skrinka, index) => {
       pocetSkrinek += 1;
       const material = mapaMaterialu.get(Number(skrinka.material_id)) || vychozi;
@@ -468,83 +460,6 @@ export function odhadDesek(polozky, standard) {
     celkem += desky.length;
   }
   return { desek: celkem, podle, nevejde };
-}
-
-/** Svislý rozsah skříňky na stěně (od podlahy), v mm. */
-export function svislyRozsah(skrinka, standard) {
-  if (skrinka.typ === "horni") {
-    const dole = standard.vyska_horni_mm;
-    return [dole, dole + cele(skrinka.vyska_mm, 720)];
-  }
-  const dole = standard.sokl_mm;
-  return [dole, dole + cele(skrinka.vyska_mm, 720)];
-}
-
-/**
- * Kolize na stěně — to, co truhláři u zákazníka ušetří výjezd navíc:
- * skříňka přes okno, přes délku stěny, přes sousedku nebo do rohu.
- */
-export function zkontrolujStenu(stena, skrinky, standard) {
-  const varovani = [];
-  const delka = cele(stena.delka_mm, 0);
-  const vyska = cele(stena.vyska_mm, 0);
-  let otvory = stena.otvory;
-  if (typeof otvory === "string") {
-    try { otvory = JSON.parse(otvory); } catch { otvory = []; }
-  }
-  otvory = Array.isArray(otvory) ? otvory : [];
-  const nazevSteny = stena.nazev || "Stěna";
-
-  skrinky.forEach((s, index) => {
-    const stitek = `${nazevSteny} · ${popisSkrinky(s, index)}`;
-    const x1 = cele(s.odsazeni_mm, 0);
-    const x2 = x1 + cele(s.sirka_mm, 0);
-    const [y1, y2] = svislyRozsah(s, standard);
-
-    if (x2 > delka) {
-      varovani.push(`${stitek}: přesahuje délku stěny o ${x2 - delka} mm.`);
-    }
-    if (y2 > vyska && vyska > 0) {
-      varovani.push(`${stitek}: sahá výš než stěna o ${y2 - vyska} mm.`);
-    }
-    for (const o of otvory) {
-      const ox1 = cele(o.odsazeni_mm, 0);
-      const ox2 = ox1 + cele(o.sirka_mm, 0);
-      const oy1 = o.typ === "dvere" ? 0 : cele(o.parapet_mm, 0);
-      const oy2 = oy1 + cele(o.vyska_mm, 0);
-      if (x1 < ox2 && x2 > ox1 && y1 < oy2 && y2 > oy1) {
-        varovani.push(`${stitek}: zasahuje do ${o.typ === "dvere" ? "dveří" : "okna"} `
-          + `(otvor od ${ox1} mm, šířka ${ox2 - ox1} mm).`);
-      }
-    }
-    if (stena.roh_vlevo && x1 < cele(s.hloubka_mm, 510)) {
-      varovani.push(`${stitek}: začíná v rohu — sousední stěna si bere prvních `
-        + `${cele(s.hloubka_mm, 510)} mm (hloubka korpusu).`);
-    }
-    if (stena.roh_vpravo && x2 > delka - cele(s.hloubka_mm, 510)) {
-      varovani.push(`${stitek}: končí v rohu — sousední stěna si bere posledních `
-        + `${cele(s.hloubka_mm, 510)} mm (hloubka korpusu).`);
-    }
-  });
-
-  // Překryv v rámci jedné řady (spodní × horní se překrývat smí).
-  for (let i = 0; i < skrinky.length; i += 1) {
-    for (let j = i + 1; j < skrinky.length; j += 1) {
-      const a = skrinky[i];
-      const b = skrinky[j];
-      const [ay1, ay2] = svislyRozsah(a, standard);
-      const [by1, by2] = svislyRozsah(b, standard);
-      const ax1 = cele(a.odsazeni_mm, 0);
-      const ax2 = ax1 + cele(a.sirka_mm, 0);
-      const bx1 = cele(b.odsazeni_mm, 0);
-      const bx2 = bx1 + cele(b.sirka_mm, 0);
-      if (ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1) {
-        varovani.push(`${nazevSteny}: ${popisSkrinky(a, i)} a ${popisSkrinky(b, j)} `
-          + "se překrývají.");
-      }
-    }
-  }
-  return varovani;
 }
 
 /** Ukázkový rozpad pro obrazovku Standard — ať je vidět, co parametry dělají. */

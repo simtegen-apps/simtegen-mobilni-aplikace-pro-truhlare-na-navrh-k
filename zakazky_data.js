@@ -12,8 +12,9 @@
 
 import { ted } from "./spolecne.js";
 import { MEZE, VYCHOZI_STANDARD, normalizujStandard } from "./rozpad.js";
+import { TYPY_SKRINEK } from "./web/kolize.js";
 
-const TYPY = ["spodni", "horni", "vysoka", "rohova"];
+const TYPY = Object.keys(TYPY_SKRINEK);
 const TYPY_OTVORU = ["okno", "dvere"];
 
 function cele(hodnota, vychozi) {

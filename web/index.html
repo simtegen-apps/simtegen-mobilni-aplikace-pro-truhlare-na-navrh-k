@@ -32,7 +32,7 @@
     /* Přepínač dvou pohledů (Pohled / Půdorys). */
     .prepinac { display: flex; background: var(--barva-plocha-2); border-radius: var(--radius-maly);
       padding: 3px; gap: 3px; }
-    .prepinac button { flex: 1; min-height: 40px; border: 0; border-radius: var(--radius-maly);
+    .prepinac button { flex: 1; min-height: var(--dotyk); border: 0; border-radius: var(--radius-maly);
       background: none; font: inherit; font-weight: 600; color: var(--barva-text-2); cursor: pointer; }
     .prepinac button[aria-pressed="true"] { background: var(--barva-plocha); color: var(--barva-text); }
 
@@ -89,12 +89,18 @@
   <div id="panel-misto"></div>
   <div id="toast-misto" aria-live="polite"></div>
 
-  <script>
-    "use strict";
+  <script type="module">
+    // Modul, ne klasický skript: pravidla kolizí a svislého rozsahu skříněk
+    // si aplikace bere ze stejného souboru jako server (web/kolize.js), aby
+    // se varování na obrazovce nerozešla s varováními v uloženém kusovníku.
+    import { TYPY_SKRINEK, celeCislo, svislyRozsah, zkontrolujStenu } from "./kolize.js";
 
-    // Schválená cena. Bez ní by úvodní obrazovka i objednávka zůstaly
-    // u věty „ceník sdělí provozovatel“.
-    window.CENIK = { mesic: 490, mena: "Kč" };
+    // CENIK doplní stavitel teprve ze SCHVÁLENÉ ceny — ve stejném kroku,
+    // ve kterém se do data-manifest.json zapíše `cena_dph`. Dokud je null,
+    // aplikace nikde neslibuje číslo, které neprošlo bránou majitele, a
+    // obchodní podmínky i úvodní obrazovka mluví stejně.
+    // Tvar: window.CENIK = { mesic: 490, mena: "Kč" };
+    window.CENIK = null;
     const CENIK = window.CENIK;
 
     const KLIC_KONCEPTU = "rozpracovana-zakazka";
@@ -102,13 +108,9 @@
     const $ = (id) => document.getElementById(id);
     const esc = (text) => String(text ?? "").replace(/[&<>"']/g, (z) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[z]));
-    const cislo = (hodnota, vychozi) => {
-      const n = Math.round(Number(hodnota));
-      return Number.isFinite(n) ? n : vychozi;
-    };
+    const cislo = celeCislo;
     const datum = (unix) => new Date(unix * 1000).toLocaleDateString("cs-CZ");
 
-    const TYPY_SKRINEK = { spodni: "Spodní", horni: "Horní", vysoka: "Vysoká", rohova: "Rohová" };
     const VYCHOZI_ROZMERY = {
       spodni: { sirka_mm: 600, vyska_mm: 720, hloubka_mm: 510, pocet_polic: 1, pocet_dvirek: 1 },
       horni: { sirka_mm: 600, vyska_mm: 720, hloubka_mm: 320, pocet_polic: 1, pocet_dvirek: 1 },
@@ -189,7 +191,6 @@
       $("hlavicka").hidden = kam.nazev === "uvod";
       $("titulek").textContent = def.titulek;
       $("zpet").hidden = !def.zpet;
-      $("akce-vpravo").hidden = true;
       $("navigace").hidden = !def.navigace;
       $("navigace").querySelectorAll("button").forEach((b) =>
         b.setAttribute("aria-current", b.dataset.cil === kam.nazev ? "page" : "false"));
@@ -320,15 +321,6 @@
     }
 
     // ── Kresba: pohled na stěnu a půdorys ──────────────────────────────
-    function svislyRozsah(skrinka, standard) {
-      if (skrinka.typ === "horni") {
-        const dole = cislo(standard.vyska_horni_mm, 1450);
-        return [dole, dole + cislo(skrinka.vyska_mm, 720)];
-      }
-      const dole = cislo(standard.sokl_mm, 100);
-      return [dole, dole + cislo(skrinka.vyska_mm, 720)];
-    }
-
     function nakresliPohled(stena, standard, kolizni) {
       const D = Math.max(1, cislo(stena.delka_mm, 3600));
       const V = Math.max(1, cislo(stena.vyska_mm, 2600));
@@ -432,43 +424,10 @@
       </div>`;
     }
 
-    // ── Kolize (stejná pravidla jako na serveru, jen pro kresbu) ───────
-    function koliznikSteny(stena, standard) {
-      const kolizni = new Set();
-      const hlasky = [];
-      const skrinky = stena.skrinky || [];
-      const D = cislo(stena.delka_mm, 0);
-      const V = cislo(stena.vyska_mm, 0);
-      skrinky.forEach((sk, i) => {
-        const x1 = cislo(sk.odsazeni_mm, 0);
-        const x2 = x1 + cislo(sk.sirka_mm, 0);
-        const [y1, y2] = svislyRozsah(sk, standard);
-        const stitek = `${i + 1}. ${(TYPY_SKRINEK[sk.typ] || "skříňka").toLowerCase()} ${sk.sirka_mm} mm`;
-        if (x2 > D) { kolizni.add(i); hlasky.push(`${stitek}: přesahuje délku stěny o ${x2 - D} mm.`); }
-        if (V > 0 && y2 > V) { kolizni.add(i); hlasky.push(`${stitek}: sahá výš než stěna o ${y2 - V} mm.`); }
-        for (const o of stena.otvory || []) {
-          const ox1 = cislo(o.odsazeni_mm, 0);
-          const ox2 = ox1 + cislo(o.sirka_mm, 0);
-          const oy1 = o.typ === "dvere" ? 0 : cislo(o.parapet_mm, 0);
-          const oy2 = oy1 + cislo(o.vyska_mm, 0);
-          if (x1 < ox2 && x2 > ox1 && y1 < oy2 && y2 > oy1) {
-            kolizni.add(i);
-            hlasky.push(`${stitek}: zasahuje do ${o.typ === "dvere" ? "dveří" : "okna"}.`);
-          }
-        }
-        for (let j = i + 1; j < skrinky.length; j += 1) {
-          const druha = skrinky[j];
-          const bx1 = cislo(druha.odsazeni_mm, 0);
-          const bx2 = bx1 + cislo(druha.sirka_mm, 0);
-          const [by1, by2] = svislyRozsah(druha, standard);
-          if (x1 < bx2 && x2 > bx1 && y1 < by2 && y2 > by1) {
-            kolizni.add(i);
-            kolizni.add(j);
-            hlasky.push(`${stitek} se překrývá s ${j + 1}. skříňkou.`);
-          }
-        }
-      });
-      return { kolizni, hlasky };
+    // Kontrola stěny je JEDNA funkce sdílená se serverem (web/kolize.js);
+    // tohle je jen zkratka, aby se nemusely pokaždé vypisovat skříňky.
+    function kontrolaSteny(stena) {
+      return zkontrolujStenu(stena, stena.skrinky || [], stav.standard);
     }
 
     // ── Obrazovka: úvod a přihlášení ───────────────────────────────────
@@ -698,7 +657,7 @@
         const seznam = document.createElement("div");
         seznam.className = "seznam";
         dokument.steny.forEach((stena, index) => {
-          const { hlasky } = koliznikSteny(stena, stav.standard);
+          const { hlasky } = kontrolaSteny(stena);
           const radek = document.createElement("button");
           radek.type = "button";
           radek.className = "radek";
@@ -816,7 +775,7 @@
       stav.stenaIndex = index;
       $("titulek").textContent = stena.nazev;
 
-      const { kolizni, hlasky } = koliznikSteny(stena, stav.standard);
+      const { kolizni, hlasky } = kontrolaSteny(stena);
 
       cil.innerHTML = `
         <div class="karta">${nakresliPohled(stena, stav.standard, kolizni)}${legenda()}</div>
@@ -1124,15 +1083,13 @@
           <p class="napoveda">Stěny jdou za sebou a po každé se zatáčí o 90° dovnitř
           místnosti. Čárkovaně jsou horní skříňky.</p></div>`;
         for (const stena of steny) {
-          for (const h of koliznikSteny(stena, stav.standard).hlasky) {
-            vsechnyHlasky.push(`${stena.nazev}: ${h}`);
-          }
+          for (const h of kontrolaSteny(stena).hlasky) vsechnyHlasky.push(h);
         }
       } else {
         const kusy = [];
         for (const stena of steny) {
-          const { kolizni, hlasky } = koliznikSteny(stena, stav.standard);
-          for (const h of hlasky) vsechnyHlasky.push(`${stena.nazev}: ${h}`);
+          const { kolizni, hlasky } = kontrolaSteny(stena);
+          for (const h of hlasky) vsechnyHlasky.push(h);
           kusy.push(`<div class="karta"><h2>${esc(stena.nazev)}</h2>
             ${nakresliPohled(stena, stav.standard, kolizni)}</div>`);
         }
@@ -1529,6 +1486,9 @@
           <p class="popisek">Rozsah: plný přístup k aplikaci — zakázky, standard,
           náhled i generování kusovníků.</p>
           <p>Cena: <strong id="ob-celkem">podle ceníku</strong></p>
+          ${CENIK ? "" : `<div class="hlaska varovani">Ceník zatím není v aplikaci
+            zveřejněný — celkovou cenu vám potvrdíme e-mailem dřív, než vystavíme
+            fakturu, a do té doby vás objednávka k ničemu nezavazuje.</div>`}
           <div class="pole"><label for="ob-fakturace">Fakturační údaje</label>
             <textarea id="ob-fakturace" rows="3" maxlength="600"
               placeholder="Název / jméno, adresa, IČO (máte-li)"></textarea></div>
