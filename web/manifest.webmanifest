@@ -1,0 +1,41 @@
+{
+  "name": "Kusovník pro truhláře",
+  "short_name": "Kusovník",
+  "description": "Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.",
+  "lang": "cs",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f6f5",
+  "theme_color": "#10504b",
+  "icons": [
+    {
+      "src": "/ikona-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ikona-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ikona-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "cz.simtegen.mobilni_aplikace_pro_truhlare_na_navrh_k",
+      "url": "https://play.google.com/store/apps/details?id=cz.simtegen.mobilni_aplikace_pro_truhlare_na_navrh_k"
+    }
+  ],
+  "prefer_related_applications": false
+}
