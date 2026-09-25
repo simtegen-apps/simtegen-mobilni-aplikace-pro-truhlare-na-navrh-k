@@ -212,7 +212,14 @@ export function rozpadSkrinky(skrinka, standard, material, materialZad) {
   const S = cele(skrinka.sirka_mm, 600);
   const V = cele(skrinka.vyska_mm, 720);
   const H = cele(skrinka.hloubka_mm, 510);
+  // Dvě tloušťky hrany, každá tam, kam patří:
+  //   hp = pohledová — to, co je vidět při zavřených dvířkách: dvířka,
+  //        čela zásuvek a přední hrana boku (ta kouká ve spáře a bere
+  //        nárazy dvířek, proto na ní bývá silnější ABS),
+  //   ho = ostatní  — přední hrany vnitřních vodorovných dílů (dno, víko,
+  //        police), které jsou vidět až po otevření.
   const hp = standard.hrana_pohledova_desetiny;
+  const ho = standard.hrana_ostatni_desetiny;
   const svetlost = S - 2 * t;
   const dily = [];
 
@@ -227,8 +234,8 @@ export function rozpadSkrinky(skrinka, standard, material, materialZad) {
   dily.push(dil({
     klic: "dno", nazev: "Dno", ks: 1,
     a_mm: svetlost, b_mm: H, smer: "vodorovne",
-    hrany: { dole: hp },
-    hrany_popis: `přední hrana ${desetinyText(hp)}`,
+    hrany: { dole: ho },
+    hrany_popis: `přední hrana ${desetinyText(ho)}`,
   }, standard, material));
 
   const traverzy = skrinka.typ === "spodni" && standard.traverzy_spodni;
@@ -242,8 +249,8 @@ export function rozpadSkrinky(skrinka, standard, material, materialZad) {
     dily.push(dil({
       klic: "viko", nazev: "Víko", ks: 1,
       a_mm: svetlost, b_mm: H, smer: "vodorovne",
-      hrany: { dole: hp },
-      hrany_popis: `přední hrana ${desetinyText(hp)}`,
+      hrany: { dole: ho },
+      hrany_popis: `přední hrana ${desetinyText(ho)}`,
     }, standard, material));
   }
 
@@ -252,8 +259,8 @@ export function rozpadSkrinky(skrinka, standard, material, materialZad) {
     dily.push(dil({
       klic: "police", nazev: "Police", ks: police,
       a_mm: svetlost, b_mm: H - standard.odskok_police_mm, smer: "vodorovne",
-      hrany: { dole: hp },
-      hrany_popis: `přední hrana ${desetinyText(hp)}`,
+      hrany: { dole: ho },
+      hrany_popis: `přední hrana ${desetinyText(ho)}`,
     }, standard, material));
   }
 

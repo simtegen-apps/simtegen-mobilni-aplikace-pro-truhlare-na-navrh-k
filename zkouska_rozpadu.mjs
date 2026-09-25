@@ -53,6 +53,26 @@ if (dily.length !== OCEKAVANO.length) {
   console.log(`  CHYBA vznikly navíc díly: ${dily.map((d) => d.nazev).join(", ")}`);
 }
 
+// Obě tloušťky hrany musí být použité. Dřív se všechno olepovalo podle
+// hrana_pohledova_desetiny a parametr hrana_ostatni_desetiny ležel
+// v databázi bez užitku.
+const OCEKAVANE_HRANY = [
+  ["Bok", 20, "pohledová 2 mm na přední hraně"],
+  ["Dno", 8, "ostatní 0,8 mm na přední hraně"],
+  ["Police", 8, "ostatní 0,8 mm na přední hraně"],
+  ["Dvířka", 20, "pohledová 2 mm kolem dokola"],
+];
+console.log("\nOlepení hran:");
+for (const [nazev, desetiny, popis] of OCEKAVANE_HRANY) {
+  const d = dily.find((x) => x.nazev === nazev);
+  const h = d && d.hrany;
+  const nejvetsi = h ? Math.max(h.delka_1, h.delka_2, h.sirka_1, h.sirka_2) : -1;
+  const sedi = nejvetsi === desetiny;
+  if (!sedi) chyb += 1;
+  console.log(`  ${sedi ? "OK   " : "CHYBA"} ${nazev}: ${popis}`
+    + `  (spočítáno ${nejvetsi / 10} mm, popis „${d ? d.hrany_popis : "—"}“)`);
+}
+
 // Kolize: skříňka pod oknem s parapetem 900 do něj nezasahuje, horní ano.
 const dokument = {
   steny: [{
