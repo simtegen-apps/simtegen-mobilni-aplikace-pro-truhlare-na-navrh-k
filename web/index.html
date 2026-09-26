@@ -2,7 +2,10 @@
 <html lang="cs">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- interactive-widget=resizes-content: vysunutá klávesnice zmenší
+       layoutový viewport, takže spodní panel i akční lišta zůstanou nad ní.
+       Prohlížeče, které to neumí, dorovná visualViewport v sledujKlavesnici. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#10504b">
   <title>Kusovník pro truhláře</title>
   <link rel="stylesheet" href="styl.css">
@@ -10,6 +13,38 @@
     /* Jen rozložení obrazovek tohohle produktu. Barvy, písma, rozměry
        a komponenty jsou v návrhovém systému (styl.css) — tady se z nich
        jenom skládá. */
+
+    /* ── Klávesnice pod spodním panelem ─────────────────────────────
+       Panel je position: fixed, a ten se drží LAYOUTOVÉHO viewportu —
+       ten se vysunutím klávesnice nezmenší, takže formulář zmizí pod ní.
+       --klavesnice drží, kolik pixelů zespodu klávesnice ukousla, a
+       počítá ji visualViewport (funkce sledujKlavesnici). */
+    :root { --klavesnice: 0px; --viditelna-vyska: 100dvh; }
+    .panel {
+      bottom: var(--klavesnice);
+      max-height: calc(var(--viditelna-vyska) - var(--mezera-6));
+    }
+    /* Hlavní akce panelu zůstane v dosahu palce i u dlouhého formuláře
+       a i když je nad ní vysunutá klávesnice. */
+    .panel-akce {
+      position: sticky; bottom: 0; z-index: 1;
+      display: flex; flex-direction: column; gap: var(--mezera-2);
+      margin-top: var(--mezera-1);
+      padding: var(--mezera-3) 0 var(--mezera-2);
+      background: var(--barva-plocha);
+      border-top: 1px solid var(--barva-okraj);
+    }
+
+    /* Ikony jsou inline SVG (žádná knihovna, žádné externí písmo):
+       velikost se váže na písmo, barvu dědí z textu. */
+    .ikona-svg { width: 1.5em; height: 1.5em; display: block; flex: none; }
+    .navigace .ikona-svg { width: 1.55em; height: 1.55em; }
+    .prazdno .ikona-svg { width: var(--mezera-6); height: var(--mezera-6);
+      color: var(--barva-text-3); }
+    .radek > .ikona-svg { color: var(--barva-akcent); }
+    /* Štítek typu skříňky v řádku seznamu si drží svou velikost i barvu
+       (jinak by ho přebil obecný popisek řádku z návrhového systému). */
+    .radek .hlavni .stitek { font-size: var(--velikost-5); color: var(--barva-text-3); }
 
     /* Velké číslo, na kterém na obrazovce záleží (dílů, desek, mm). */
     .cislo { font-size: 2.25rem; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
@@ -24,10 +59,15 @@
        takže na 390 px nic nepřetéká. */
     .kresba { width: 100%; height: auto; display: block; border-radius: var(--radius-maly);
       background: var(--barva-plocha-2); }
+    /* Kresbě se na telefonu vyplatí každý milimetr šířky. */
+    .karta-kresba { padding: var(--mezera-3); }
     .kresba-legenda { display: flex; gap: var(--mezera-4); flex-wrap: wrap;
       font-size: var(--velikost-5); color: var(--barva-text-3); }
     .kresba-legenda span { display: inline-flex; align-items: center; gap: var(--mezera-1); }
     .vzorek { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+    /* Nákres linky na úvodní obrazovce kreslí tentýž kód jako aplikace —
+       návštěvník vidí rovnou to, co dostane. */
+    .uvodni-kresba { border: 1px solid var(--barva-okraj); background: var(--barva-plocha); }
 
     /* Přepínač dvou pohledů (Pohled / Půdorys). */
     .prepinac { display: flex; background: var(--barva-plocha-2); border-radius: var(--radius-maly);
@@ -79,10 +119,22 @@
 
     <div class="lista-dole" id="lista-dole" hidden></div>
 
+    <!-- Ikony jsou inline SVG v jednom tahu (kuchyňská linka, posuvné
+         měřítko, osoba) — žádná knihovna, barvu dědí z textu. -->
     <nav class="navigace" id="navigace" hidden aria-label="Hlavní nabídka">
-      <button type="button" data-cil="zakazky"><span aria-hidden="true">📐</span>Zakázky</button>
-      <button type="button" data-cil="standard"><span aria-hidden="true">⚙️</span>Standard</button>
-      <button type="button" data-cil="ucet"><span aria-hidden="true">👤</span>Účet</button>
+      <button type="button" data-cil="zakazky"><svg class="ikona-svg" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16"
+        rx="2"/><path d="M3 12h18M12 4v16M10.2 8.6v1.6M10.2 14.4v1.6M13.8 8.6v1.6M13.8 14.4v1.6"/>
+        </svg>Zakázky</button>
+      <button type="button" data-cil="standard"><svg class="ikona-svg" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true"><rect x="2" y="8" width="20" height="8"
+        rx="1.5"/><path d="M6.5 8v3.2M10 8v4.6M13.5 8v3.2M17 8v4.6"/></svg>Standard</button>
+      <button type="button" data-cil="ucet"><svg class="ikona-svg" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/>
+        <path d="M4.8 20c0-3.7 3.2-5.8 7.2-5.8s7.2 2.1 7.2 5.8"/></svg>Účet</button>
     </nav>
   </div>
 
@@ -110,6 +162,26 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[z]));
     const cislo = celeCislo;
     const datum = (unix) => new Date(unix * 1000).toLocaleDateString("cs-CZ");
+
+    // Ikony kreslené jedním tahem — z tématu dílny, ne z obecné sady emoji.
+    const IKONY = {
+      linka: '<rect x="3" y="4" width="18" height="16" rx="2"/>'
+        + '<path d="M3 12h18M12 4v16M10.2 8.6v1.6M10.2 14.4v1.6M13.8 8.6v1.6M13.8 14.4v1.6"/>',
+      metr: '<rect x="2" y="9" width="20" height="7" rx="2.2"/><circle cx="7" cy="12.5" r="1.9"/>'
+        + '<path d="M12.5 9v2M15.5 9v2.8M18.5 9v2"/>',
+      skrinka: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 3v18"/>'
+        + '<path d="M10.2 11.2v1.6M13.8 11.2v1.6"/>',
+      kusovnik: '<rect x="5" y="3" width="14" height="18" rx="2"/>'
+        + '<path d="M8.5 8h7M8.5 12h7M8.5 16h4"/>',
+      oko: '<path d="M2.5 12S6 6.2 12 6.2 21.5 12 21.5 12 18 17.8 12 17.8 2.5 12 2.5 12Z"/>'
+        + '<circle cx="12" cy="12" r="2.6"/>',
+    };
+
+    function ikona(nazev) {
+      return `<svg class="ikona-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+        aria-hidden="true">${IKONY[nazev] || ""}</svg>`;
+    }
 
     const VYCHOZI_ROZMERY = {
       spodni: { sirka_mm: 600, vyska_mm: 720, hloubka_mm: 510, pocet_polic: 1, pocet_dvirek: 1 },
@@ -224,6 +296,25 @@
       }
     }
 
+    // ── Klávesnice ─────────────────────────────────────────────────────
+    // Spodní panel je position: fixed, a ten se drží layoutového viewportu.
+    // Ten se vysunutím klávesnice NEZMENŠÍ, takže formulář zůstane pod ní.
+    // visualViewport jako jediný ví, kolik místa klávesnice sebrala —
+    // číslo předáme do CSS a panel se o něj nadzvedne.
+    function sledujKlavesnici() {
+      const vv = window.visualViewport;
+      if (!vv) return;
+      const koren = document.documentElement;
+      const prepocti = () => {
+        const skryto = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        koren.style.setProperty("--klavesnice", `${skryto}px`);
+        koren.style.setProperty("--viditelna-vyska", `${Math.round(vv.height)}px`);
+      };
+      vv.addEventListener("resize", prepocti);
+      vv.addEventListener("scroll", prepocti);
+      prepocti();
+    }
+
     // ── Spodní panel ───────────────────────────────────────────────────
     function otevriPanel(titulek, obsahHtml, pripoj) {
       zavriPanel();
@@ -239,6 +330,24 @@
       misto.appendChild(pozadi);
       misto.appendChild(panel);
       if (pripoj) pripoj(panel);
+
+      // Klávesnice se vysune až po fokusu, takže se na políčko musí
+      // doscrollovat s odstupem — jinak by se rolovalo do místa, které
+      // za okamžik zakryje.
+      panel.addEventListener("focusin", (u) => {
+        if (!u.target.scrollIntoView) return;
+        setTimeout(() => u.target.scrollIntoView({ block: "center", behavior: "smooth" }), 280);
+      });
+      // Enter odešle (DESIGN.md): v textovém poli spustí hlavní akci
+      // panelu, ať se uživatel nemusí proklikávat ke schovanému tlačítku.
+      panel.addEventListener("keydown", (u) => {
+        if (u.key !== "Enter" || u.target.tagName === "TEXTAREA") return;
+        const hlavni = panel.querySelector(".panel-akce .tlacitko");
+        if (!hlavni) return;
+        u.preventDefault();
+        hlavni.click();
+      });
+
       const prvni = panel.querySelector("input, select, textarea, button");
       if (prvni) prvni.focus({ preventScroll: true });
     }
@@ -321,69 +430,178 @@
     }
 
     // ── Kresba: pohled na stěnu a půdorys ──────────────────────────────
-    function nakresliPohled(stena, standard, kolizni) {
+    // Pohled se kreslí tak, jak si ho truhlář čmárá na papír: podlaha,
+    // sokl, pracovní deska, dvířka se spárou a úchytkou, police čárkovaně
+    // jako skrytá hrana a pod stěnou kóta s celkovou délkou.
+    function nakresliPohled(stena, standard, kolizni, trida) {
+      const st = standard || {};
+      const kolize = kolizni || new Set();
       const D = Math.max(1, cislo(stena.delka_mm, 3600));
       const V = Math.max(1, cislo(stena.vyska_mm, 2600));
-      const okraj = Math.round(Math.max(D, V) * 0.06);
-      const casti = [];
-      casti.push(`<rect x="0" y="0" width="${D}" height="${V}" fill="var(--barva-plocha)"`
-        + ` stroke="var(--barva-okraj)" stroke-width="${Math.round(V / 160)}"/>`);
+      // Tloušťky čar a písmo jsou zlomky výšky stěny, protože viewBox je
+      // v milimetrech — jinak by čára na krátké stěně byla jako prkno.
+      const tenka = Math.max(3, Math.round(V / 330));
+      const stredni = Math.max(5, Math.round(V / 190));
+      const silna = Math.max(8, Math.round(V / 115));
+      const pismo = Math.round(V / 24);
+      const kota = Math.round(V * 0.13);
+      const okraj = Math.round(Math.max(D, V) * 0.05);
+      const carka = `${Math.round(V / 55)} ${Math.round(V / 90)}`;
+      const y = (mm) => V - mm;            // výška nad podlahou → osa SVG
+      const c = [];
 
+      // Stěna
+      c.push(`<rect x="0" y="0" width="${D}" height="${V}" rx="${Math.round(V / 260)}"
+        fill="var(--barva-plocha)" stroke="var(--barva-okraj)" stroke-width="${tenka}"/>`);
+
+      // Okna a dveře: rám, křídla a parapetní deska
       for (const o of stena.otvory || []) {
         const x = cislo(o.odsazeni_mm, 0);
-        const s = cislo(o.sirka_mm, 0);
-        const v = cislo(o.vyska_mm, 0);
-        const dole = o.typ === "dvere" ? 0 : cislo(o.parapet_mm, 0);
-        casti.push(`<rect x="${x}" y="${V - dole - v}" width="${s}" height="${v}"`
-          + ` fill="var(--barva-plocha-2)" stroke="var(--barva-text-3)"`
-          + ` stroke-width="${Math.round(V / 260)}" stroke-dasharray="${Math.round(V / 60)}"/>`);
+        const s = Math.max(1, cislo(o.sirka_mm, 0));
+        const v = Math.max(1, cislo(o.vyska_mm, 0));
+        const dole = o.typ === "dvere" ? 0 : Math.max(0, cislo(o.parapet_mm, 0));
+        c.push(`<rect x="${x}" y="${y(dole + v)}" width="${s}" height="${v}"
+          fill="var(--barva-pozadi)" stroke="var(--barva-text-3)" stroke-width="${stredni}"/>`);
+        c.push(`<path d="M${x + s / 2} ${y(dole + v)}V${y(dole)}M${x} ${y(dole + v / 2)}H${x + s}"
+          stroke="var(--barva-text-3)" stroke-width="${tenka}"/>`);
+        if (o.typ !== "dvere") {
+          c.push(`<rect x="${x - s * 0.03}" y="${y(dole)}" width="${s * 1.06}"
+            height="${Math.round(V / 70)}" fill="var(--barva-text-3)"/>`);
+        }
       }
 
-      (stena.skrinky || []).forEach((sk, index) => {
+      // Skříňky: sokl, korpus, police čárkovaně (skrytá hrana), čela s úchytkou
+      const skrinky = stena.skrinky || [];
+      skrinky.forEach((sk, index) => {
         const x = cislo(sk.odsazeni_mm, 0);
-        const s = cislo(sk.sirka_mm, 0);
-        const [y1, y2] = svislyRozsah(sk, standard);
-        const problem = kolizni.has(index);
-        casti.push(`<rect x="${x}" y="${V - y2}" width="${s}" height="${y2 - y1}"`
-          + ` fill="${problem ? "var(--barva-chyba-pozadi)" : "var(--barva-plocha-2)"}"`
-          + ` stroke="${problem ? "var(--barva-chyba)" : "var(--barva-akcent)"}"`
-          + ` stroke-width="${Math.round(V / 190)}" rx="${Math.round(V / 200)}"/>`);
-        if (s > D / 9) {
-          casti.push(`<text x="${x + s / 2}" y="${V - y1 - (y2 - y1) / 2}"`
-            + ` text-anchor="middle" dominant-baseline="middle"`
-            + ` font-size="${Math.round(V / 22)}" fill="var(--barva-text-2)">${s}</text>`);
+        const s = Math.max(1, cislo(sk.sirka_mm, 0));
+        const [y1, y2] = svislyRozsah(sk, st);
+        const v = Math.max(1, y2 - y1);
+        const problem = kolize.has(index);
+        const barva = problem ? "var(--barva-chyba)" : "var(--barva-akcent)";
+
+        if (sk.typ !== "horni" && y1 > 0) {
+          c.push(`<rect x="${x + s * 0.04}" y="${y(y1)}" width="${s * 0.92}" height="${y1}"
+            fill="var(--barva-plocha-2)" stroke="var(--barva-okraj)" stroke-width="${tenka}"/>`);
+        }
+
+        c.push(`<rect x="${x}" y="${y(y2)}" width="${s}" height="${v}"
+          rx="${Math.round(V / 240)}"
+          fill="${problem ? "var(--barva-chyba-pozadi)" : "var(--barva-plocha-2)"}"
+          stroke="${barva}" stroke-width="${stredni}"/>`);
+
+        const police = Math.max(0, cislo(sk.pocet_polic, 0));
+        for (let i = 1; i <= police; i += 1) {
+          const yy = y1 + (v * i) / (police + 1);
+          c.push(`<line x1="${x + s * 0.1}" y1="${y(yy)}" x2="${x + s * 0.9}" y2="${y(yy)}"
+            stroke="var(--barva-text-3)" stroke-width="${tenka}" stroke-dasharray="${carka}"/>`);
+        }
+
+        // Pořadí čel je stejné jako v rozpadu: zásuvky nahoře, dvířka pod nimi.
+        const zasuvek = Math.max(0, cislo(sk.pocet_zasuvek, 0));
+        const dvirek = Math.max(0, cislo(sk.pocet_dvirek, 0));
+        const madlo = Math.max(Math.round(V / 95), Math.round(v / 16));
+        let hranice = y2;
+        for (let i = 0; i < zasuvek; i += 1) {
+          const vyskaCela = dvirek > 0
+            ? Math.min(cislo(sk.zasuvka_vyska_mm, 140), v / (zasuvek + 1))
+            : v / zasuvek;
+          hranice -= vyskaCela;
+          if (hranice < y1) break;
+          if (i < zasuvek - 1 || dvirek > 0) {
+            c.push(`<line x1="${x}" y1="${y(hranice)}" x2="${x + s}" y2="${y(hranice)}"
+              stroke="${barva}" stroke-width="${tenka}"/>`);
+          }
+          c.push(`<rect x="${x + s * 0.3}" y="${y(hranice + vyskaCela / 2 + madlo / 2)}"
+            width="${s * 0.4}" height="${madlo}" rx="${madlo / 2}" fill="${barva}"/>`);
+        }
+        if (dvirek > 0 && hranice > y1) {
+          const sirkaDvirek = s / dvirek;
+          const stredDvirek = y1 + (hranice - y1) / 2;
+          const delkaMadla = Math.min((hranice - y1) * 0.35, 220);
+          for (let i = 0; i < dvirek; i += 1) {
+            const leve = x + sirkaDvirek * i;
+            if (i > 0) {
+              c.push(`<line x1="${leve}" y1="${y(hranice)}" x2="${leve}" y2="${y(y1)}"
+                stroke="${barva}" stroke-width="${tenka}"/>`);
+            }
+            // Úchytka u otevírací hrany — u dvojice dvířek tedy uprostřed.
+            const mx = dvirek > 1 && i === 0
+              ? leve + sirkaDvirek * 0.88
+              : leve + sirkaDvirek * 0.12;
+            c.push(`<rect x="${mx - madlo / 2}" y="${y(stredDvirek + delkaMadla / 2)}"
+              width="${madlo}" height="${delkaMadla}" rx="${madlo / 2}" fill="${barva}"/>`);
+          }
+        }
+
+        if (s > D / 10) {
+          c.push(`<text x="${x + s / 2}" y="${y(y1) - pismo * 0.5}" text-anchor="middle"
+            font-size="${pismo}" fill="var(--barva-text-2)">${s}</text>`);
         }
       });
 
-      return `<svg class="kresba" viewBox="${-okraj} ${-okraj} ${D + 2 * okraj} ${V + 2 * okraj}"`
-        + ` role="img" aria-label="Pohled na stěnu ${esc(stena.nazev || "")},`
-        + ` ${D} krát ${V} milimetrů">${casti.join("")}</svg>`;
+      // Pracovní deska leží na spodní řadě — bez ní to není kuchyně.
+      const spodniRada = skrinky.filter((sk) => sk.typ === "spodni");
+      if (spodniRada.length) {
+        const odX = Math.min(...spodniRada.map((sk) => cislo(sk.odsazeni_mm, 0)));
+        const doX = Math.max(...spodniRada.map((sk) =>
+          cislo(sk.odsazeni_mm, 0) + cislo(sk.sirka_mm, 0)));
+        const vrch = Math.max(...spodniRada.map((sk) => svislyRozsah(sk, st)[1]));
+        const tl = Math.round(V / 65);
+        c.push(`<rect x="${odX - tl}" y="${y(vrch + tl)}" width="${doX - odX + 2 * tl}"
+          height="${tl}" rx="${Math.round(tl / 3)}" fill="var(--barva-text-2)"/>`);
+      }
+
+      // Podlaha a kóta délky stěny
+      c.push(`<line x1="${-okraj}" y1="${V}" x2="${D + okraj}" y2="${V}"
+        stroke="var(--barva-text)" stroke-width="${silna}" stroke-linecap="round"/>`);
+      const ky = V + kota;
+      c.push(`<path d="M0 ${ky}H${D}M0 ${ky - kota * 0.28}V${ky + kota * 0.28}M${D} ${ky - kota * 0.28}V${ky + kota * 0.28}"
+        stroke="var(--barva-text-3)" stroke-width="${tenka}"/>`);
+      c.push(`<text x="${D / 2}" y="${ky - kota * 0.42}" text-anchor="middle"
+        font-size="${pismo}" fill="var(--barva-text-3)">${D} mm</text>`);
+
+      return `<svg class="kresba${trida ? " " + trida : ""}"
+        viewBox="${-okraj} ${-okraj} ${D + 2 * okraj} ${V + okraj + kota * 1.3}"
+        role="img" aria-label="Pohled na stěnu ${esc(stena.nazev || "")}, ${D} krát ${V}
+        milimetrů, ${skrinky.length} skříněk">${c.join("")}</svg>`;
     }
 
     function nakresliPudorys(steny, standard) {
       // Stěny se skládají za sebou a po každé se zatáčí o 90° dovnitř —
-      // tak vznikne tvar rovné, L i U kuchyně. Skříňky jsou obdélníky
-      // vysunuté od stěny do místnosti o svou hloubku.
+      // tak vznikne tvar rovné, L i U kuchyně. Zdi jsou šrafované na 45°,
+      // jak se kreslí řez ve výkrese; skříňky jsou obdélníky vysunuté od
+      // stěny do místnosti o svou hloubku a čelo mají silnější čarou.
+      const idSrafy = `srafy-${Math.random().toString(36).slice(2, 8)}`;
+      const tloustkaZdi = 120;
       let x = 0;
       let y = 0;
       let dx = 1;
       let dy = 0;
       const body = [];
-      const casti = [];
+      const zdi = [];
+      const kusy = [];
       for (const stena of steny) {
         const D = Math.max(1, cislo(stena.delka_mm, 3600));
         const x2 = x + dx * D;
         const y2 = y + dy * D;
-        body.push([x, y], [x2, y2]);
-        casti.push(`<line x1="${x}" y1="${y}" x2="${x2}" y2="${y2}"`
-          + ` stroke="var(--barva-text)" stroke-width="60" stroke-linecap="square"/>`);
-
-        const nx = -dy;
+        const nx = -dy;   // normála dovnitř místnosti
         const ny = dx;
+
+        const zed = [
+          [x, y],
+          [x2, y2],
+          [x2 - nx * tloustkaZdi, y2 - ny * tloustkaZdi],
+          [x - nx * tloustkaZdi, y - ny * tloustkaZdi],
+        ];
+        for (const bod of zed) body.push(bod);
+        zdi.push(`<polygon points="${zed.map((b) => b.join(",")).join(" ")}"
+          fill="url(#${idSrafy})" stroke="var(--barva-text)" stroke-width="24"/>`);
+
         for (const sk of stena.skrinky || []) {
           const o = cislo(sk.odsazeni_mm, 0);
-          const s = cislo(sk.sirka_mm, 0);
-          const h = cislo(sk.hloubka_mm, 510);
+          const s = Math.max(1, cislo(sk.sirka_mm, 0));
+          const h = Math.max(1, cislo(sk.hloubka_mm, 510));
           const ax = x + dx * o;
           const ay = y + dy * o;
           const rohy = [
@@ -393,9 +611,14 @@
             [ax + nx * h, ay + ny * h],
           ];
           for (const bod of rohy) body.push(bod);
-          casti.push(`<polygon points="${rohy.map((b) => b.join(",")).join(" ")}"`
-            + ` fill="var(--barva-plocha-2)" stroke="var(--barva-akcent)" stroke-width="40"`
-            + (sk.typ === "horni" ? ' stroke-dasharray="120 80"' : "") + "/>");
+          kusy.push(`<polygon points="${rohy.map((b) => b.join(",")).join(" ")}"
+            fill="var(--barva-plocha)" stroke="var(--barva-akcent)" stroke-width="40"`
+            + (sk.typ === "horni" ? ' stroke-dasharray="130 90"' : "") + "/>");
+          if (sk.typ !== "horni") {
+            kusy.push(`<line x1="${rohy[3][0]}" y1="${rohy[3][1]}"
+              x2="${rohy[2][0]}" y2="${rohy[2][1]}" stroke="var(--barva-akcent)"
+              stroke-width="90" stroke-linecap="round"/>`);
+          }
         }
         x = x2;
         y = y2;
@@ -407,18 +630,24 @@
       const ys = body.map((b) => b[1]);
       const minX = Math.min(...xs) - 300;
       const minY = Math.min(...ys) - 300;
-      const sirka = Math.max(...xs) - minX + 300;
-      const vyska = Math.max(...ys) - minY + 300;
-      return `<svg class="kresba" viewBox="${minX} ${minY} ${sirka} ${vyska}" role="img"`
-        + ` aria-label="Půdorys místnosti">${casti.join("")}</svg>`;
+      const sirka = Math.max(...xs) - minX + 600;
+      const vyska = Math.max(...ys) - minY + 600;
+      const defs = `<defs><pattern id="${idSrafy}" width="140" height="140"
+        patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line x1="0" y1="0" x2="0" y2="140" stroke="var(--barva-text-3)" stroke-width="24"/>
+        </pattern></defs>`;
+      return `<svg class="kresba" viewBox="${minX} ${minY} ${sirka} ${vyska}" role="img"
+        aria-label="Půdorys místnosti">${defs}${zdi.join("")}${kusy.join("")}</svg>`;
     }
 
     function legenda() {
       return `<div class="kresba-legenda">
         <span><i class="vzorek" style="background: var(--barva-plocha-2);
           border: 2px solid var(--barva-akcent)"></i> skříňka</span>
-        <span><i class="vzorek" style="background: var(--barva-plocha-2);
-          border: 2px dashed var(--barva-text-3)"></i> okno / dveře</span>
+        <span><i class="vzorek" style="background: var(--barva-pozadi);
+          border: 2px solid var(--barva-text-3)"></i> okno / dveře</span>
+        <span><i class="vzorek" style="background: var(--barva-plocha);
+          border: 2px dashed var(--barva-text-3)"></i> police a horní řada</span>
         <span><i class="vzorek" style="background: var(--barva-chyba-pozadi);
           border: 2px solid var(--barva-chyba)"></i> kolize</span>
       </div>`;
@@ -430,10 +659,34 @@
       return zkontrolujStenu(stena, stena.skrinky || [], stav.standard);
     }
 
+    // Ukázková stěna pro úvodní obrazovku. Kreslí ji TÝŽ kód jako zakázky,
+    // takže návštěvník na první pohled vidí přesně to, co dostane.
+    const UKAZKOVA_STENA = {
+      nazev: "Ukázka", delka_mm: 3000, vyska_mm: 2500, roh_vlevo: 0, roh_vpravo: 0,
+      otvory: [{ typ: "okno", odsazeni_mm: 1250, sirka_mm: 800, vyska_mm: 1100, parapet_mm: 950 }],
+      skrinky: [
+        { typ: "spodni", odsazeni_mm: 0, sirka_mm: 600, vyska_mm: 720, hloubka_mm: 510,
+          pocet_polic: 1, pocet_dvirek: 1, pocet_zasuvek: 0 },
+        { typ: "spodni", odsazeni_mm: 600, sirka_mm: 600, vyska_mm: 720, hloubka_mm: 510,
+          pocet_polic: 0, pocet_dvirek: 0, pocet_zasuvek: 3 },
+        { typ: "spodni", odsazeni_mm: 1200, sirka_mm: 900, vyska_mm: 720, hloubka_mm: 510,
+          pocet_polic: 1, pocet_dvirek: 2, pocet_zasuvek: 0 },
+        { typ: "spodni", odsazeni_mm: 2100, sirka_mm: 900, vyska_mm: 720, hloubka_mm: 510,
+          pocet_polic: 1, pocet_dvirek: 2, pocet_zasuvek: 0 },
+        { typ: "horni", odsazeni_mm: 0, sirka_mm: 600, vyska_mm: 720, hloubka_mm: 320,
+          pocet_polic: 1, pocet_dvirek: 1, pocet_zasuvek: 0 },
+        { typ: "horni", odsazeni_mm: 600, sirka_mm: 600, vyska_mm: 720, hloubka_mm: 320,
+          pocet_polic: 1, pocet_dvirek: 1, pocet_zasuvek: 0 },
+        { typ: "horni", odsazeni_mm: 2100, sirka_mm: 900, vyska_mm: 720, hloubka_mm: 320,
+          pocet_polic: 1, pocet_dvirek: 2, pocet_zasuvek: 0 },
+      ],
+    };
+
     // ── Obrazovka: úvod a přihlášení ───────────────────────────────────
     function vykresliUvod() {
       $("o-uvod").innerHTML = `
         <h1>Kuchyň změříte u zákazníka, kusovník máte hned</h1>
+        ${nakresliPohled(UKAZKOVA_STENA, null, null, "uvodni-kresba")}
         <p>Pro truhláře, kteří měří na místě a objednávají řezané desky
         v nářezovém centru. Zadáte stěny, okna a skříňky — aplikace spočítá
         boky, dna, police, záda i dvířka podle standardu vaší dílny.</p>
@@ -530,7 +783,7 @@
 
       if (!stav.zakazky.length) {
         cil.innerHTML = `<div class="prazdno">
-          <span class="ikona-velka" aria-hidden="true">📐</span>
+          ${ikona("metr")}
           <p>Zatím tu není žádná zakázka. Začněte změřením stěny u zákazníka.</p>
         </div>`;
         const zacit = document.createElement("button");
@@ -548,7 +801,7 @@
         const radek = document.createElement("button");
         radek.type = "button";
         radek.className = "radek";
-        radek.innerHTML = `<span class="hlavni"><strong>${esc(z.nazev)}</strong>
+        radek.innerHTML = `${ikona("linka")}<span class="hlavni"><strong>${esc(z.nazev)}</strong>
           <span>${esc(z.oznaceni_zakaznika || "bez označení zákazníka")} · ${datum(z.zmeneno)}</span></span>
           <span class="vpravo">${z.pocet_dilu ? z.pocet_dilu + " dílů" : "—"}</span>`;
         radek.addEventListener("click", () => jdi("zakazka", { id: z.id }));
@@ -570,7 +823,9 @@
           vašeho zákazníka.</span>
         </div>
         <div id="nz-zprava" aria-live="polite"></div>
-        <button type="button" class="tlacitko plne" id="nz-ulozit">Založit zakázku</button>`,
+        <div class="panel-akce">
+          <button type="button" class="tlacitko plne" id="nz-ulozit">Založit zakázku</button>
+        </div>`,
         (panel) => {
           panel.querySelector("#nz-ulozit").addEventListener("click", async () => {
             const zprava = panel.querySelector("#nz-zprava");
@@ -651,7 +906,7 @@
       const seznamSten = $("seznam-sten");
       if (!(dokument.steny || []).length) {
         seznamSten.innerHTML = `<div class="prazdno">
-          <span class="ikona-velka" aria-hidden="true">📏</span>
+          ${ikona("metr")}
           <p>Zakázka je prázdná — přidejte první stěnu.</p></div>`;
       } else {
         const seznam = document.createElement("div");
@@ -724,7 +979,9 @@
           <input id="uz-zakaznik" type="text" value="${esc(z.oznaceni_zakaznika || "")}"></div>
         <div class="pole"><label for="uz-poznamka">Poznámka</label>
           <textarea id="uz-poznamka" rows="3" maxlength="1000">${esc(z.poznamka || "")}</textarea></div>
-        <button type="button" class="tlacitko plne" id="uz-ulozit">Uložit</button>`,
+        <div class="panel-akce">
+          <button type="button" class="tlacitko plne" id="uz-ulozit">Uložit</button>
+        </div>`,
         (panel) => {
           panel.querySelector("#uz-ulozit").addEventListener("click", () => {
             z.nazev = panel.querySelector("#uz-nazev").value.trim() || z.nazev;
@@ -778,7 +1035,8 @@
       const { kolizni, hlasky } = kontrolaSteny(stena);
 
       cil.innerHTML = `
-        <div class="karta">${nakresliPohled(stena, stav.standard, kolizni)}${legenda()}</div>
+        <div class="karta karta-kresba">${nakresliPohled(stena, stav.standard, kolizni)}
+          ${legenda()}</div>
         ${hlasky.length ? `<div class="hlaska varovani">${hlasky.map(esc).join("<br>")}</div>` : ""}
         <div class="dvojice">
           <div class="pole"><label for="st-delka">Délka stěny (mm)</label>
@@ -844,7 +1102,7 @@
       const skrinky = $("seznam-skrinek");
       if (!(stena.skrinky || []).length) {
         skrinky.innerHTML = `<div class="prazdno">
-          <span class="ikona-velka" aria-hidden="true">🗄️</span>
+          ${ikona("skrinka")}
           <p>Zatím žádná skříňka. Přidejte první — rozměry jsou předvyplněné.</p></div>`;
       } else {
         const seznam = document.createElement("div");
@@ -853,12 +1111,12 @@
           const radek = document.createElement("button");
           radek.type = "button";
           radek.className = "radek";
-          radek.innerHTML = `<span class="hlavni">
-            <strong>${i + 1}. ${esc(TYPY_SKRINEK[sk.typ] || "Skříňka")}
-              ${sk.sirka_mm} × ${sk.vyska_mm} × ${sk.hloubka_mm}</strong>
+          radek.innerHTML = `${ikona("skrinka")}<span class="hlavni">
+            <span class="stitek">${i + 1}. ${esc(TYPY_SKRINEK[sk.typ] || "Skříňka")}</span>
+            <strong>${sk.sirka_mm} × ${sk.vyska_mm} × ${sk.hloubka_mm} mm</strong>
             <span>od ${cislo(sk.odsazeni_mm, 0)} mm · ${sk.pocet_polic}× police ·
               ${sk.pocet_dvirek}× dvířka${sk.pocet_zasuvek ? " · " + sk.pocet_zasuvek + "× zásuvka" : ""}</span>
-            </span><span class="vpravo">${kolizni.has(i) ? "⚠" : "upravit"}</span>`;
+            </span><span class="vpravo">${kolizni.has(i) ? "⚠" : "›"}</span>`;
           radek.addEventListener("click", () => panelSkrinka(stena, i, index));
           seznam.appendChild(radek);
         });
@@ -902,8 +1160,10 @@
         <div class="pole"><label for="ot-parapet">Parapet nad podlahou (mm)</label>
           <input id="ot-parapet" type="number" inputmode="numeric" value="${o.parapet_mm}">
           <span class="napoveda">U dveří se parapet nepoužije.</span></div>
-        <button type="button" class="tlacitko plne" id="ot-ulozit">Uložit</button>
-        ${novy ? "" : `<button type="button" class="tlacitko varovne plne" id="ot-smazat">Smazat</button>`}`,
+        <div class="panel-akce">
+          <button type="button" class="tlacitko plne" id="ot-ulozit">Uložit</button>
+          ${novy ? "" : `<button type="button" class="tlacitko varovne plne" id="ot-smazat">Smazat</button>`}
+        </div>`,
         (panel) => {
           panel.querySelector("#ot-ulozit").addEventListener("click", () => {
             const novyOtvor = {
@@ -997,8 +1257,10 @@
             <option value="nasazena"${sk.zada_typ_prepis === "nasazena" ? " selected" : ""}>Nasazená</option>
           </select></div>
         <div id="sk-chyba" aria-live="polite"></div>
-        <button type="button" class="tlacitko plne" id="sk-ulozit">Uložit skříňku</button>
-        ${novy ? "" : `<button type="button" class="tlacitko varovne plne" id="sk-smazat">Smazat skříňku</button>`}`,
+        <div class="panel-akce">
+          <button type="button" class="tlacitko plne" id="sk-ulozit">Uložit skříňku</button>
+          ${novy ? "" : `<button type="button" class="tlacitko varovne plne" id="sk-smazat">Smazat skříňku</button>`}
+        </div>`,
         (panel) => {
           panel.querySelector("#sk-typ").addEventListener("change", (u) => {
             const vychozi = VYCHOZI_ROZMERY[u.target.value];
@@ -1069,7 +1331,7 @@
       if (!stav.dokument) { jdi("zakazky", {}, true); return; }
       const steny = stav.dokument.steny || [];
       if (!steny.length) {
-        cil.innerHTML = `<div class="prazdno"><span class="ikona-velka" aria-hidden="true">👁️</span>
+        cil.innerHTML = `<div class="prazdno">${ikona("oko")}
           <p>Přidejte stěnu, ať je co ukázat.</p></div>`;
         nastavListu([{ popisek: "Zpět na zakázku", tiche: true,
           akce: () => jdi("zakazka", { id: stav.dokument.zakazka.id }, true) }]);
@@ -1079,9 +1341,9 @@
       const vsechnyHlasky = [];
       let kresba = "";
       if (stav.nahledRezim === "pudorys") {
-        kresba = `<div class="karta">${nakresliPudorys(steny, stav.standard)}
+        kresba = `<div class="karta karta-kresba">${nakresliPudorys(steny, stav.standard)}
           <p class="napoveda">Stěny jdou za sebou a po každé se zatáčí o 90° dovnitř
-          místnosti. Čárkovaně jsou horní skříňky.</p></div>`;
+          místnosti. Šrafovaně je zeď, čárkovaně horní skříňky, silnou čarou čelo.</p></div>`;
         for (const stena of steny) {
           for (const h of kontrolaSteny(stena).hlasky) vsechnyHlasky.push(h);
         }
@@ -1090,7 +1352,7 @@
         for (const stena of steny) {
           const { kolizni, hlasky } = kontrolaSteny(stena);
           for (const h of hlasky) vsechnyHlasky.push(h);
-          kusy.push(`<div class="karta"><h2>${esc(stena.nazev)}</h2>
+          kusy.push(`<div class="karta karta-kresba"><h2>${esc(stena.nazev)}</h2>
             ${nakresliPohled(stena, stav.standard, kolizni)}</div>`);
         }
         kresba = kusy.join("");
@@ -1146,7 +1408,7 @@
           { zakazka_id: stav.dokument.zakazka.id }).catch(() => ({ ok: false, data: {} }));
         if (!ok) {
           if (data.chyba && data.chyba.indexOf("skříňku") > -1) {
-            cil.innerHTML = `<div class="prazdno"><span class="ikona-velka" aria-hidden="true">📋</span>
+            cil.innerHTML = `<div class="prazdno">${ikona("kusovnik")}
               <p>Nejdřív přidejte aspoň jednu skříňku.</p></div>`;
           } else {
             cil.innerHTML = `<div class="hlaska chyba">${esc(data.chyba
@@ -1422,7 +1684,9 @@
         <label class="radka"><input type="checkbox" id="mt-vlakno"> Dekor má směr vlákna</label>
         <span class="napoveda">Díly se pak neotáčí a v kusovníku je délka po vlákně.</span>
         <div id="mt-zprava" aria-live="polite"></div>
-        <button type="button" class="tlacitko plne" id="mt-ulozit">Přidat materiál</button>`,
+        <div class="panel-akce">
+          <button type="button" class="tlacitko plne" id="mt-ulozit">Přidat materiál</button>
+        </div>`,
         (panel) => {
           panel.querySelector("#mt-ulozit").addEventListener("click", async () => {
             const zprava = panel.querySelector("#mt-zprava");
@@ -1613,6 +1877,8 @@
     }
 
     // ── Start ──────────────────────────────────────────────────────────
+    sledujKlavesnici();
+
     async function start() {
       const { data } = await api("/api/ja").catch(() => ({ data: {} }));
       stav.ja = data;
