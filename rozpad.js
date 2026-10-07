@@ -208,7 +208,13 @@ function dil(vstup, standard, material) {
  * ověřit, čte jednu obrazovku, ne šest souborů.
  */
 export function rozpadSkrinky(skrinka, standard, material, materialZad) {
-  const t = standard.tloustka_mm;
+  // Tloušťka se bere ze SKUTEČNĚ ZVOLENÉHO materiálu, ne ze standardu:
+  // korpus je z té desky, kterou truhlář vybral. Kdyby se světlost počítala
+  // ze standardních 18 mm a na skříňce byl dekor 22 mm, dno by vyšlo o 8 mm
+  // širší, než se vejde mezi boky — a díl by se navíc vykázal jako 22mm,
+  // takže by chyba nebyla na kusovníku vidět. Standard je jen záloha pro
+  // případ, že materiál tloušťku nenese.
+  const t = cele(material && material.tloustka_mm, 0) || standard.tloustka_mm;
   const S = cele(skrinka.sirka_mm, 600);
   const V = cele(skrinka.vyska_mm, 720);
   const H = cele(skrinka.hloubka_mm, 510);
