@@ -73,8 +73,9 @@ export async function onRequestPost(context) {
 
   const cislo = await zrcadliDoIssue(env, vlozeno.id, mesice, varianta);
   if (cislo) {
-    await env.DB.prepare("UPDATE objednavky SET issue_cislo = ? WHERE id = ?")
-      .bind(cislo, vlozeno.id).run();
+    await env.DB.prepare(
+      "UPDATE objednavky SET issue_cislo = ? WHERE uzivatel_id = ? AND id = ?"
+    ).bind(cislo, data.uzivatel.id, vlozeno.id).run();
   }
   const emaily = await posliEmaily(env, data.uzivatel.email, {
     id: vlozeno.id, mesice, varianta, cena, fakturace, spotrebitel, souhlas,

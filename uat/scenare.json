@@ -1,5 +1,5 @@
 {
-  "poznamka": "Akceptační scénáře ze schválené specifikace, spouští je uat_kontrola.py proti skutečnému API (wrangler pages dev + lokální D1 z migrací). Čísla v kroku 'Vygenerovat kusovník' jsou tatáž, která specifikace žádá ověřit na telefonu: skříňka 600 × 720 × 510 s jednou policí a jedněmi dvířky dá 8 dílů — bok 2× 510 × 720, dno 564 × 510, traverza 2× 564 × 100, police 564 × 490, záda 580 × 700, dvířka 597 × 717.",
+  "poznamka": "Akceptační scénáře ze schválené specifikace, spouští je uat_kontrola.py proti skutečnému API (wrangler pages dev + lokální D1 z migrací). Čísla v kroku 'Vygenerovat kusovník' jsou tatáž, která specifikace žádá ověřit na telefonu: skříňka 600 × 720 × 510 s jednou policí a jedněmi dvířky dá 8 dílů — bok 2× 510 × 720, dno 564 × 510, traverza 2× 564 × 100, police 564 × 490, záda 580 × 700, dvířka 597 × 717. Typ skříňky se v tělech úmyslně nevyplňuje a nechává se na výchozí hodnotě 'spodni' (zakazky_data.js, ocistiSkrinku): kontrola izolace hledá řetězce z těl účtu A v odpovědích účtu B a slovo 'spodni' je kus názvu parametru 'traverzy_spodni', který má ve svém standardu každý účet — jako stopa by tedy hlásilo únik tam, kde žádný není.",
   "scenare": [
     {
       "nazev": "Od měření ke kusovníku",
@@ -32,7 +32,6 @@
                 ],
                 "skrinky": [
                   {
-                    "typ": "spodni",
                     "odsazeni_mm": 0,
                     "sirka_mm": 600,
                     "vyska_mm": 720,
@@ -99,7 +98,6 @@
                 "otvory": [],
                 "skrinky": [
                   {
-                    "typ": "spodni",
                     "odsazeni_mm": 0,
                     "sirka_mm": 900,
                     "vyska_mm": 720,
