@@ -1,0 +1,192 @@
+{
+  "poznamka": "Akceptační scénáře ze schválené specifikace, spouští je uat_kontrola.py proti skutečnému API (wrangler pages dev + lokální D1 z migrací). Čísla v kroku 'Vygenerovat kusovník' jsou tatáž, která specifikace žádá ověřit na telefonu: skříňka 600 × 720 × 510 s jednou policí a jedněmi dvířky dá 8 dílů — bok 2× 510 × 720, dno 564 × 510, traverza 2× 564 × 100, police 564 × 490, záda 580 × 700, dvířka 597 × 717.",
+  "scenare": [
+    {
+      "nazev": "Od měření ke kusovníku",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/standard",
+          "ocekavam": 200,
+          "obsahuje": ["tloustka_mm", "spara_okraj_desetiny"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "Ukázka — kuchyň", "oznaceni_zakaznika": "Zkouška UAT" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "Ukázka — kuchyň", "oznaceni_zakaznika": "Zkouška UAT" },
+            "steny": [
+              {
+                "nazev": "Stěna A",
+                "delka_mm": 3600,
+                "vyska_mm": 2600,
+                "otvory": [
+                  { "typ": "okno", "odsazeni_mm": 1200, "sirka_mm": 1200, "vyska_mm": 1400, "parapet_mm": 900 }
+                ],
+                "skrinky": [
+                  {
+                    "typ": "spodni",
+                    "odsazeni_mm": 0,
+                    "sirka_mm": 600,
+                    "vyska_mm": 720,
+                    "hloubka_mm": 510,
+                    "pocet_polic": 1,
+                    "pocet_dvirek": 1,
+                    "pocet_zasuvek": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200,
+          "obsahuje": ["Stěna A", "3600"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/kusovnik",
+          "telo": { "zakazka_id": "{zakazka}" },
+          "ocekavam": 200,
+          "obsahuje": ["\"pocet_dilu\":8", "Bok", "Traverza", "Dvířka"],
+          "uloz": { "kusovnik": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}",
+          "ocekavam": 200,
+          "obsahuje": ["\"pocet_dilu\":8"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}/csv",
+          "ocekavam": 200,
+          "obsahuje": ["material;dil;delka_mm", "Rozměry před odesláním do nářezového centra zkontrolujte"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky",
+          "ocekavam": 200,
+          "obsahuje": ["Ukázka — kuchyň"]
+        }
+      ]
+    },
+    {
+      "nazev": "Kopie zakázky jako šablona",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "Šablona — rovná linka" },
+          "ocekavam": 200,
+          "uloz": { "zdroj": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zdroj}",
+          "telo": {
+            "zakazka": { "nazev": "Šablona — rovná linka" },
+            "steny": [
+              {
+                "nazev": "Stěna A",
+                "delka_mm": 3000,
+                "vyska_mm": 2500,
+                "otvory": [],
+                "skrinky": [
+                  {
+                    "typ": "spodni",
+                    "odsazeni_mm": 0,
+                    "sirka_mm": 900,
+                    "vyska_mm": 720,
+                    "hloubka_mm": 510,
+                    "pocet_polic": 1,
+                    "pocet_dvirek": 2,
+                    "pocet_zasuvek": 0
+                  }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky/{zdroj}/kopie",
+          "telo": { "nazev": "Novák — podle šablony" },
+          "ocekavam": 200,
+          "uloz": { "kopie": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{kopie}",
+          "ocekavam": 200,
+          "obsahuje": ["Novák — podle šablony", "\"sirka_mm\":900"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/zakazky/{kopie}",
+          "ocekavam": 404
+        },
+        {
+          "jako": "B",
+          "pozadavek": "POST /api/kusovnik",
+          "telo": { "zakazka_id": "{kopie}" },
+          "ocekavam": 404
+        }
+      ]
+    },
+    {
+      "nazev": "Standard dílny a materiály",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/standard",
+          "telo": {
+            "nazev": "Dílna Zkouška",
+            "tloustka_mm": 18,
+            "zada_typ": "nasazena",
+            "hrana_pohledova_desetiny": 20,
+            "hrana_ostatni_desetiny": 8
+          },
+          "ocekavam": 200,
+          "obsahuje": ["Dílna Zkouška", "nasazena"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/standard",
+          "ocekavam": 200,
+          "obsahuje": ["Dílna Zkouška"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/standard",
+          "ocekavam": 200,
+          "neobsahuje": ["Dílna Zkouška"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/materialy",
+          "telo": { "nazev": "LTD 18 dub Zkouška", "dekor_kod": "H1145", "tloustka_mm": 18, "vlakno": true },
+          "ocekavam": 200,
+          "uloz": { "material": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/materialy",
+          "ocekavam": 200,
+          "obsahuje": ["LTD 18 dub Zkouška"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "DELETE /api/materialy?id={material}",
+          "ocekavam": 200
+        }
+      ]
+    }
+  ]
+}

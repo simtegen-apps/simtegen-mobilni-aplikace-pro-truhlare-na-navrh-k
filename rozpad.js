@@ -469,7 +469,11 @@ export function odhadDesek(polozky, standard) {
   return { desek: celkem, podle, nevejde };
 }
 
-/** Ukázkový rozpad pro obrazovku Standard — ať je vidět, co parametry dělají. */
+/**
+ * Ukázkový rozpad pro obrazovku Standard — ať je vidět, co parametry dělají.
+ * Vrací rozebrané položky, ne slepenou větu: obrazovka je skládá do seznamu
+ * (název, počet kusů, rozměr) a nemusí větu zase rozebírat zpátky.
+ */
 export function ukazkaStandardu(standard) {
   const material = normalizujMaterial({ nazev: "ukázka", tloustka_mm: standard.tloustka_mm, vlakno: 0 });
   const zada = normalizujMaterial({ nazev: "záda", tloustka_mm: standard.zada_tloustka_mm, vlakno: 0 });
@@ -478,7 +482,12 @@ export function ukazkaStandardu(standard) {
       pocet_polic: 1, pocet_dvirek: 1, pocet_zasuvek: 0 },
     standard, material, zada
   );
-  return dily.map((d) => `${d.nazev} ${d.ks}× ${d.a_mm} × ${d.b_mm}`);
+  return dily.map((d) => ({
+    nazev: d.nazev,
+    ks: d.ks,
+    rozmer: `${d.a_mm} × ${d.b_mm}`,
+    hrany: d.hrany_popis,
+  }));
 }
 
 const CSV_HLAVICKA = [

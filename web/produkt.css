@@ -1,0 +1,17 @@
+/* Barva produktu — jediné místo, kde se produkt vzhledem liší od ostatních
+ * appek SimteGen. Stavitel ji volí podle tématu produktu a zapíše do spec
+ * (pole design). Smí tu být jen proměnná --barva-produktu (a táž pro tmavý
+ * režim v @media prefers-color-scheme: dark). CI hlídá kontrast: na papíře
+ * #f6f4ef aspoň 4.5:1, v tmavém režimu na #161513 taky.
+ *
+ * Kusovník pro truhláře: jedlová zelená. Dřevo na papíře vypadá jako skvrna
+ * od kávy; jehličnatá zelená drží dílenský tón, je čitelná jako text
+ * a nepere se s černým inkoustem výkresu. */
+:root {
+  --barva-produktu: #2f6b43;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --barva-produktu: #4fa36b;
+  }
+}
