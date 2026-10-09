@@ -7,6 +7,11 @@
 // closes (§ 1837 l). Without that tick a consumer's paid period starts
 // only after 14 days; a business customer has no such window.
 //
+// The price is NOT taken from the request: it is computed from the approved
+// price list (cenik.js). What the browser sends is only checked against it,
+// so an order can never be stored — and invoiced — for an amount the
+// customer typed instead of the one they were shown.
+//
 // Money still never flows through the app: the customer gets a
 // confirmation "in textual form" (the § 1837 l record), the operator a
 // copy with the billing details. The GitHub mirror carries only the order
@@ -17,6 +22,7 @@
 // GET → the signed-in customer's own orders.
 
 import { json, ted } from "../../spolecne.js";
+import { cenaZa, MIN_MESICU, MAX_MESICU } from "../../cenik.js";
 
 const MAX_FAKTURACE = 600;
 
@@ -41,11 +47,30 @@ export async function onRequestPost(context) {
     return json({ chyba: "Neplatný požadavek." }, 400);
   }
   const mesice = Number(telo && telo.mesice);
-  if (!Number.isInteger(mesice) || mesice < 1 || mesice > 24) {
-    return json({ chyba: "Zvolte délku předplatného 1–24 měsíců." }, 422);
+  if (!Number.isInteger(mesice) || mesice < MIN_MESICU || mesice > MAX_MESICU) {
+    return json({ chyba: `Zvolte délku předplatného ${MIN_MESICU}–${MAX_MESICU} měsíců.` }, 422);
   }
   const varianta = String((telo && telo.varianta) || "").trim().slice(0, 80);
-  const cena = Number(telo && telo.cena_czk);
+
+  // Cenu určuje SERVER podle schváleného ceníku (cenik.js). Číslo z těla
+  // požadavku je jen kontrola, že zákazník na obrazovce viděl totéž —
+  // kdyby se cena ukládala z požadavku, stačilo by ji při objednávce
+  // přepsat a faktura by vyšla na cizí částku.
+  const cena = cenaZa(mesice);
+  const poslana = telo && telo.cena_czk !== null && telo.cena_czk !== undefined
+    ? Number(telo.cena_czk) : null;
+  if (poslana !== null && !Number.isFinite(poslana)) {
+    return json({ chyba: "Neplatný požadavek." }, 400);
+  }
+  if (cena === null && poslana !== null) {
+    return json({ chyba: "Ceník zatím není zveřejněný — celkovou cenu vám potvrdíme "
+      + "e-mailem dřív, než vystavíme fakturu." }, 422);
+  }
+  if (cena !== null && poslana !== null && Math.round(poslana) !== cena) {
+    return json({ chyba: "Cena se mezitím změnila. Načtěte prosím stránku znovu "
+      + "a objednávku zopakujte." }, 409);
+  }
+
   const fakturace = String((telo && telo.fakturace) || "").trim();
   if (fakturace.length < 3) {
     return json({ chyba: "Vyplňte prosím fakturační údaje (název nebo jméno, adresa, IČO máte-li)." }, 422);
@@ -67,7 +92,7 @@ export async function onRequestPost(context) {
     "INSERT INTO objednavky (uzivatel_id, mesice, varianta, cena_czk, fakturace, spotrebitel, " +
     "souhlas_zahajeni, souhlas_cas) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, vytvoreno"
   ).bind(
-    data.uzivatel.id, mesice, varianta || null, Number.isFinite(cena) ? Math.round(cena) : null,
+    data.uzivatel.id, mesice, varianta || null, cena,
     fakturace, spotrebitel ? 1 : 0, souhlas ? 1 : 0, souhlas ? ted() : null,
   ).first();
 

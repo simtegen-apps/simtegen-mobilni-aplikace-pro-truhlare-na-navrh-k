@@ -149,9 +149,12 @@
     // se varování na obrazovce nerozešla s varováními v uloženém kusovníku.
     import { TYPY_SKRINEK, celeCislo, svislyRozsah, zkontrolujStenu } from "./kolize.js";
 
-    // CENIK doplní stavitel teprve ze SCHVÁLENÉ ceny — ve stejném kroku,
-    // ve kterém se do data-manifest.json zapíše `cena_dph`. Dokud je null,
-    // aplikace nikde neslibuje číslo, které neprošlo bránou majitele.
+    // Tohle je jen ZOBRAZENÍ ceny. Závazný ceník je na serveru (cenik.js) —
+    // podle něj se počítá částka objednávky a číslo odtud slouží jen jako
+    // kontrola, že zákazník viděl totéž. Doplní se tedy obojí najednou ze
+    // SCHVÁLENÉ ceny, ve stejném kroku, ve kterém se do data-manifest.json
+    // zapíše `cena_dph`. Dokud je null, aplikace nikde neslibuje číslo,
+    // které neprošlo bránou majitele.
     // Tvar: window.CENIK = { mesic: 490, mena: "Kč" };
     window.CENIK = null;
     const CENIK = window.CENIK;
