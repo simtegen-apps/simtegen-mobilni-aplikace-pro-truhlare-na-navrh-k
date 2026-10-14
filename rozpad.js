@@ -208,7 +208,13 @@ function dil(vstup, standard, material) {
  * ověřit, čte jednu obrazovku, ne šest souborů.
  */
 export function rozpadSkrinky(skrinka, standard, material, materialZad) {
-  const t = standard.tloustka_mm;
+  // Tloušťka se bere ze SKUTEČNĚ ZVOLENÉHO materiálu, ne ze standardu:
+  // korpus je z té desky, kterou truhlář vybral. Kdyby se světlost počítala
+  // ze standardních 18 mm a na skříňce byl dekor 22 mm, dno by vyšlo o 8 mm
+  // širší, než se vejde mezi boky — a díl by se navíc vykázal jako 22mm,
+  // takže by chyba nebyla na kusovníku vidět. Standard je jen záloha pro
+  // případ, že materiál tloušťku nenese.
+  const t = cele(material && material.tloustka_mm, 0) || standard.tloustka_mm;
   const S = cele(skrinka.sirka_mm, 600);
   const V = cele(skrinka.vyska_mm, 720);
   const H = cele(skrinka.hloubka_mm, 510);
@@ -469,7 +475,11 @@ export function odhadDesek(polozky, standard) {
   return { desek: celkem, podle, nevejde };
 }
 
-/** Ukázkový rozpad pro obrazovku Standard — ať je vidět, co parametry dělají. */
+/**
+ * Ukázkový rozpad pro obrazovku Standard — ať je vidět, co parametry dělají.
+ * Vrací rozebrané položky, ne slepenou větu: obrazovka je skládá do seznamu
+ * (název, počet kusů, rozměr) a nemusí větu zase rozebírat zpátky.
+ */
 export function ukazkaStandardu(standard) {
   const material = normalizujMaterial({ nazev: "ukázka", tloustka_mm: standard.tloustka_mm, vlakno: 0 });
   const zada = normalizujMaterial({ nazev: "záda", tloustka_mm: standard.zada_tloustka_mm, vlakno: 0 });
@@ -478,7 +488,12 @@ export function ukazkaStandardu(standard) {
       pocet_polic: 1, pocet_dvirek: 1, pocet_zasuvek: 0 },
     standard, material, zada
   );
-  return dily.map((d) => `${d.nazev} ${d.ks}× ${d.a_mm} × ${d.b_mm}`);
+  return dily.map((d) => ({
+    nazev: d.nazev,
+    ks: d.ks,
+    rozmer: `${d.a_mm} × ${d.b_mm}`,
+    hrany: d.hrany_popis,
+  }));
 }
 
 const CSV_HLAVICKA = [

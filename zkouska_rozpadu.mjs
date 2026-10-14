@@ -73,6 +73,29 @@ for (const [nazev, desetiny, popis] of OCEKAVANE_HRANY) {
     + `  (spočítáno ${nejvetsi / 10} mm, popis „${d ? d.hrany_popis : "—"}“)`);
 }
 
+// Tloušťka materiálu, ne standardu: na silnější desce musí zúžit světlost
+// i záda do drážky. Dřív se světlost počítala vždy z 18 mm standardu, takže
+// dno vyšlo o 8 mm širší, než se vejde mezi boky.
+const ltd22 = normalizujMaterial({ id: 2, nazev: "LTD 22 dub", tloustka_mm: 22, vlakno: 0 });
+const OCEKAVANO_22 = [
+  ["Bok", 2, 510, 720],
+  ["Dno", 1, 556, 510],
+  ["Traverza", 2, 556, 100],
+  ["Police", 1, 556, 490],
+  ["Záda (do drážky)", 1, 572, 692],
+  ["Dvířka", 1, 597, 717],
+];
+const dily22 = rozpadSkrinky({ ...skrinka, material_id: 2 }, standard, ltd22, hdf);
+console.log("\nTáž skříňka na desce 22 mm (standard má 18 mm):");
+for (const [nazev, ks, a, b] of OCEKAVANO_22) {
+  const d = dily22.find((x) => x.nazev === nazev);
+  const sedi = d && d.ks === ks && d.a_mm === a && d.b_mm === b;
+  if (!sedi) chyb += 1;
+  console.log(`  ${sedi ? "OK   " : "CHYBA"} ${nazev} ${ks}x ${a} x ${b}`
+    + (d ? `  (spočítáno ${d.ks}x ${d.a_mm} x ${d.b_mm}, tloušťka ${d.tloustka_mm} mm)`
+         : "  (díl vůbec nevznikl)"));
+}
+
 // Kolize: skříňka pod oknem s parapetem 900 do něj nezasahuje, horní ano.
 const dokument = {
   steny: [{

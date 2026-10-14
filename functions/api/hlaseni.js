@@ -1,20 +1,26 @@
-// /api/hlaseni — the product's mailbox.
+// /api/hlaseni — schránka produktu pro PŘIHLÁŠENÉHO zákazníka.
 //
-// GET  → the signed-in customer's own reports, newest first, with answers.
-// POST → {text}: store the report, then mirror it as an issue in the
-//        product's GitHub repo WITHOUT the account (no e-mail, no id of the
-//        user — only the report number). The firm's triage reads issues;
-//        the customer never leaves the app. Mirroring is best effort: a
-//        failed GitHub call must not lose the report.
+// GET  → vlastní hlášení zákazníka, nejnovější nahoře, i s odpovědí firmy.
+// POST → {text, kontext}: hlášení se uloží k účtu (aby zákazník viděl
+//        odpověď v aplikaci) a zrcadlí se jako issue v repozitáři produktu.
 //
-// Not gated by the subscription: reporting a problem is a right, not a
-// feature. Rate-limited per account so a stuck retry loop cannot flood
-// the repo.
+// Repozitáře produktů jsou veřejné, takže text NIKDY neodchází čitelný:
+// zrcadlení dělá zrcadliHlaseni() ze schranka_sifra.js, která ho zašifruje
+// veřejným klíčem SimteGenu. Do issue nejde nic o účtu — jen číslo hlášení
+// a šifrovaný blok. Bezpečnostní kontrola hlídá, že issue se štítkem
+// „hlaseni“ nevzniká nikde jinde.
+//
+// Formulář na straně aplikace řídí web/simtegen.js (tlačítko .nahlasit-chybu),
+// proto sem chodí i `kontext` — technika, která pomůže chybu najít: verze,
+// obrazovka, velikost okna, prohlížeč a posledních pět chyb skriptu.
+// Nic o člověku.
+//
+// Nehlídá se předplatným: nahlásit problém je právo, ne funkce. Omezeno
+// na účet, aby zaseklé opakování nezaplavilo schránku.
 
 import { json, ted } from "../../spolecne.js";
+import { ocistiKontext, zrcadliHlaseni, MIN_DELKA, MAX_DELKA } from "../../schranka_sifra.js";
 
-const MIN_DELKA = 3;
-const MAX_DELKA = 2000;
 const MAX_ZA_HODINU = 5;
 
 export async function onRequestGet(context) {
@@ -54,41 +60,16 @@ export async function onRequestPost(context) {
     "INSERT INTO hlaseni (uzivatel_id, text) VALUES (?, ?) RETURNING id, vytvoreno"
   ).bind(data.uzivatel.id, text).first();
 
-  let zrcadlo = false;
-  const cislo = await zrcadliDoIssue(env, vlozeno.id, text);
+  const cislo = await zrcadliHlaseni(env, `Hlášení #${vlozeno.id}`, {
+    zdroj: "aplikace",
+    hlaseni_id: vlozeno.id,
+    text,
+    kontext: ocistiKontext(telo.kontext),
+  });
   if (cislo) {
-    await env.DB.prepare("UPDATE hlaseni SET issue_cislo = ? WHERE id = ?")
-      .bind(cislo, vlozeno.id).run();
-    zrcadlo = true;
+    await env.DB.prepare(
+      "UPDATE hlaseni SET issue_cislo = ? WHERE uzivatel_id = ? AND id = ?"
+    ).bind(cislo, data.uzivatel.id, vlozeno.id).run();
   }
-  return json({ id: vlozeno.id, stav: "nove", zrcadlo });
-}
-
-async function zrcadliDoIssue(env, id, text) {
-  // Both come from the deploy workflow (org secret + repository name). A
-  // preview deployment has neither, so test reports never reach the firm.
-  if (!env.GITHUB_ISSUES_TOKEN || !env.GITHUB_REPO) return null;
-  try {
-    const odpoved = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/issues`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.GITHUB_ISSUES_TOKEN}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "simtegen-schranka",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: `Hlášení #${id}`,
-        // The customer's text is the whole body; no account details.
-        body: `${text}\n\n---\nZe schránky produktu, hlášení č. ${id}. Odpověď: komentář začínající „odpoved:“.`,
-        labels: ["hlaseni"],
-      }),
-    });
-    if (!odpoved.ok) return null;
-    const issue = await odpoved.json();
-    return issue.number || null;
-  } catch {
-    return null;
-  }
+  return json({ id: vlozeno.id, stav: "nove", zrcadlo: Boolean(cislo) });
 }

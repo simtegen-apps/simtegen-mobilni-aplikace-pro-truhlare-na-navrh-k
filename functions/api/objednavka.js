@@ -7,18 +7,50 @@
 // closes (§ 1837 l). Without that tick a consumer's paid period starts
 // only after 14 days; a business customer has no such window.
 //
+// The price is NOT taken from the request: it is computed from the approved
+// price list (cenik.js). What the browser sends is only checked against it,
+// so an order can never be stored — and invoiced — for an amount the
+// customer typed instead of the one they were shown.
+//
 // Money still never flows through the app: the customer gets a
 // confirmation "in textual form" (the § 1837 l record), the operator a
 // copy with the billing details. The GitHub mirror carries only the order
-// number and months — no account, no billing data — and is what the firm
-// (SimteGen) reacts to: it dispatches the Faktura workflow, which reads
-// the billing details from THIS database and mails the invoice.
+// number, the months and the variant name — no account, no billing data —
+// and is what the firm (SimteGen) reacts to: it dispatches the Faktura
+// workflow, which reads the billing details from THIS database and mails
+// the invoice. The variant is the one piece of customer text in there, so
+// it goes through ocistiVariantu(): an issue body is Markdown, and nobody
+// at the firm should be reading links, images or extra "instructions" a
+// customer wrote into it.
 //
 // GET → the signed-in customer's own orders.
 
 import { json, ted } from "../../spolecne.js";
+import { cenaZa, MIN_MESICU, MAX_MESICU } from "../../cenik.js";
 
 const MAX_FAKTURACE = 600;
+const MAX_VARIANTA = 80;
+
+// `varianta` je krátký název varianty předplatného, ale přichází z prohlížeče
+// jako volný text — a končí v těle GitHub issue, které si firma otevře jako
+// Markdown. Neošetřený by tam zákazník propašoval odkaz, obrázek z cizího
+// serveru, @zmínku, #křížový odkaz na jiné issue nebo zalomení řádku, kterým
+// by dopsal vlastní „pokyn“ pod naši větu a snažil se tak zařídit, aby člověk
+// ve firmě vystavil fakturu jinak, než má.
+//
+// Proto síto, ne escapování: projdou jen písmena, číslice, mezera a pár
+// oddělovačů. Odpadne tím i to, co není vidět — značky pro směr psaní
+// a nulové mezery (jsou to formátovací znaky, ne písmena). Víc než název
+// varianty tohle pole nikdy nést nemá.
+const VARIANTA_ZAKAZANE = /[^\p{L}\p{N} .,\-_\/]/gu;
+
+function ocistiVariantu(text) {
+  return String(text ?? "")
+    .replace(VARIANTA_ZAKAZANE, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_VARIANTA);
+}
 
 export async function onRequestGet(context) {
   const { env, data } = context;
@@ -41,11 +73,30 @@ export async function onRequestPost(context) {
     return json({ chyba: "Neplatný požadavek." }, 400);
   }
   const mesice = Number(telo && telo.mesice);
-  if (!Number.isInteger(mesice) || mesice < 1 || mesice > 24) {
-    return json({ chyba: "Zvolte délku předplatného 1–24 měsíců." }, 422);
+  if (!Number.isInteger(mesice) || mesice < MIN_MESICU || mesice > MAX_MESICU) {
+    return json({ chyba: `Zvolte délku předplatného ${MIN_MESICU}–${MAX_MESICU} měsíců.` }, 422);
   }
-  const varianta = String((telo && telo.varianta) || "").trim().slice(0, 80);
-  const cena = Number(telo && telo.cena_czk);
+  const varianta = ocistiVariantu(telo && telo.varianta);
+
+  // Cenu určuje SERVER podle schváleného ceníku (cenik.js). Číslo z těla
+  // požadavku je jen kontrola, že zákazník na obrazovce viděl totéž —
+  // kdyby se cena ukládala z požadavku, stačilo by ji při objednávce
+  // přepsat a faktura by vyšla na cizí částku.
+  const cena = cenaZa(mesice);
+  const poslana = telo && telo.cena_czk !== null && telo.cena_czk !== undefined
+    ? Number(telo.cena_czk) : null;
+  if (poslana !== null && !Number.isFinite(poslana)) {
+    return json({ chyba: "Neplatný požadavek." }, 400);
+  }
+  if (cena === null && poslana !== null) {
+    return json({ chyba: "Ceník zatím není zveřejněný — celkovou cenu vám potvrdíme "
+      + "e-mailem dřív, než vystavíme fakturu." }, 422);
+  }
+  if (cena !== null && poslana !== null && Math.round(poslana) !== cena) {
+    return json({ chyba: "Cena se mezitím změnila. Načtěte prosím stránku znovu "
+      + "a objednávku zopakujte." }, 409);
+  }
+
   const fakturace = String((telo && telo.fakturace) || "").trim();
   if (fakturace.length < 3) {
     return json({ chyba: "Vyplňte prosím fakturační údaje (název nebo jméno, adresa, IČO máte-li)." }, 422);
@@ -67,14 +118,15 @@ export async function onRequestPost(context) {
     "INSERT INTO objednavky (uzivatel_id, mesice, varianta, cena_czk, fakturace, spotrebitel, " +
     "souhlas_zahajeni, souhlas_cas) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, vytvoreno"
   ).bind(
-    data.uzivatel.id, mesice, varianta || null, Number.isFinite(cena) ? Math.round(cena) : null,
+    data.uzivatel.id, mesice, varianta || null, cena,
     fakturace, spotrebitel ? 1 : 0, souhlas ? 1 : 0, souhlas ? ted() : null,
   ).first();
 
   const cislo = await zrcadliDoIssue(env, vlozeno.id, mesice, varianta);
   if (cislo) {
-    await env.DB.prepare("UPDATE objednavky SET issue_cislo = ? WHERE id = ?")
-      .bind(cislo, vlozeno.id).run();
+    await env.DB.prepare(
+      "UPDATE objednavky SET issue_cislo = ? WHERE uzivatel_id = ? AND id = ?"
+    ).bind(cislo, data.uzivatel.id, vlozeno.id).run();
   }
   const emaily = await posliEmaily(env, data.uzivatel.email, {
     id: vlozeno.id, mesice, varianta, cena, fakturace, spotrebitel, souhlas,
@@ -84,6 +136,11 @@ export async function onRequestPost(context) {
 
 async function zrcadliDoIssue(env, id, mesice, varianta) {
   if (!env.GITHUB_ISSUES_TOKEN || !env.GITHUB_REPO) return null;
+  // Síto znovu, i když vstup prošel ocistiVariantu už při přijetí: tohle je
+  // místo, kde text opouští náš systém, a nesmí záviset na tom, že si ho
+  // volající pohlídal. Číslo objednávky a počet měsíců jsou celá čísla.
+  const popis = ocistiVariantu(varianta);
+  const mesicu = Math.round(Number(mesice)) || 0;
   try {
     const odpoved = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/issues`, {
       method: "POST",
@@ -96,7 +153,7 @@ async function zrcadliDoIssue(env, id, mesice, varianta) {
       },
       body: JSON.stringify({
         title: `Objednávka #${id}`,
-        body: `Předplatné na ${mesice} měs.${varianta ? ` (${varianta})` : ""}. ` +
+        body: `Předplatné na ${mesicu} měs.${popis ? ` (${popis})` : ""}. ` +
               "Fakturační údaje jsou v databázi produktu; fakturu vystaví firma (workflow Faktura).",
         labels: ["objednavka"],
       }),

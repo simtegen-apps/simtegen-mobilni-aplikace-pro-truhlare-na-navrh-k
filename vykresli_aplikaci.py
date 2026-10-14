@@ -125,6 +125,7 @@ OFFLINE = """<!doctype html>
   <meta name="theme-color" content="{barva}">
   <title>{nazev} — bez připojení</title>
   <link rel="stylesheet" href="styl.css">
+  <link rel="stylesheet" href="produkt.css">
 </head>
 <body class="appka">
   <main class="obrazovka aktivni">
@@ -141,16 +142,26 @@ OFFLINE = """<!doctype html>
 
 # ── Inputs ────────────────────────────────────────────────────────────
 
-def _barvy(styl: str) -> dict[str, str]:
-    """Light-theme tokens from the first :root block of styl.css. The app's
-    theme colour must be the product's accent, not a guess."""
-    blok = re.search(r":root\s*\{(.*?)\}", styl, re.S)
-    tokeny = dict(re.findall(r"--(barva-[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})", blok.group(1) if blok else ""))
-    return {
-        "akcent": tokeny.get("barva-akcent", "#10504b").lower(),
-        "akcent_text": tokeny.get("barva-akcent-text", "#ffffff").lower(),
-        "pozadi": tokeny.get("barva-pozadi", "#f4f6f5").lower(),
-    }
+def _barvy(styl: str, produkt: str = "") -> dict[str, str]:
+    """Light-theme colours for the app. Design v2: the product's colour
+    lives in web/produkt.css (--barva-produktu) and the ground is the
+    paper (--barva-papir in styl.css). v1 products had --barva-akcent and
+    --barva-pozadi in styl.css — still read as the fallback, so an app
+    built before v2 keeps its colours until its next build converts it."""
+    def tokeny(text: str) -> dict[str, str]:
+        blok = re.search(r":root\s*\{(.*?)\}", text, re.S)
+        return dict(re.findall(r"--(barva-[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})", blok.group(1) if blok else ""))
+    s, pr = tokeny(styl), tokeny(produkt)
+    akcent = pr.get("barva-produktu") or s.get("barva-produktu") or s.get("barva-akcent") or "#c2410c"
+    pozadi = s.get("barva-papir") or s.get("barva-pozadi") or "#f6f4ef"
+    return {"akcent": akcent.lower(), "akcent_text": "#ffffff", "pozadi": pozadi.lower()}
+
+
+def _nacti_barvy() -> dict[str, str]:
+    def cti(jmeno: str) -> str:
+        cesta = WEB / jmeno
+        return cesta.read_text(encoding="utf-8") if cesta.exists() else ""
+    return _barvy(cti("styl.css"), cti("produkt.css"))
 
 
 def _pismeno(aplikace: dict) -> str:
@@ -371,7 +382,7 @@ def vykresli(manifest: dict) -> list[str]:
     chyby = _chyby_konfigurace(manifest)
     if chyby:
         raise SystemExit("Modul aplikace: " + " ".join(chyby))
-    barvy = _barvy((WEB / "styl.css").read_text(encoding="utf-8") if (WEB / "styl.css").exists() else "")
+    barvy = _nacti_barvy()
     zapsano = []
     for cesta, text in _texty(manifest, barvy).items():
         cesta.parent.mkdir(parents=True, exist_ok=True)
@@ -406,7 +417,7 @@ def zkontroluj(manifest: dict) -> list[str]:
     chyby = _chyby_konfigurace(manifest)
     if chyby:
         return chyby
-    barvy = _barvy((WEB / "styl.css").read_text(encoding="utf-8") if (WEB / "styl.css").exists() else "")
+    barvy = _nacti_barvy()
     for cesta, text in _texty(manifest, barvy).items():
         if not cesta.exists() or cesta.read_text(encoding="utf-8").replace("\r\n", "\n") != text:
             chyby.append(f"{cesta} neodpovídá manifestu — spusť `python vykresli_aplikaci.py` (ručně se needituje).")
