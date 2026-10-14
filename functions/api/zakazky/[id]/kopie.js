@@ -1,7 +1,9 @@
 // /api/zakazky/:id/kopie — starší zakázka jako šablona pro novou.
 //
 // Tohle je funkce, kvůli které se truhlář vrací: druhá kuchyň bývá skoro
-// jako první, jen o kus kratší stěna. Kopíruje se návrh (stěny a skříňky),
+// jako první, jen o kus kratší stěna. Kopíruje se návrh (místnosti s jejich
+// rozmístěním, stěny s okny a dveřmi, skříňky — nactiDokument je vrátí
+// a ulozDokument je celé zapíše pod novou zakázku),
 // NE označení koncového zákazníka ani poznámka — ty patří k té staré
 // zakázce a do nové by se nasypaly cizí údaje.
 

@@ -1,13 +1,16 @@
 // /api/zakazky/:id — jedna zakázka jako celý dokument.
 //
-// GET    → {zakazka, steny:[{…, skrinky:[…]}]}
-// PUT    → tentýž tvar zpátky; stěny a skříňky se přepíšou celé (viz
-//          zakazky_data.js — telefon u zákazníka drží celý dokument).
+// GET    → {zakazka, mistnosti:[…], steny:[{…, mistnost, skrinky:[…]}]}
+// PUT    → tentýž tvar zpátky; místnosti, stěny a skříňky se přepíšou celé
+//          (viz zakazky_data.js — telefon u zákazníka drží celý dokument).
+//          409, když tělo bez místností přepisuje zakázku s víc místnostmi.
 // DELETE → smaže zakázku; stěny, skříňky i kusovníky jdou s ní (CASCADE).
 
 import { json, ted } from "../../../spolecne.js";
 import { vyzadujPredplatne } from "../../../predplatne.js";
-import { nactiDokument, ulozDokument, ocistiText } from "../../../zakazky_data.js";
+import {
+  nactiDokument, nactiMistnosti, ulozDokument, ocistiText,
+} from "../../../zakazky_data.js";
 
 function cisloZakazky(context) {
   const id = Number(context.params.id);
@@ -52,6 +55,30 @@ export async function onRequestPut(context) {
   if (nazev.length < 2) {
     return json({ chyba: "Napište prosím název zakázky (aspoň dva znaky)." }, 422);
   }
+
+  // Tělo bez místností posílá aplikace z doby před místnostmi (otevřená
+  // karta, nainstalovaná appka, starý koncept v telefonu). U jedné místnosti
+  // se zachová ta uložená; víc místností by takový zápis slil do jedné,
+  // a to se odmítne dřív, než se cokoli přepíše.
+  if (!Array.isArray(telo?.mistnosti)) {
+    const ulozene = await nactiMistnosti(env, data.uzivatel.id, id);
+    if (ulozene.length > 1) {
+      return json({ chyba: "Aplikace se mezitím aktualizovala — obnovte ji prosím, "
+        + "ať nepřijdete o místnosti." }, 409);
+    }
+    telo.mistnosti = ulozene;
+    // Starý klient o zatočení stěn neví — vnější roh místnosti tvaru L by
+    // jinak tiše spadl zpátky na „dovnitř“.
+    const zatoceni = await env.DB.prepare(
+      "SELECT poradi, zatoceni FROM steny WHERE uzivatel_id = ? AND zakazka_id = ?"
+    ).bind(data.uzivatel.id, id).all();
+    const podlePoradi = new Map((zatoceni.results || []).map((s) => [s.poradi, s.zatoceni]));
+    (Array.isArray(telo.steny) ? telo.steny : []).forEach((stena, i) => {
+      if (stena && typeof stena === "object" && !stena.zatoceni && podlePoradi.has(i)) {
+        stena.zatoceni = podlePoradi.get(i);
+      }
+    });
+  }
   const stav = telo?.zakazka?.stav === "hotova" ? "hotova" : "rozpracovana";
 
   await env.DB.prepare(
@@ -81,6 +108,8 @@ export async function onRequestDelete(context) {
     env.DB.prepare("DELETE FROM skrinky WHERE uzivatel_id = ? AND zakazka_id = ?")
       .bind(data.uzivatel.id, id),
     env.DB.prepare("DELETE FROM steny WHERE uzivatel_id = ? AND zakazka_id = ?")
+      .bind(data.uzivatel.id, id),
+    env.DB.prepare("DELETE FROM mistnosti WHERE uzivatel_id = ? AND zakazka_id = ?")
       .bind(data.uzivatel.id, id),
     env.DB.prepare("DELETE FROM kusovniky WHERE uzivatel_id = ? AND zakazka_id = ?")
       .bind(data.uzivatel.id, id),

@@ -185,6 +185,352 @@
           "ocekavam": 200
         }
       ]
+    },
+    {
+      "nazev": "Build 7: okno na stěně zůstane uložené vedle skříňky",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-okno — kuchyň" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-okno — kuchyň" },
+            "mistnosti": [{ "nazev": "UAT-okno místnost", "x_mm": 0, "y_mm": 0, "otoceni": 0 }],
+            "steny": [
+              {
+                "nazev": "UAT-okno stěna",
+                "delka_mm": 3600,
+                "vyska_mm": 2600,
+                "mistnost": 0,
+                "otvory": [],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0 }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200,
+          "obsahuje": ["UAT-okno stěna", "\"sirka_mm\":600"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-okno — kuchyň" },
+            "mistnosti": [{ "nazev": "UAT-okno místnost", "x_mm": 0, "y_mm": 0, "otoceni": 0 }],
+            "steny": [
+              {
+                "nazev": "UAT-okno stěna",
+                "delka_mm": 3600,
+                "vyska_mm": 2600,
+                "mistnost": 0,
+                "otvory": [
+                  { "typ": "okno", "odsazeni_mm": 1200, "sirka_mm": 1200, "vyska_mm": 1400, "parapet_mm": 900 }
+                ],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0 }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200,
+          "obsahuje": ["\"parapet_mm\":900"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 200,
+          "obsahuje": [
+            "\"typ\":\"okno\",\"odsazeni_mm\":1200,\"sirka_mm\":1200,\"vyska_mm\":1400,\"parapet_mm\":900",
+            "\"odsazeni_mm\":0,\"sirka_mm\":600,\"vyska_mm\":720,\"hloubka_mm\":510"
+          ]
+        }
+      ]
+    },
+    {
+      "nazev": "Build 7: zakázka se dvěma místnostmi",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-prostor — byt" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-prostor — byt" },
+            "mistnosti": [
+              { "nazev": "UAT-Kuchyň", "x_mm": 0, "y_mm": 0, "otoceni": 0 },
+              { "nazev": "UAT-Spíž", "x_mm": 3600, "y_mm": 0, "otoceni": 90 }
+            ],
+            "steny": [
+              { "nazev": "UAT-K1", "delka_mm": 3600, "vyska_mm": 2600, "mistnost": 0, "otvory": [], "skrinky": [] },
+              { "nazev": "UAT-K2", "delka_mm": 2800, "vyska_mm": 2600, "mistnost": 0, "otvory": [], "skrinky": [] },
+              { "nazev": "UAT-K3", "delka_mm": 3600, "vyska_mm": 2600, "mistnost": 0, "otvory": [], "skrinky": [] },
+              { "nazev": "UAT-K4", "delka_mm": 2800, "vyska_mm": 2600, "mistnost": 0, "otvory": [], "skrinky": [] },
+              { "nazev": "UAT-S1", "delka_mm": 1500, "vyska_mm": 2600, "mistnost": 1, "zatoceni": "ven", "otvory": [], "skrinky": [] },
+              { "nazev": "UAT-S2", "delka_mm": 1200, "vyska_mm": 2600, "mistnost": 1, "zatoceni": "ven", "otvory": [], "skrinky": [] }
+            ]
+          },
+          "ocekavam": 200,
+          "obsahuje": ["UAT-Kuchyň", "UAT-Spíž"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 200,
+          "obsahuje": [
+            "\"nazev\":\"UAT-Kuchyň\",\"x_mm\":0,\"y_mm\":0,\"otoceni\":0",
+            "\"nazev\":\"UAT-Spíž\",\"x_mm\":3600,\"y_mm\":0,\"otoceni\":90",
+            "\"nazev\":\"UAT-K4\",\"delka_mm\":2800",
+            "\"nazev\":\"UAT-S2\",\"delka_mm\":1200",
+            "\"zatoceni\":\"dovnitr\",\"mistnost\":0",
+            "\"zatoceni\":\"ven\",\"mistnost\":1"
+          ],
+          "neobsahuje": ["\"zatoceni\":\"ven\",\"mistnost\":0", "\"zatoceni\":\"dovnitr\",\"mistnost\":1"]
+        }
+      ]
+    },
+    {
+      "nazev": "Build 7: skříňka posunutá do okna dá varování v kusovníku",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-kolize — linka" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-kolize — linka" },
+            "mistnosti": [{ "nazev": "UAT-kolize místnost" }],
+            "steny": [
+              {
+                "nazev": "UAT-kolize stěna",
+                "delka_mm": 3600,
+                "vyska_mm": 2600,
+                "otvory": [
+                  { "typ": "okno", "odsazeni_mm": 1200, "sirka_mm": 1200, "vyska_mm": 1400, "parapet_mm": 700 }
+                ],
+                "skrinky": [
+                  { "odsazeni_mm": 1500, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0 }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200,
+          "obsahuje": ["\"odsazeni_mm\":1500"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/kusovnik",
+          "telo": { "zakazka_id": "{zakazka}" },
+          "ocekavam": 200,
+          "obsahuje": ["\"pocet_dilu\":8", "zasahuje do okna"]
+        }
+      ]
+    },
+    {
+      "nazev": "Build 7: kopie zakázky se dvěma místnostmi",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-šablona — byt" },
+          "ocekavam": 200,
+          "uloz": { "zdroj": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zdroj}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-šablona — byt" },
+            "mistnosti": [
+              { "nazev": "UAT-Obývák", "x_mm": 0, "y_mm": 0, "otoceni": 0 },
+              { "nazev": "UAT-Předsíň", "x_mm": 4200, "y_mm": 300, "otoceni": 180 }
+            ],
+            "steny": [
+              {
+                "nazev": "UAT-O1", "delka_mm": 4200, "vyska_mm": 2600, "mistnost": 0,
+                "otvory": [
+                  { "typ": "okno", "odsazeni_mm": 1000, "sirka_mm": 1500, "vyska_mm": 1400, "parapet_mm": 850 }
+                ],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 800, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 2, "pocet_zasuvek": 0 }
+                ]
+              },
+              { "nazev": "UAT-P1", "delka_mm": 2000, "vyska_mm": 2600, "mistnost": 1, "otvory": [], "skrinky": [] }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky/{zdroj}/kopie",
+          "telo": { "nazev": "UAT-kopie bytu" },
+          "ocekavam": 200,
+          "uloz": { "kopie": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{kopie}",
+          "ocekavam": 200,
+          "obsahuje": [
+            "UAT-kopie bytu",
+            "\"nazev\":\"UAT-Obývák\",\"x_mm\":0,\"y_mm\":0,\"otoceni\":0",
+            "\"nazev\":\"UAT-Předsíň\",\"x_mm\":4200,\"y_mm\":300,\"otoceni\":180",
+            "\"parapet_mm\":850",
+            "\"sirka_mm\":800"
+          ]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{kopie}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-kopie bytu" },
+            "mistnosti": [{ "nazev": "UAT-změněná kopie", "x_mm": 0, "y_mm": 0, "otoceni": 0 }],
+            "steny": [
+              { "nazev": "UAT-O1", "delka_mm": 3900, "vyska_mm": 2600, "mistnost": 0, "otvory": [], "skrinky": [] }
+            ]
+          },
+          "ocekavam": 200,
+          "obsahuje": ["UAT-změněná kopie"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zdroj}",
+          "ocekavam": 200,
+          "obsahuje": ["UAT-Obývák", "UAT-Předsíň", "\"parapet_mm\":850", "\"delka_mm\":4200", "\"sirka_mm\":800"],
+          "neobsahuje": ["UAT-změněná kopie", "\"delka_mm\":3900"]
+        }
+      ]
+    },
+    {
+      "nazev": "Build 7: starý klient bez místností nepřepíše víc místností",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-starý klient" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-starý klient" },
+            "mistnosti": [
+              { "nazev": "UAT-Dílna", "x_mm": 0, "y_mm": 0, "otoceni": 0 },
+              { "nazev": "UAT-Sklad", "x_mm": 5000, "y_mm": 0, "otoceni": 0 }
+            ],
+            "steny": [
+              { "nazev": "UAT-D1", "delka_mm": 3000, "vyska_mm": 2600, "mistnost": 0, "otvory": [], "skrinky": [] },
+              { "nazev": "UAT-SK1", "delka_mm": 2000, "vyska_mm": 2600, "mistnost": 1, "otvory": [], "skrinky": [] }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-starý klient" },
+            "steny": [
+              { "nazev": "UAT-D1", "delka_mm": 3100, "vyska_mm": 2600, "otvory": [], "skrinky": [] }
+            ]
+          },
+          "ocekavam": 409,
+          "obsahuje": ["obnovte ji prosím"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 200,
+          "obsahuje": ["UAT-Dílna", "UAT-Sklad", "UAT-SK1", "\"delka_mm\":3000"],
+          "neobsahuje": ["\"delka_mm\":3100"]
+        }
+      ]
+    },
+    {
+      "nazev": "Build 7: účet B nevidí místnosti ani stěny účtu A",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-cizí zakázka A" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-cizí zakázka A" },
+            "mistnosti": [{ "nazev": "UAT-Tajná místnost", "x_mm": 0, "y_mm": 0, "otoceni": 0 }],
+            "steny": [
+              { "nazev": "UAT-tajná stěna", "delka_mm": 3000, "vyska_mm": 2600, "mistnost": 0, "otvory": [], "skrinky": [] }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 404
+        },
+        {
+          "jako": "B",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-přepis účtem B" },
+            "mistnosti": [{ "nazev": "UAT-přepis účtem B" }],
+            "steny": []
+          },
+          "ocekavam": 404
+        },
+        {
+          "jako": "B",
+          "pozadavek": "POST /api/zakazky/{zakazka}/kopie",
+          "telo": { "nazev": "UAT-kopie účtem B" },
+          "ocekavam": 404
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/zakazky",
+          "ocekavam": 200,
+          "neobsahuje": ["UAT-cizí zakázka A", "UAT-Tajná místnost", "UAT-kopie účtem B"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/ucet/export",
+          "ocekavam": 200,
+          "neobsahuje": ["UAT-cizí zakázka A", "UAT-Tajná místnost", "UAT-tajná stěna"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 200,
+          "obsahuje": ["UAT-Tajná místnost", "UAT-tajná stěna"],
+          "neobsahuje": ["UAT-přepis účtem B"]
+        }
+      ]
     }
   ]
 }

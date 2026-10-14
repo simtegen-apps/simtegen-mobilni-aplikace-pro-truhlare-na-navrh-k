@@ -40,7 +40,19 @@ export async function onRequestPost(context) {
 
   const standard = await zajistiStandard(env, data.uzivatel.id);
   const materialy = await nactiMaterialy(env, data.uzivatel.id);
-  const kusovnik = kusovnikZakazky(dokument, standard, materialy);
+  // Víc místností = víc „Stěn A“. Varování (a tím i to, co truhlář pošle
+  // do dílny) proto nesou název místnosti; výpočet dílů se tím nemění.
+  const mistnosti = dokument.mistnosti || [];
+  const kVypoctu = mistnosti.length > 1
+    ? {
+        ...dokument,
+        steny: dokument.steny.map((stena) => ({
+          ...stena,
+          nazev: `${mistnosti[stena.mistnost]?.nazev || "Místnost"} · ${stena.nazev}`,
+        })),
+      }
+    : dokument;
+  const kusovnik = kusovnikZakazky(kVypoctu, standard, materialy);
 
   const vlozeny = await env.DB.prepare(
     "INSERT INTO kusovniky (uzivatel_id, zakazka_id, nazev_zakazky, standard_snapshot_json, "
