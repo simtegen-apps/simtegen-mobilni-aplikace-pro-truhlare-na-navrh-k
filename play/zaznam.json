@@ -1,0 +1,142 @@
+{
+  "jazyk": "cs-CZ",
+  "nazev": "Kusovník pro truhláře",
+  "kratky_popis": "Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.",
+  "dlouhy_popis": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru, kteří měří přímo u zákazníka v telefonu nebo tabletu.\n\nCo aplikace dělá:\n• Zadáte rozměry stěn, oken a dveří a na stěny postavíte skříňky — spodní, horní, vysoké i rohové.\n• Výkres stěny ukazuje skříňky, okna a dveře v měřítku.\n• Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.\n• Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.\n• Kusovník stáhnete jako soubor CSV pro nářezové centrum.\n• Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.\n\nPřihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.\n\nAplikace se platí měsíčním předplatným. Prvních 30 dní je zdarma, bez zadávání platební karty a bez závazku.\n\nRozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte.",
+  "kategorie": "BUSINESS",
+  "kontakt_email": "podpora@simtegen.cz",
+  "zasady_cesta": "/zasady.html",
+  "ucty": true,
+  "smazani_uctu_cesta": "/zasady.html",
+  "bezpecnost_dat": {
+    "sbira": true,
+    "sdili": false,
+    "sifrovano_pri_prenosu": true,
+    "lze_smazat": true,
+    "typy": [
+      {
+        "klic": "email",
+        "kategorie": "Personal info",
+        "typ": "Email address",
+        "ucely": [
+          "Account management",
+          "Fraud prevention, security, and compliance"
+        ],
+        "volitelne": false,
+        "zdroje": [
+          "uzivatele",
+          "prihlasovaci_odkazy"
+        ]
+      },
+      {
+        "klic": "jmeno",
+        "kategorie": "Personal info",
+        "typ": "Name",
+        "ucely": [
+          "App functionality",
+          "Account management"
+        ],
+        "volitelne": false,
+        "zdroje": [
+          "objednavky"
+        ]
+      },
+      {
+        "klic": "adresa",
+        "kategorie": "Personal info",
+        "typ": "Address",
+        "ucely": [
+          "App functionality",
+          "Account management"
+        ],
+        "volitelne": false,
+        "zdroje": [
+          "objednavky"
+        ]
+      },
+      {
+        "klic": "id_uzivatele",
+        "kategorie": "Personal info",
+        "typ": "User IDs",
+        "ucely": [
+          "Account management"
+        ],
+        "volitelne": false,
+        "zdroje": [
+          "uzivatele"
+        ]
+      },
+      {
+        "klic": "osobni_jine",
+        "kategorie": "Personal info",
+        "typ": "Other info",
+        "ucely": [
+          "App functionality"
+        ],
+        "volitelne": false,
+        "zdroje": [
+          "zakazky"
+        ]
+      },
+      {
+        "klic": "historie_nakupu",
+        "kategorie": "Financial info",
+        "typ": "Purchase history",
+        "ucely": [
+          "Account management",
+          "App functionality"
+        ],
+        "volitelne": false,
+        "zdroje": [
+          "predplatne",
+          "platby",
+          "objednavky"
+        ]
+      },
+      {
+        "klic": "zpravy",
+        "kategorie": "Messages",
+        "typ": "Other in-app messages",
+        "ucely": [
+          "Developer communications",
+          "App functionality"
+        ],
+        "volitelne": true,
+        "zdroje": [
+          "hlaseni",
+          "hlášení chyb (tlačítko Nahlásit chybu)"
+        ]
+      },
+      {
+        "klic": "obsah_uzivatele",
+        "kategorie": "App activity",
+        "typ": "Other user-generated content",
+        "ucely": [
+          "App functionality"
+        ],
+        "volitelne": false,
+        "zdroje": [
+          "standardy",
+          "materialy",
+          "zakazky",
+          "steny",
+          "skrinky",
+          "kusovniky"
+        ]
+      },
+      {
+        "klic": "diagnostika",
+        "kategorie": "App info and performance",
+        "typ": "Diagnostics",
+        "ucely": [
+          "App functionality",
+          "Developer communications"
+        ],
+        "volitelne": true,
+        "zdroje": [
+          "hlášení chyb (tlačítko Nahlásit chybu)"
+        ]
+      }
+    ]
+  }
+}
