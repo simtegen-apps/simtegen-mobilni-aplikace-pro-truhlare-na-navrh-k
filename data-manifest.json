@@ -1,7 +1,7 @@
 {
   "produkt": "Kusovník pro truhláře",
   "provozovatel": "SimteGen s.r.o.",
-  "kontakt_email": "",
+  "kontakt_email": "podpora@simtegen.cz",
   "ico": "",
   "dic": "",
   "sidlo": "",
@@ -26,78 +26,105 @@
   "ukladame": [
     {
       "entita": "uzivatele",
+      "play_typy": ["email", "id_uzivatele"],
+      "play_ucely": ["ucet"],
       "ucel": "účet zákazníka a přihlášení",
       "pole": "e-mailová adresa, čas založení účtu",
       "retence": "do smazání účtu zákazníkem"
     },
     {
       "entita": "prihlasovaci_odkazy",
+      "play_typy": ["email"],
+      "play_ucely": ["ucet", "bezpecnost"],
       "ucel": "jednorázové přihlášení e-mailovým odkazem",
       "pole": "otisk tokenu, e-mailová adresa, expirace",
       "retence": "24 hodin"
     },
     {
       "entita": "relace",
+      "play_typy": [],
+      "play_ucely": ["ucet", "bezpecnost"],
       "ucel": "udržení přihlášení",
       "pole": "otisk tokenu, odkaz na účet, expirace",
       "retence": "30 dní od přihlášení"
     },
     {
       "entita": "predplatne",
+      "play_typy": ["historie_nakupu"],
+      "play_ucely": ["ucet"],
       "ucel": "evidence zaplaceného období předplatného",
       "pole": "odkaz na účet, datum konce předplatného, poznámka k platbě (např. číslo dokladu)",
       "retence": "do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu"
     },
     {
       "entita": "hlaseni",
+      "play_typy": ["zpravy"],
+      "play_ucely": ["komunikace"],
+      "play_volitelne": true,
       "ucel": "hlášení a dotazy zákazníka k aplikaci a naše odpovědi",
       "pole": "text hlášení, stav vyřízení, odpověď, číslo záznamu v systému podpory, čas",
       "retence": "do smazání účtu zákazníkem"
     },
     {
       "entita": "platby",
+      "play_typy": ["historie_nakupu"],
+      "play_ucely": ["ucet"],
       "ucel": "evidence zaplacených období předplatného (historie plateb)",
       "pole": "odkaz na účet, počet zaplacených měsíců, poznámka k platbě, čas zápisu",
       "retence": "do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu"
     },
     {
       "entita": "objednavky",
+      "play_typy": ["jmeno", "adresa", "historie_nakupu"],
+      "play_ucely": ["funkce", "ucet"],
       "ucel": "objednávka předplatného a doklad o souhlasu se zahájením služby",
       "pole": "odkaz na účet, délka a varianta předplatného, cena, fakturační údaje, zda jde o spotřebitele, souhlas se zahájením a jeho čas, stav",
       "retence": "do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu"
     },
     {
       "entita": "standardy",
+      "play_typy": ["obsah_uzivatele"],
+      "play_ucely": ["funkce"],
       "ucel": "konstrukční standard dílny, podle kterého se počítá kusovník",
       "pole": "odkaz na účet, název standardu, tloušťka desky a zad, provedení zad (drážka/nasazená) a rozměry drážky, odskok police, spáry dvířek, traverzy místo víka, výška soklu a horních skříněk, tloušťky olepení hran, zda je rozměr uveden po olepení, prořez, formát desky, časy",
       "retence": "do smazání účtu zákazníkem"
     },
     {
       "entita": "materialy",
+      "play_typy": ["obsah_uzivatele"],
+      "play_ucely": ["funkce"],
       "ucel": "seznam desek a dekorů, které truhlář používá",
       "pole": "odkaz na účet, název materiálu, kód dekoru, tloušťka, zda má dekor směr vlákna, dekor hrany, čas založení",
       "retence": "do smazání účtu zákazníkem"
     },
     {
       "entita": "zakazky",
+      "play_typy": ["obsah_uzivatele", "osobni_jine"],
+      "play_ucely": ["funkce"],
       "ucel": "zakázka truhláře (návrh kuchyně nebo skříně) uložená pro pozdější dopracování a kopírování",
       "pole": "odkaz na účet, název zakázky, označení koncového zákazníka a poznámka (obsah vkládá zákazník), stav, časy",
       "retence": "do smazání účtu zákazníkem"
     },
     {
       "entita": "steny",
+      "play_typy": ["obsah_uzivatele"],
+      "play_ucely": ["funkce"],
       "ucel": "naměřené stěny místnosti včetně oken a dveří",
       "pole": "odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas",
       "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem"
     },
     {
       "entita": "skrinky",
+      "play_typy": ["obsah_uzivatele"],
+      "play_ucely": ["funkce"],
       "ucel": "navržené skříňky a jejich rozměry jako podklad pro kusovník",
       "pole": "odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas",
       "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem"
     },
     {
       "entita": "kusovniky",
+      "play_typy": ["obsah_uzivatele"],
+      "play_ucely": ["funkce"],
       "ucel": "vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl",
       "pole": "odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas",
       "retence": "do smazání účtu zákazníkem"
@@ -146,7 +173,9 @@
     "nazev": "Kusovník pro truhláře",
     "kratky_nazev": "Kusovník",
     "popis": "Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.",
-    "otisky": []
+    "otisky": [],
+    "kategorie": "BUSINESS",
+    "dlouhy_popis": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru, kteří měří přímo u zákazníka v telefonu nebo tabletu.\n\nCo aplikace dělá:\n• Zadáte rozměry stěn, oken a dveří a na stěny postavíte skříňky — spodní, horní, vysoké i rohové.\n• Výkres stěny ukazuje skříňky, okna a dveře v měřítku.\n• Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.\n• Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.\n• Kusovník stáhnete jako soubor CSV pro nářezové centrum.\n• Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.\n\nPřihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.\n\nAplikace se platí měsíčním předplatným. Prvních 30 dní je zdarma, bez zadávání platební karty a bez závazku.\n\nRozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte."
   },
   "poznamka": "Jediny zdroj pravdy o datech produktu. Zasady, obchodni podminky, zpracovatelska smlouva, formular pro odstoupeni, zaznam o zpracovani i postup pri incidentu se GENERUJI z tohoto souboru (python3 vykresli_zasady.py) a kontrola_manifestu.py shazuje build, kdyz se kod nebo vygenerovane soubory s manifestem rozejdou. Kazda nova tabulka = zaznam v ukladame + migrace v db/migrace/ se sloupcem uzivatel_id. Prazdne sloty (ico, sidlo, dic, zapis_or, kontakt_email, ucinnost_od, cena_dph, retence_logy, retence_podpora, odpovedna_osoba, zastup, ucetni, balancni_test) se vykresli cervene jako (doplnit ...) - s nimi se nesmi jit do produkce. obsah_zakaznika_popis a subjekty_obsahu popisuji obsah, ktery do produktu vklada zakaznik (zpracovatelska smlouva, cl. 2) - stavitel je vyplni podle produktu. agregaty = tabulky bez uzivatel_id, ktere smi obsahovat jen souhrnna cisla (den, stranka, pocet) - kontrola hlida, ze v nich neni zadny osobni sloupec."
 }
