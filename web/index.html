@@ -52,6 +52,15 @@
     .vykres-popis { font-family: var(--pismo-mono); font-size: var(--velikost-5);
       letter-spacing: 0.06em; text-transform: uppercase; color: var(--barva-tuzka); }
 
+    /* Režim „Posouvat ve výkresu“: prst nad výkresem posouvá skříňky
+       a okna, ne stránku. Platí jen v tomhle režimu, jinak se výkresem
+       dá normálně rolovat. */
+    .vykres-plocha.uprava { touch-action: none; user-select: none; -webkit-user-select: none; }
+    .vykres-plocha.uprava [data-prvek] { cursor: grab; }
+    .vykres-plocha.uprava [data-uchyt] { cursor: ew-resize; }
+    .vykres-akce { display: flex; flex-wrap: wrap; gap: var(--mezera-2); margin-top: var(--mezera-3); }
+    .vykres-akce .tlacitko { flex: 1 1 10rem; }
+
     /* Trojice rozměrů Š/V/H vedle sebe — palcem dosažitelná i na 360 px. */
     .trojice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mezera-3); }
     .dvojice-poli { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--mezera-3); }
@@ -213,6 +222,8 @@
       materialy: [],
       hlaseni: [],
       nahledRezim: "pohled",
+      upravaVykresu: false,    // stěna: posouvání prstem ve výkresu
+      posledniPosun: null,     // { stenaIndex, druh, i, puvodni } pro „Vrátit posun“
       ukladani: "cisto",   // cisto | ceka | chyba
     };
 
@@ -494,9 +505,15 @@
     // spárou a úchytkou, police čárkovaně jako skrytá hrana a pod stěnou
     // kóta s celkovou délkou. Úchytky nesou barvu produktu — jediné místo
     // ve výkrese, kde se používá, a nese informaci „tohle je čelo“.
-    function nakresliPohled(stena, standard, kolizni) {
+    // moznosti.uprava = režim posouvání: každá skříňka a otvor je skupina
+    // [data-prvek], za kterou jde chytit, a vpravo má úchyt šířky.
+    // moznosti.aktivni = { druh, i } právě taženého prvku — dostane kóty
+    // od obou konců stěny, ať truhlář vidí čísla, aniž by je psal.
+    function nakresliPohled(stena, standard, kolizni, moznosti) {
       const st = standard || {};
       const kolize = kolizni || new Set();
+      const uprava = Boolean(moznosti && moznosti.uprava);
+      const aktivni = (moznosti && moznosti.aktivni) || null;
       const D = Math.max(1, cislo(stena.delka_mm, 3600));
       const V = Math.max(1, cislo(stena.vyska_mm, 2600));
       // Tloušťky čar a písmo jsou zlomky výšky stěny, protože viewBox je
@@ -511,14 +528,30 @@
       const y = (mm) => V - mm;            // výška nad podlahou → osa SVG
       const c = [];
 
+      // Úchyt šířky na pravé hraně: viditelná lišta a kolem ní širší
+      // průhledná plocha, aby se dala chytit i palcem na telefonu.
+      const uchyt = (x, s, horni, spodni) => {
+        if (!uprava) return "";
+        const vyska = spodni - horni;
+        const sirkaLisy = Math.max(stredni * 2, Math.round(V / 45));
+        const delkaLisy = Math.min(vyska * 0.5, V / 7);
+        const zachyt = Math.max(sirkaLisy * 3, Math.round(D / 16));
+        return `<rect data-uchyt="sirka" x="${x + s - zachyt / 2}" y="${horni}" width="${zachyt}"
+            height="${vyska}" fill="transparent"/>
+          <rect data-uchyt="sirka" x="${x + s - sirkaLisy / 2}" y="${horni + (vyska - delkaLisy) / 2}"
+            width="${sirkaLisy}" height="${delkaLisy}" fill="var(--barva-papir)"
+            stroke="var(--barva-inkoust)" stroke-width="${tenka}"/>`;
+      };
+
       c.push(`<rect x="0" y="0" width="${D}" height="${V}"
         fill="var(--barva-list)" stroke="var(--barva-linka)" stroke-width="${tenka}"/>`);
 
-      for (const o of stena.otvory || []) {
+      (stena.otvory || []).forEach((o, index) => {
         const x = cislo(o.odsazeni_mm, 0);
         const s = Math.max(1, cislo(o.sirka_mm, 0));
         const v = Math.max(1, cislo(o.vyska_mm, 0));
         const dole = o.typ === "dvere" ? 0 : Math.max(0, cislo(o.parapet_mm, 0));
+        c.push(`<g data-prvek="otvor" data-i="${index}">`);
         c.push(`<rect x="${x}" y="${y(dole + v)}" width="${s}" height="${v}"
           fill="var(--barva-papir)" stroke="var(--barva-tuzka-2)" stroke-width="${stredni}"/>`);
         c.push(`<path d="M${x + s / 2} ${y(dole + v)}V${y(dole)}M${x} ${y(dole + v / 2)}H${x + s}"
@@ -527,7 +560,9 @@
           c.push(`<rect x="${x - s * 0.03}" y="${y(dole)}" width="${s * 1.06}"
             height="${Math.round(V / 70)}" fill="var(--barva-tuzka-2)"/>`);
         }
-      }
+        c.push(uchyt(x, s, y(dole + v), y(dole)));
+        c.push("</g>");
+      });
 
       const skrinky = stena.skrinky || [];
       skrinky.forEach((sk, index) => {
@@ -537,6 +572,7 @@
         const v = Math.max(1, y2 - y1);
         const problem = kolize.has(index);
         const barva = problem ? "var(--barva-chyba)" : "var(--barva-inkoust)";
+        c.push(`<g data-prvek="skrinka" data-i="${index}">`);
 
         if (sk.typ !== "horni" && y1 > 0) {
           c.push(`<rect x="${x + s * 0.04}" y="${y(y1)}" width="${s * 0.92}" height="${y1}"
@@ -595,6 +631,8 @@
           c.push(`<text x="${x + s / 2}" y="${y(y1) - pismo * 0.5}" text-anchor="middle"
             font-size="${pismo}" fill="var(--barva-tuzka)">${s}</text>`);
         }
+        c.push(uchyt(x, s, y(y2), y(y1)));
+        c.push("</g>");
       });
 
       // Pracovní deska leží na spodní řadě — bez ní to není kuchyně.
@@ -606,7 +644,40 @@
         const vrch = Math.max(...spodniRada.map((sk) => svislyRozsah(sk, st)[1]));
         const tl = Math.round(V / 65);
         c.push(`<rect x="${odX - tl}" y="${y(vrch + tl)}" width="${doX - odX + 2 * tl}"
-          height="${tl}" fill="var(--barva-tuzka)"/>`);
+          height="${tl}" fill="var(--barva-tuzka)" pointer-events="none"/>`);
+      }
+
+      // Kóty taženého prvku: od levého kraje stěny a od pravého kraje,
+      // u okna i parapet. Kreslí se jen během tahu.
+      const tazeny = aktivni
+        ? (aktivni.druh === "skrinka" ? skrinky : stena.otvory || [])[aktivni.i] : null;
+      if (tazeny) {
+        const x = cislo(tazeny.odsazeni_mm, 0);
+        const s = Math.max(1, cislo(tazeny.sirka_mm, 0));
+        const jeOtvor = aktivni.druh === "otvor";
+        const dole = jeOtvor
+          ? (tazeny.typ === "dvere" ? 0 : Math.max(0, cislo(tazeny.parapet_mm, 0)))
+          : svislyRozsah(tazeny, st)[0];
+        const nahore = jeOtvor ? dole + Math.max(1, cislo(tazeny.vyska_mm, 0))
+          : svislyRozsah(tazeny, st)[1];
+        const ky = y((dole + nahore) / 2);
+        const zarazka = Math.round(kota * 0.25);
+        const kotaH = (od, po) => {
+          if (po - od < 1) return;
+          c.push(`<path d="M${od} ${ky}H${po}M${od} ${ky - zarazka}V${ky + zarazka}M${po} ${ky - zarazka}V${ky + zarazka}"
+            stroke="var(--barva-inkoust)" stroke-width="${tenka}" pointer-events="none"/>`);
+          c.push(`<text x="${(od + po) / 2}" y="${ky - zarazka * 1.3}" text-anchor="middle"
+            font-size="${pismo}" fill="var(--barva-inkoust)" pointer-events="none">${Math.round(po - od)}</text>`);
+        };
+        kotaH(0, x);
+        kotaH(x + s, D);
+        if (jeOtvor && dole > 0) {
+          const kx = x + s / 2;
+          c.push(`<path d="M${kx} ${y(dole)}V${V}" stroke="var(--barva-inkoust)"
+            stroke-width="${tenka}" stroke-dasharray="${carka}" pointer-events="none"/>`);
+          c.push(`<text x="${kx + pismo * 0.4}" y="${y(dole / 2)}" font-size="${pismo}"
+            fill="var(--barva-inkoust)" pointer-events="none">${dole}</text>`);
+        }
       }
 
       c.push(`<line x1="${-okraj}" y1="${V}" x2="${D + okraj}" y2="${V}"
@@ -617,7 +688,7 @@
       c.push(`<text x="${D / 2}" y="${ky - kota * 0.42}" text-anchor="middle"
         font-size="${pismo}" fill="var(--barva-tuzka)">${D} mm</text>`);
 
-      return `<svg class="vykres-plocha"
+      return `<svg class="vykres-plocha${uprava ? " uprava" : ""}"
         viewBox="${-okraj} ${-okraj} ${D + 2 * okraj} ${V + okraj + kota * 1.3}"
         role="img" aria-label="Pohled na stěnu ${esc(stena.nazev || "")}, ${D} krát ${V}
         milimetrů, ${skrinky.length} skříněk">${c.join("")}</svg>`;
@@ -1082,11 +1153,21 @@
       $("titulek").textContent = stena.nazev;
 
       const { kolizni, hlasky } = kontrolaSteny(stena);
+      const uprava = stav.upravaVykresu;
+      const lzeVratit = Boolean(stav.posledniPosun && stav.posledniPosun.stenaIndex === index);
 
       cil.innerHTML = `
         <div class="karta vykres">
-          ${nakresliPohled(stena, stav.standard, kolizni)}
+          ${nakresliPohled(stena, stav.standard, kolizni, { uprava })}
           ${legenda()}
+          ${uprava ? `<p class="rozmer" id="st-odecet" aria-live="polite">Táhněte skříňku nebo okno ·
+            úchytem vpravo změníte šířku · klepnutím otevřete rozměry</p>` : ""}
+          <div class="vykres-akce">
+            <button type="button" class="tlacitko vedlejsi" id="st-uprava"
+              aria-pressed="${uprava ? "true" : "false"}">${uprava ? "Hotovo" : "Posouvat ve výkresu"}</button>
+            ${uprava && lzeVratit
+              ? `<button type="button" class="tlacitko vedlejsi" id="st-vratit">Vrátit posun</button>` : ""}
+          </div>
         </div>
         ${hlasky.length ? `<div class="hlaska varovani">${hlasky.map(esc).join("<br>")}</div>` : ""}
         ${sekce("01", "Rozměry stěny")}
@@ -1174,9 +1255,213 @@
         jdi("zakazka", { id: stav.dokument.zakazka.id }, true);
       });
 
+      $("st-uprava").addEventListener("click", () => {
+        stav.upravaVykresu = !stav.upravaVykresu;
+        vykresliStenu({ index });
+      });
+      const vratit = $("st-vratit");
+      if (vratit) {
+        vratit.addEventListener("click", () => {
+          const p = stav.posledniPosun;
+          stav.posledniPosun = null;
+          // Dokument se po uložení na server vyměňuje — bere se ten aktuální.
+          const ted = (stav.dokument.steny || [])[index] || stena;
+          const pole = p.druh === "skrinka" ? ted.skrinky : ted.otvory;
+          const prvek = pole && pole[p.i];
+          // Vrací se jen tehdy, když má prvek pořád polohu z posunu; když ho
+          // mezitím někdo upravil nebo smazal, vrátil by se jiný prvek.
+          if (!prvek || ["odsazeni_mm", "sirka_mm", "parapet_mm"]
+            .some((klic) => cislo(prvek[klic], 0) !== cislo(p.po[klic], 0))) {
+            vykresliStenu({ index });
+            toast("Posun už nejde vrátit — prvek se mezitím změnil.");
+            return;
+          }
+          prvek.odsazeni_mm = p.puvodni.odsazeni_mm;
+          prvek.sirka_mm = p.puvodni.sirka_mm;
+          prvek.parapet_mm = p.puvodni.parapet_mm;
+          zmeneno();
+          vykresliStenu({ index });
+          toast("Posun vrácen.");
+        });
+      }
+      if (uprava) napojTah(cil.querySelector(".vykres-plocha"), stena, index);
+
       napojSekce(cil, { otvor: () => panelOtvor(stena, -1, index) });
       prekresliStavUlozeni();
       nastavListu([{ popisek: "Přidat skříňku", akce: () => panelSkrinka(stena, -1, index) }]);
+    }
+
+    // ── Posouvání ve výkresu ───────────────────────────────────────────
+    // Tah prstem nebo myší mění TATÁŽ čísla jako formulář (odsazení, šířka,
+    // parapet), takže kusovník i kontrola stěny o tahu nic vědět nemusí.
+    // Krok je 10 mm; do 10 px od hrany sousední skříňky, otvoru nebo konce
+    // stěny se prvek k hraně přichytí. Přesné číslo jde dál zapsat v panelu.
+    const KROK_TAHU_MM = 10;
+    const PRICHYCENI_PX = 10;
+    const PRAH_TAHU_PX = 6;
+
+    function napojTah(svg, vychoziStena, index) {
+      if (!svg) return;
+      // Po automatickém uložení se stav.dokument vymění za odpověď serveru,
+      // proto se stěna bere znovu při každém chycení a výsledek tahu se na
+      // konci zapisuje do právě platného dokumentu.
+      const platnaStena = () =>
+        (stav.dokument && (stav.dokument.steny || [])[index]) || vychoziStena;
+      let stena = vychoziStena;
+      const D = Math.max(1, cislo(stena.delka_mm, 3600));
+      const V = Math.max(1, cislo(stena.vyska_mm, 2600));
+      const odecet = $("st-odecet");
+      let tah = null;
+
+      const bodVMm = (udalost) => {
+        const matice = svg.getScreenCTM();
+        if (!matice) return { x: 0, y: 0 };
+        const bod = svg.createSVGPoint();
+        bod.x = udalost.clientX;
+        bod.y = udalost.clientY;
+        const p = bod.matrixTransform(matice.inverse());
+        return { x: p.x, y: p.y };
+      };
+      const mmNaPx = () => {
+        const matice = svg.getScreenCTM();
+        return matice && matice.a ? 1 / matice.a : 1;
+      };
+      const naKrok = (mm) => Math.round(mm / KROK_TAHU_MM) * KROK_TAHU_MM;
+      const omez = (hodnota, min, max) => Math.min(Math.max(hodnota, min), Math.max(min, max));
+
+      // Hrany, ke kterým se přichytává: konce stěny a hrany ostatních prvků.
+      const hrany = (druh, i) => {
+        const vysledek = [0, D];
+        (stena.skrinky || []).forEach((sk, j) => {
+          if (druh === "skrinka" && j === i) return;
+          const x = cislo(sk.odsazeni_mm, 0);
+          vysledek.push(x, x + cislo(sk.sirka_mm, 0));
+        });
+        (stena.otvory || []).forEach((o, j) => {
+          if (druh === "otvor" && j === i) return;
+          const x = cislo(o.odsazeni_mm, 0);
+          vysledek.push(x, x + cislo(o.sirka_mm, 0));
+        });
+        return vysledek;
+      };
+      const nejblizsi = (hodnota, kandidati, mez) => {
+        let nalez = null;
+        for (const k of kandidati) {
+          const vzdalenost = Math.abs(k - hodnota);
+          if (vzdalenost <= mez && (nalez === null || vzdalenost < Math.abs(nalez - hodnota))) nalez = k;
+        }
+        return nalez;
+      };
+
+      const popisPrvku = (t) => {
+        const p = t.prvek;
+        const nazev = t.druh === "skrinka"
+          ? `Skříňka ${String(t.i + 1).padStart(2, "0")}`
+          : (p.typ === "dvere" ? "Dveře" : "Okno");
+        const casti = [nazev, `od ${p.odsazeni_mm} mm`, `šířka ${p.sirka_mm} mm`];
+        if (t.druh === "otvor" && p.typ !== "dvere") casti.push(`parapet ${p.parapet_mm} mm`);
+        return casti.join(" · ");
+      };
+
+      const prekresli = () => {
+        const { kolizni } = kontrolaSteny(stena);
+        const docasny = document.createElement("div");
+        docasny.innerHTML = nakresliPohled(stena, stav.standard, kolizni, {
+          uprava: true, aktivni: tah && tah.pohnuto ? { druh: tah.druh, i: tah.i } : null,
+        });
+        svg.replaceChildren(...docasny.firstElementChild.childNodes);
+        if (odecet && tah) odecet.textContent = popisPrvku(tah);
+      };
+
+      svg.addEventListener("pointerdown", (udalost) => {
+        if (tah || (udalost.pointerType === "mouse" && udalost.button !== 0)) return;
+        const skupina = udalost.target.closest("[data-prvek]");
+        if (!skupina) return;
+        stena = platnaStena();
+        const druh = skupina.dataset.prvek;
+        const i = Number(skupina.dataset.i);
+        const pole = druh === "skrinka" ? stena.skrinky : stena.otvory;
+        if (!pole || !pole[i]) return;
+        tah = {
+          druh, i, prvek: pole[i], puvodni: { ...pole[i] },
+          sirka: Boolean(udalost.target.closest("[data-uchyt]")),
+          start: bodVMm(udalost), pohnuto: false, id: udalost.pointerId,
+        };
+        svg.setPointerCapture(udalost.pointerId);
+        udalost.preventDefault();
+      });
+
+      svg.addEventListener("pointermove", (udalost) => {
+        if (!tah || udalost.pointerId !== tah.id) return;
+        const bod = bodVMm(udalost);
+        const dx = bod.x - tah.start.x;
+        const dy = bod.y - tah.start.y;
+        const naPx = mmNaPx();
+        if (!tah.pohnuto && Math.hypot(dx, dy) < PRAH_TAHU_PX * naPx) return;
+        tah.pohnuto = true;
+        const p = tah.prvek;
+        const puv = tah.puvodni;
+        const mez = PRICHYCENI_PX * naPx;
+        const kandidati = hrany(tah.druh, tah.i);
+        const x0 = cislo(puv.odsazeni_mm, 0);
+
+        if (tah.sirka) {
+          const [min, max] = tah.druh === "skrinka" ? [100, 1400] : [200, D];
+          let pravy = x0 + cislo(puv.sirka_mm, 0) + dx;
+          const prichyceno = nejblizsi(pravy, kandidati, mez);
+          pravy = prichyceno !== null ? prichyceno : naKrok(pravy);
+          p.sirka_mm = omez(Math.round(pravy - x0), min, Math.min(max, D - x0));
+        } else {
+          const s = cislo(p.sirka_mm, 0);
+          let levy = x0 + dx;
+          const kLevemu = nejblizsi(levy, kandidati, mez);
+          const kPravemu = nejblizsi(levy + s, kandidati, mez);
+          if (kLevemu !== null && (kPravemu === null
+              || Math.abs(kLevemu - levy) <= Math.abs(kPravemu - levy - s))) levy = kLevemu;
+          else if (kPravemu !== null) levy = kPravemu - s;
+          else levy = naKrok(levy);
+          p.odsazeni_mm = omez(Math.round(levy), 0, D - s);
+          // Okno jde posunout i nahoru a dolů (parapet); skříňky ne — jejich
+          // výšku nad podlahou dává konstrukční standard, ne tah.
+          if (tah.druh === "otvor" && p.typ !== "dvere") {
+            const parapet = naKrok(cislo(puv.parapet_mm, 0) - dy);
+            p.parapet_mm = omez(parapet, 0, V - cislo(p.vyska_mm, 0));
+          }
+        }
+        prekresli();
+      });
+
+      const konec = (udalost, zrusit) => {
+        if (!tah || udalost.pointerId !== tah.id) return;
+        const t = tah;
+        tah = null;
+        if (svg.hasPointerCapture(udalost.pointerId)) svg.releasePointerCapture(udalost.pointerId);
+        if (!t.pohnuto) {
+          if (zrusit) return;
+          // Klepnutí bez posunu otevře rozměry jako v seznamu pod výkresem.
+          if (t.druh === "skrinka") panelSkrinka(stena, t.i, index);
+          else panelOtvor(stena, t.i, index);
+          return;
+        }
+        if (zrusit) {
+          Object.assign(t.prvek, t.puvodni);
+          vykresliStenu({ index });
+          return;
+        }
+        const po = {
+          odsazeni_mm: t.prvek.odsazeni_mm, sirka_mm: t.prvek.sirka_mm, parapet_mm: t.prvek.parapet_mm,
+        };
+        // Uložení mohlo doběhnout během tahu a dokument vyměnit: výsledek
+        // se proto propíše i do prvku v právě platném dokumentu.
+        const ted = platnaStena();
+        const pole = t.druh === "skrinka" ? ted.skrinky : ted.otvory;
+        if (pole && pole[t.i] && pole[t.i] !== t.prvek) Object.assign(pole[t.i], po);
+        stav.posledniPosun = { stenaIndex: index, druh: t.druh, i: t.i, puvodni: t.puvodni, po };
+        zmeneno();
+        vykresliStenu({ index });
+      };
+      svg.addEventListener("pointerup", (udalost) => konec(udalost, false));
+      svg.addEventListener("pointercancel", (udalost) => konec(udalost, true));
     }
 
     function panelOtvor(stena, poradi, stenaIndex) {
