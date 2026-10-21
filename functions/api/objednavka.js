@@ -26,7 +26,7 @@
 // GET → the signed-in customer's own orders.
 
 import { json, ted } from "../../spolecne.js";
-import { cenaZa, MIN_MESICU, MAX_MESICU } from "../../cenik.js";
+import { CENIK, cenaZa, variantaZ, MIN_MESICU, MAX_MESICU } from "../../cenik.js";
 
 const MAX_FAKTURACE = 600;
 const MAX_VARIANTA = 80;
@@ -76,13 +76,24 @@ export async function onRequestPost(context) {
   if (!Number.isInteger(mesice) || mesice < MIN_MESICU || mesice > MAX_MESICU) {
     return json({ chyba: `Zvolte délku předplatného ${MIN_MESICU}–${MAX_MESICU} měsíců.` }, 422);
   }
-  const varianta = ocistiVariantu(telo && telo.varianta);
+  // Se schváleným ceníkem posílá prohlížeč jen KLÍČ varianty (solo /
+  // standard / tym) a do objednávky se uloží její název z ceníku — žádný
+  // volný text od zákazníka. Bez ceníku zůstává původní volný popis.
+  const klic = telo ? telo.varianta : undefined;
+  let varianta;
+  if (CENIK) {
+    const zCeniku = variantaZ(klic);
+    if (!zCeniku) return json({ chyba: "Zvolte prosím variantu předplatného z ceníku." }, 422);
+    varianta = zCeniku.nazev;
+  } else {
+    varianta = ocistiVariantu(klic);
+  }
 
   // Cenu určuje SERVER podle schváleného ceníku (cenik.js). Číslo z těla
   // požadavku je jen kontrola, že zákazník na obrazovce viděl totéž —
   // kdyby se cena ukládala z požadavku, stačilo by ji při objednávce
   // přepsat a faktura by vyšla na cizí částku.
-  const cena = cenaZa(mesice);
+  const cena = cenaZa(mesice, klic);
   const poslana = telo && telo.cena_czk !== null && telo.cena_czk !== undefined
     ? Number(telo.cena_czk) : null;
   if (poslana !== null && !Number.isFinite(poslana)) {

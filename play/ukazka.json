@@ -1,0 +1,122 @@
+{
+  "poznamka": "Ukázková data pro „Vyzkoušet ukázku“ a snímky do obchodu. Vymyšlená zakázka, žádné skutečné osoby. Pořadí je úmyslné: kuchyň se zakládá a ukládá poslední, aby byla v seznamu zakázek první — na ni klepají snímky (aplikace.snimky[].kliky).",
+  "kroky": [
+    {
+      "pozadavek": "PUT /api/standard",
+      "telo": {
+        "nazev": "Dílna Ukázka – LTD 18",
+        "tloustka_mm": 18,
+        "zada_tloustka_mm": 8,
+        "zada_typ": "drazka",
+        "drazka_hloubka_mm": 10,
+        "drazka_odsazeni_mm": 16,
+        "odskok_police_mm": 20,
+        "spara_okraj_desetiny": 15,
+        "spara_mezi_desetiny": 30,
+        "traverzy_spodni": 1,
+        "traverza_sirka_mm": 100,
+        "sokl_mm": 100,
+        "vyska_horni_mm": 1450,
+        "hrana_pohledova_desetiny": 20,
+        "hrana_ostatni_desetiny": 8,
+        "rozmer_s_olepenim": 0,
+        "prorez_mm": 4,
+        "deska_x_mm": 2800,
+        "deska_y_mm": 2070
+      }
+    },
+    {
+      "pozadavek": "POST /api/materialy",
+      "telo": { "nazev": "LTD 18 dub Bardolino přírodní", "dekor_kod": "H1145 ST10", "tloustka_mm": 18, "vlakno": true, "hrana_dekor": "ABS H1145 2 mm" },
+      "uloz": { "dub": "id" }
+    },
+    {
+      "pozadavek": "POST /api/materialy",
+      "telo": { "nazev": "LTD 18 bílá alpská", "dekor_kod": "W1100 ST9", "tloustka_mm": 18, "vlakno": false, "hrana_dekor": "ABS W1100 1 mm" },
+      "uloz": { "bila": "id" }
+    },
+    {
+      "pozadavek": "POST /api/zakazky",
+      "telo": { "nazev": "Vestavná skříň předsíň", "oznaceni_zakaznika": "Ukázka, Brno-Bystrc" },
+      "uloz": { "skrin": "id" }
+    },
+    {
+      "pozadavek": "PUT /api/zakazky/{skrin}",
+      "telo": {
+        "zakazka": { "nazev": "Vestavná skříň předsíň", "oznaceni_zakaznika": "Ukázka, Brno-Bystrc", "poznamka": "Mezi zdmi, strop 2600." },
+        "steny": [
+          {
+            "nazev": "Předsíň",
+            "delka_mm": 2000,
+            "vyska_mm": 2600,
+            "roh_vlevo": 0,
+            "roh_vpravo": 0,
+            "otvory": [],
+            "skrinky": [
+              { "typ": "vysoka", "odsazeni_mm": 0, "sirka_mm": 1000, "vyska_mm": 2400, "hloubka_mm": 600, "pocet_polic": 5, "pocet_dvirek": 2, "pocet_zasuvek": 0, "material_id": "{bila}" },
+              { "typ": "vysoka", "odsazeni_mm": 1000, "sirka_mm": 1000, "vyska_mm": 2400, "hloubka_mm": 600, "pocet_polic": 1, "pocet_dvirek": 2, "pocet_zasuvek": 0, "material_id": "{bila}", "poznamka": "šatní tyč" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "pozadavek": "POST /api/kusovnik",
+      "telo": { "zakazka_id": "{skrin}" }
+    },
+    {
+      "pozadavek": "POST /api/zakazky",
+      "telo": { "nazev": "Kuchyň Rodinný dům Lipová", "oznaceni_zakaznika": "Ukázka, Brno-Líšeň" },
+      "uloz": { "kuchyn": "id" }
+    },
+    {
+      "pozadavek": "PUT /api/zakazky/{kuchyn}",
+      "telo": {
+        "zakazka": { "nazev": "Kuchyň Rodinný dům Lipová", "oznaceni_zakaznika": "Ukázka, Brno-Líšeň", "poznamka": "Linka do L, roh drží stěna A, dřez pod oknem, vysoká skříň na troubu." },
+        "steny": [
+          {
+            "nazev": "Stěna A — okno",
+            "delka_mm": 3600,
+            "vyska_mm": 2600,
+            "roh_vlevo": 0,
+            "roh_vpravo": 0,
+            "otvory": [
+              { "typ": "okno", "odsazeni_mm": 1100, "sirka_mm": 1200, "vyska_mm": 1400, "parapet_mm": 900 }
+            ],
+            "skrinky": [
+              { "typ": "spodni", "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "spodni", "odsazeni_mm": 600, "sirka_mm": 400, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 0, "pocet_dvirek": 0, "pocet_zasuvek": 3, "zasuvka_vyska_mm": 180, "material_id": "{dub}" },
+              { "typ": "spodni", "odsazeni_mm": 1000, "sirka_mm": 300, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 2, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}", "poznamka": "výsuv na lahve" },
+              { "typ": "spodni", "odsazeni_mm": 1300, "sirka_mm": 800, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 0, "pocet_dvirek": 2, "pocet_zasuvek": 0, "material_id": "{dub}", "poznamka": "dřez pod oknem" },
+              { "typ": "spodni", "odsazeni_mm": 2100, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "rohova", "odsazeni_mm": 2700, "sirka_mm": 900, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "horni", "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 320, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "horni", "odsazeni_mm": 600, "sirka_mm": 400, "vyska_mm": 720, "hloubka_mm": 320, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "horni", "odsazeni_mm": 2300, "sirka_mm": 400, "vyska_mm": 720, "hloubka_mm": 320, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "horni", "odsazeni_mm": 2700, "sirka_mm": 900, "vyska_mm": 720, "hloubka_mm": 320, "pocet_polic": 1, "pocet_dvirek": 2, "pocet_zasuvek": 0, "material_id": "{dub}" }
+            ]
+          },
+          {
+            "nazev": "Stěna B — trouba",
+            "delka_mm": 2400,
+            "vyska_mm": 2600,
+            "roh_vlevo": 1,
+            "roh_vpravo": 0,
+            "otvory": [],
+            "skrinky": [
+              { "typ": "spodni", "odsazeni_mm": 600, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 0, "pocet_dvirek": 0, "pocet_zasuvek": 3, "zasuvka_vyska_mm": 180, "material_id": "{dub}" },
+              { "typ": "spodni", "odsazeni_mm": 1200, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "vysoka", "odsazeni_mm": 1800, "sirka_mm": 600, "vyska_mm": 2100, "hloubka_mm": 560, "pocet_polic": 4, "pocet_dvirek": 2, "pocet_zasuvek": 0, "material_id": "{dub}", "poznamka": "vestavná trouba" },
+              { "typ": "horni", "odsazeni_mm": 600, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 320, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" },
+              { "typ": "horni", "odsazeni_mm": 1200, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 320, "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0, "material_id": "{dub}" }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "pozadavek": "POST /api/kusovnik",
+      "telo": { "zakazka_id": "{kuchyn}" }
+    }
+  ]
+}

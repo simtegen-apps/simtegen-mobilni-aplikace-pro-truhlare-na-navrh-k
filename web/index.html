@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="cs">
+<html data-aplikace lang="cs">
 <head>
   <meta charset="utf-8">
   <!-- interactive-widget=resizes-content: vysunutá klávesnice zmenší
@@ -85,6 +85,20 @@
     .kostra-radka { height: var(--mezera-4); }
     .kostra-karta { height: 9rem; }
     .kostra-tabulka { height: 6rem; }
+
+    /* Úvod: ukázka pod přihlášením. Bez ukázky (play.js nenašel /ukazka.json)
+       zmizí tlačítko i jeho popisek. */
+    .uvod-ukazka { display: flex; flex-direction: column; gap: var(--mezera-2);
+      margin-top: var(--mezera-4); padding-top: var(--mezera-4);
+      border-top: 1px solid var(--barva-linka); }
+    html:not(.sg-ukazka) .uvod-ukazka { display: none; }
+
+    /* Účet: bloky pravého sloupce pod sebou. */
+    #ucet-mrizka .s7 > * + * { margin-top: var(--mezera-4); }
+    #ucet-mrizka .s7 > :empty { display: none; }
+    .varianty { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column;
+      gap: var(--mezera-2); }
+    .varianty legend { padding: 0; margin-bottom: var(--mezera-2); }
   </style>
   <!-- aplikace: vykresli_aplikaci.py -->
   <link rel="manifest" href="/manifest.webmanifest">
@@ -136,14 +150,42 @@
         <div class="kostra kostra-karta"></div>
       </section>
 
-      <section class="obrazovka" id="o-uvod"></section>
+      <!-- Úvod a Účet mají kostru přímo v HTML: simtegen.js načte play.js jen
+           tehdy, když při načtení stránky najde [data-ukazka],
+           [data-predplatne-play] nebo [data-objednavka] — obrazovky se ale
+           kreslí až po /api/ja. Skript proto plní jen vnitřní místa a tyhle
+           prvky nikdy nepřepíše. -->
+      <section class="obrazovka" id="o-uvod">
+        <div class="dva-sloupce">
+          <div id="uvod-levy"></div>
+          <div class="karta vykres">
+            <div id="uvod-prihlaseni"></div>
+            <div class="uvod-ukazka">
+              <button type="button" class="tlacitko" data-ukazka>Vyzkoušet ukázku</button>
+              <p class="popisek">Bez registrace: vymyšlená kuchyň s kusovníkem, na 24 hodin.</p>
+            </div>
+          </div>
+        </div>
+        <div id="uvod-paticka"></div>
+      </section>
       <section class="obrazovka" id="o-zakazky"></section>
       <section class="obrazovka" id="o-zakazka"></section>
       <section class="obrazovka" id="o-stena"></section>
       <section class="obrazovka" id="o-nahled"></section>
       <section class="obrazovka" id="o-kusovnik"></section>
       <section class="obrazovka" id="o-standard"></section>
-      <section class="obrazovka" id="o-ucet"></section>
+      <section class="obrazovka" id="o-ucet">
+        <div id="ucet-neprihlasen"></div>
+        <div class="mrizka" id="ucet-mrizka">
+          <div class="s5" id="ucet-stav"></div>
+          <div class="s7">
+            <div id="ucet-predplatne"></div>
+            <div data-predplatne-play></div>
+            <div class="karta" data-objednavka id="ucet-objednavka"></div>
+            <div id="ucet-dalsi"></div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <div class="lista-dole skryte" id="lista-dole"></div>
@@ -164,9 +206,24 @@
     // SCHVÁLENÉ ceny, ve stejném kroku, ve kterém se do data-manifest.json
     // zapíše `cena_dph`. Dokud je null, aplikace nikde neslibuje číslo,
     // které neprošlo bránou majitele.
-    // Tvar: window.CENIK = { mesic: 490, mena: "Kč" };
-    window.CENIK = null;
+    // Schváleno majitelem (build 10). `mesic` je výchozí varianta Standard;
+    // varianty a jejich texty se ukazují přesně tak, jak je majitel schválil
+    // — nic se z nich nedopočítává (jen celková částka objednávky = měsíce ×
+    // cena varianty, stejně jako na serveru v cenik.js).
+    window.CENIK = { mesic: 449, mena: "Kč" };
+    window.CENIK_VARIANTY = [
+      { klic: "solo", nazev: "SimteGen Kusovník – Sólo", mesic: 249,
+        popis: "249 Kč za firmu a měsíc" },
+      { klic: "standard", nazev: "SimteGen Kusovník – Standard", mesic: 449,
+        popis: "449 Kč za firmu a měsíc; obsahuje: neomezený počet zakázek a uložených "
+          + "projektů, návrh a vizualizace kuchyně/skříněk v tabletu i telefonu, automatické "
+          + "generování kusovníku (rozměry desek a polic) pro nářezové centrum" },
+      { klic: "tym", nazev: "SimteGen Kusovník – Tým", mesic: 890,
+        popis: "890 Kč za firmu a měsíc" },
+    ];
+    window.ZKUSEBNI_DOBA = "Zkušební doba 14 dní";
     const CENIK = window.CENIK;
+    const VARIANTY = window.CENIK_VARIANTY;
 
     const KLIC_KONCEPTU = "rozpracovana-zakazka";
 
@@ -323,6 +380,8 @@
         button.type = "button";
         button.className = "tlacitko" + (t.vedlejsi ? " vedlejsi" : "");
         button.textContent = t.popisek;
+        // Háček pro snímky do obchodu (aplikace.snimky[].kliky) — chování nemění.
+        if (t.klic) button.dataset.akce = t.klic;
         if (t.zakazane) button.disabled = true;
         button.addEventListener("click", t.akce);
         lista.appendChild(button);
@@ -330,12 +389,14 @@
     }
 
     /** Položka seznamu, která je akce: <li> s tlačítkem ve tvaru řádku. */
-    function radekTlacitko(obsahHtml, akce) {
+    function radekTlacitko(obsahHtml, akce, data) {
       const li = document.createElement("li");
       const polozka = document.createElement("button");
       polozka.type = "button";
       polozka.className = "radek";
       polozka.innerHTML = obsahHtml;
+      // data-* háčky pro snímky do obchodu (aplikace.snimky[].kliky).
+      for (const [klic, hodnota] of Object.entries(data || {})) polozka.dataset[klic] = hodnota;
       polozka.addEventListener("click", akce);
       li.appendChild(polozka);
       return li;
@@ -803,8 +864,28 @@
     };
 
     // ── Obrazovka: úvod a přihlášení ───────────────────────────────────
+    const PATICKA = `
+        <div class="paticka">
+          <a href="zasady.html">Zásady zpracování údajů</a>
+          <a href="podminky.html">Obchodní podmínky</a>
+          <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a>
+          <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a>
+          <button type="button" class="nahlasit-chybu">Nahlásit chybu</button>
+        </div>`;
+
+    /** Ceník přesně podle schválení — řádek na variantu, nic dopočítaného. */
+    function cenikSeznam() {
+      return `<ul class="seznam">${VARIANTY.map((v, i) => `
+          <li class="radek"><span class="poradi">${String(i + 1).padStart(2, "0")}</span>
+            <span class="hlavni"><strong>${esc(v.nazev)}</strong>
+            <span>${esc(v.popis)}</span></span></li>`).join("")}</ul>
+        <p class="popisek">${esc(window.ZKUSEBNI_DOBA)}. Během ní nic neplatíte
+        a nezadáváte platební kartu.</p>`;
+    }
+
     function vykresliUvod() {
-      $("o-uvod").innerHTML = `
+      const standard = VARIANTY.find((v) => v.klic === "standard");
+      $("uvod-levy").innerHTML = `
         <p class="stitek">Pro truhláře, kteří měří u zákazníka</p>
         <h2 class="titulek-velky">Kuchyň změříte na místě, kusovník máte hned</h2>
         <div class="karta vykres">
@@ -823,9 +904,12 @@
             <strong>Zakázky zůstanou uložené</strong>
             <span>kopie staré zakázky jako šablona</span></span></li>
         </ul>
+        <p class="rozmer">Skříňka 600 × 720 × 510: bok 2× 510 × 720 · dno 564 × 510 · záda 580 × 700</p>
         ${sekce("02", "Cena")}
-        <p class="titulek-cena" id="uvod-cena">Ceník sdělí provozovatel</p>
-        <p class="popisek">Prvních 30 dní zdarma, bez karty, bez závazku.</p>
+        <div class="cislo-radek"><span class="cislo-obri">${standard.mesic}</span>
+          <p>${esc(CENIK.mena)} za firmu a měsíc<br>${esc(standard.nazev)}</p></div>
+        ${cenikSeznam()}`;
+      $("uvod-prihlaseni").innerHTML = `
         ${sekce("03", "Vyzkoušet nebo se přihlásit")}
         <p class="popisek">Zadejte svůj e-mail — pošleme vám jednorázový přihlašovací
         odkaz. Žádné heslo nepotřebujete.</p>
@@ -834,15 +918,8 @@
           <input id="email" type="email" autocomplete="email" inputmode="email"
                  placeholder="vas@email.cz" enterkeyhint="send">
         </div>
-        <div id="uvod-zprava" aria-live="polite"></div>
-        <div class="paticka">
-          <a href="zasady.html">Zásady zpracování údajů</a>
-          <a href="podminky.html">Obchodní podmínky</a>
-          <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a>
-          <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a>
-          <button type="button" class="nahlasit-chybu">Nahlásit chybu</button>
-        </div>`;
-      if (CENIK) $("uvod-cena").textContent = `${CENIK.mesic} ${CENIK.mena} měsíčně`;
+        <div id="uvod-zprava" aria-live="polite"></div>`;
+      $("uvod-paticka").innerHTML = PATICKA;
       $("email").addEventListener("keydown", (u) => { if (u.key === "Enter") posliOdkaz(); });
       nastavListu([{ popisek: "Poslat přihlašovací odkaz", akce: posliOdkaz }]);
       zapoctiNavstevu();
@@ -864,7 +941,7 @@
       if (!ok) {
         zprava.className = "hlaska chyba";
         zprava.textContent = data.chyba
-          || "E-mail se nepodařilo odeslat, zkuste to prosím znovu.";
+          || "Odkaz se nepodařilo odeslat — zkontrolujte e-mail a zkuste to znovu.";
         return;
       }
       if (data.odkaz) {
@@ -936,7 +1013,7 @@
            <span class="hlavni"><strong>${esc(z.nazev)}</strong>
            <span>${esc(z.oznaceni_zakaznika || "bez označení")} · ${datum(z.zmeneno)}</span></span>
            <span class="vpravo">${z.pocet_dilu ? z.pocet_dilu + " dílů" : "—"}</span>`,
-          () => jdi("zakazka", { id: z.id })));
+          () => jdi("zakazka", { id: z.id }), { zakazka: z.id }));
       });
       napojSekce(cil, { vse: () => { stav.vseZakazky = !stav.vseZakazky; vykresliZakazky(); } });
     }
@@ -1054,13 +1131,14 @@
              <span>${stena.delka_mm} × ${stena.vyska_mm} mm ·
              ${(stena.skrinky || []).length}× skříňka</span></span>
              <span class="vpravo">${hlasky.length ? hlasky.length + " ⚠" : "›"}</span>`,
-            () => jdi("stena", { index })));
+            () => jdi("stena", { index }), { stena: index }));
         });
         seznamSten.appendChild(seznam);
       }
 
       const akce = $("akce-zakazky");
-      pridejAkci(akce, "Náhled a kontrola", "pohled, půdorys a varování", () => jdi("nahled"));
+      pridejAkci(akce, "Náhled a kontrola", "pohled, půdorys a varování", () => jdi("nahled"),
+        { akce: "nahled" });
       pridejAkci(akce, "Kopírovat jako šablonu", "nová zakázka se stejnými stěnami", kopirujZakazku);
       pridejAkci(akce, "Upravit název a poznámku", "", panelUpravZakazku);
       pridejAkci(akce, "Smazat zakázku", "nevratné", smazZakazku);
@@ -1068,15 +1146,16 @@
       napojSekce(cil, { stena: pridejStenu });
       prekresliStavUlozeni();
       nastavListu([
-        { popisek: "Vygenerovat kusovník", akce: vygenerujKusovnik, zakazane: skrinek === 0 },
+        { popisek: "Vygenerovat kusovník", akce: vygenerujKusovnik, zakazane: skrinek === 0,
+          klic: "kusovnik" },
       ]);
     }
 
-    function pridejAkci(seznam, nazev, popis, akce) {
+    function pridejAkci(seznam, nazev, popis, akce, data) {
       seznam.appendChild(radekTlacitko(
         `<span class="hlavni"><strong>${esc(nazev)}</strong>${
           popis ? `<span>${esc(popis)}</span>` : ""}</span><span class="vpravo">›</span>`,
-        akce));
+        akce, data));
     }
 
     function pridejStenu() {
@@ -2052,65 +2131,83 @@
     const STAVY_HLASENI = { nove: "přijato", vyrizuje_se: "řešíme",
       vyrizeno: "vyřízeno", odlozeno: "odloženo" };
 
-    function vykresliUcet() {
-      const cil = $("o-ucet");
-      if (nutnePrihlaseni(cil)) return;
-      const ja = stav.ja || {};
+    // Stupnice zbývajícího období: čtyři týdny, rysky po 7 dnech (styl.css
+    // kreslí rysku po čtvrtinách), delší období stupnici jen zaplní.
+    const STUPNICE_DNI = 28;
+    const isoDatum = (unix) => new Date(unix * 1000).toISOString().slice(0, 10);
+    const jeUkazka = (ja) => /@ukazka\.invalid$/.test((ja && ja.email) || "");
+
+    function kartaStavu(ja) {
       const p = ja.predplatne;
       const dni = p ? p.dni_zbyva : 0;
       const popisStavu = !p ? ""
         : p.stav === "aktivni" ? `předplatné do ${datum(p.plati_do)}`
-        : p.stav === "zkusebni" ? `zkušebního období do ${datum(p.plati_do)}`
+        : p.stav === "zkusebni" ? `zkušební doba do ${datum(p.plati_do)}`
         : "předplatné vypršelo";
-
-      const objednavka = p && (p.stav === "vyprselo"
-        || (p.stav === "zkusebni" && p.dni_zbyva <= 7));
-
-      cil.innerHTML = `
+      const plneni = Math.min(100, Math.round((dni / STUPNICE_DNI) * 100));
+      return `
         <div class="karta vykres">
           <p class="stitek">Dní zbývá</p>
           <div class="cislo-radek"><span class="cislo-obri">${dni}</span>
             <p>${esc(popisStavu)}<br>${esc(ja.email || "")}</p></div>
+          <div class="stupnice" role="img" aria-label="Zbývá ${dni} dní">
+            <div class="stupnice-rysky"></div>
+            <div class="stupnice-plneni" style="--hodnota: ${plneni}%"></div>
+            <div class="stupnice-popisky"><span>dnes</span><span>+7</span><span>+14</span>
+              <span>+21</span><span>+28 dní</span></div>
+          </div>
+          ${p && p.plati_do ? `<p class="rozmer">konec období ${isoDatum(p.plati_do)}</p>` : ""}
           ${p && p.stav === "vyprselo" ? `<p class="hlaska chyba">Zakázky máte uložené —
-            objednávkou níž se k nim zase dostanete.</p>` : ""}
-        </div>
-        ${objednavka ? `${sekce("01", "Objednat předplatné")}
-          <div class="pole"><label for="ob-mesice">Délka</label>
-            <select id="ob-mesice">
-              <option value="1">1 měsíc</option>
-              <option value="3">3 měsíce</option>
-              <option value="12">12 měsíců</option>
-            </select></div>
-          <p class="popisek">Rozsah: plný přístup k aplikaci — zakázky, standard,
-          náhled i generování kusovníků.</p>
-          <p class="titulek-cena" id="ob-celkem">podle ceníku</p>
-          ${CENIK ? "" : `<p class="hlaska varovani">Ceník zatím není v aplikaci
-            zveřejněný — celkovou cenu vám potvrdíme e-mailem dřív, než vystavíme
-            fakturu, a do té doby vás objednávka k ničemu nezavazuje.</p>`}
-          <div class="pole"><label for="ob-fakturace">Fakturační údaje</label>
-            <textarea id="ob-fakturace" rows="3" maxlength="600"
-              placeholder="Název / jméno, adresa, IČO (máte-li)"></textarea></div>
-          <label class="volba"><input type="checkbox" id="ob-spotrebitel">
-            Objednávám jako spotřebitel (mimo podnikání)</label>
-          <label class="volba skryte" id="ob-souhlas-radek"><input type="checkbox" id="ob-souhlas">
-            Výslovně souhlasím, aby placená služba začala před uplynutím 14denní lhůty
-            pro odstoupení, a beru na vědomí, že tím právo na odstoupení ztrácím
-            (§ 1837 písm. l) občanského zákoníku).</label>
-          <button type="button" class="tlacitko" id="ob-poslat">Objednávka zavazující k platbě</button>
-          <div id="ob-zprava" aria-live="polite"></div>` : ""}
-        ${sekce(objednavka ? "02" : "01", "Vaše hlášení")}
-        <div id="hl-seznam"></div>
-        ${sekce(objednavka ? "03" : "02", "Vaše data")}
-        <ul class="seznam" id="ucet-akce"></ul>
-        <div class="paticka">
-          <a href="zasady.html">Zásady zpracování údajů</a>
-          <a href="podminky.html">Obchodní podmínky</a>
-          <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a>
-          <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a>
-          <button type="button" class="nahlasit-chybu">Nahlásit chybu</button>
+            po obnovení předplatného se k nim zase dostanete.</p>` : ""}
         </div>`;
+    }
 
-      if (objednavka) nastavObjednavku();
+    async function vykresliUcet() {
+      const mrizka = $("ucet-mrizka");
+      if (nutnePrihlaseni($("ucet-neprihlasen"))) { mrizka.classList.add("skryte"); return; }
+      $("ucet-neprihlasen").innerHTML = "";
+      mrizka.classList.remove("skryte");
+      nastavListu([]);
+
+      // Stav se čte pokaždé znovu: předplatné se mohlo mezitím prodloužit
+      // (nákup v Google Play, zaplacená faktura).
+      $("ucet-stav").innerHTML = `<div class="kostra kostra-karta"></div>`;
+      const { ok, data } = await api("/api/ja").catch(() => ({ ok: false, data: {} }));
+      if (aktualni.nazev !== "ucet") return;
+      if (!ok) {
+        $("ucet-stav").innerHTML = `<div class="hlaska chyba">Stav předplatného se nepodařilo
+          načíst — zkontrolujte připojení a zkuste to znovu.</div>`;
+        const znovu = document.createElement("button");
+        znovu.type = "button";
+        znovu.className = "tlacitko vedlejsi";
+        znovu.textContent = "Zkusit znovu";
+        znovu.addEventListener("click", vykresliUcet);
+        $("ucet-stav").appendChild(znovu);
+      } else {
+        stav.ja = data;
+        if (!data.prihlasen) { vykresliUcet(); return; }
+        $("ucet-stav").innerHTML = kartaStavu(data);
+      }
+      const ja = stav.ja || {};
+
+      $("ucet-predplatne").innerHTML = `${sekce("01", "Předplatné")}
+        <p class="popisek">Předplatné odemyká zakázky, konstrukční standard, náhled
+        i generování kusovníků. Zaplacené období platí na všech vašich zařízeních.</p>`;
+
+      // Fakturační objednávka: jen v prohlížeči (v aplikaci z Google Play ji
+      // schová styl.css podle play.js) a ne v ukázkovém účtu.
+      const objednavka = $("ucet-objednavka");
+      objednavka.classList.toggle("skryte", jeUkazka(ja));
+      if (jeUkazka(ja)) objednavka.innerHTML = "";
+      else vykresliObjednavku(objednavka);
+
+      $("ucet-dalsi").innerHTML = `
+        ${sekce("02", "Vaše hlášení")}
+        <div id="hl-seznam"></div>
+        ${sekce("03", "Vaše data")}
+        <ul class="seznam" id="ucet-akce"></ul>
+        ${PATICKA}`;
+
       nactiHlaseni();
 
       const akce = $("ucet-akce");
@@ -2126,15 +2223,52 @@
       nastavListu([]);
     }
 
-    function nastavObjednavku() {
+    function vykresliObjednavku(cil) {
+      cil.innerHTML = `
+        <p class="stitek">Objednávka s fakturou</p>
+        <fieldset class="varianty"><legend class="stitek">Varianta</legend>
+          ${VARIANTY.map((v) => `<label class="volba"><input type="radio" name="ob-varianta"
+            value="${esc(v.klic)}"${v.klic === "standard" ? " checked" : ""}>
+            <span><strong>${esc(v.nazev)}</strong> — ${esc(v.popis)}</span></label>`).join("")}
+        </fieldset>
+        <div class="pole"><label for="ob-mesice">Délka</label>
+          <select id="ob-mesice">
+            <option value="1">1 měsíc</option>
+            <option value="3">3 měsíce</option>
+            <option value="12">12 měsíců</option>
+          </select></div>
+        <p class="popisek" id="ob-vybrana"></p>
+        <p class="titulek-cena" id="ob-celkem"></p>
+        <div class="pole"><label for="ob-fakturace">Fakturační údaje</label>
+          <textarea id="ob-fakturace" rows="3" maxlength="600"
+            placeholder="Název / jméno, adresa, IČO (máte-li)"></textarea></div>
+        <label class="volba"><input type="checkbox" id="ob-spotrebitel">
+          Objednávám jako spotřebitel (mimo podnikání)</label>
+        <label class="volba skryte" id="ob-souhlas-radek"><input type="checkbox" id="ob-souhlas">
+          Výslovně souhlasím, aby placená služba začala před uplynutím 14denní lhůty
+          pro odstoupení, a beru na vědomí, že tím právo na odstoupení ztrácím
+          (§ 1837 písm. l) občanského zákoníku).</label>
+        <button type="button" class="tlacitko" id="ob-poslat">Objednávka zavazující k platbě</button>
+        <div id="ob-zprava" aria-live="polite"></div>`;
+      nastavObjednavku(cil);
+    }
+
+    function nastavObjednavku(cil) {
+      const vybrana = () => {
+        const zaskrtnuta = cil.querySelector('input[name="ob-varianta"]:checked');
+        return VARIANTY.find((v) => v.klic === (zaskrtnuta && zaskrtnuta.value)) || VARIANTY[1];
+      };
       const prepocti = () => {
         const mesice = Number($("ob-mesice").value);
-        $("ob-celkem").textContent = CENIK
-          ? `${mesice * CENIK.mesic} ${CENIK.mena} za ${mesice} měs.`
-          : "podle ceníku";
+        const v = vybrana();
+        $("ob-vybrana").textContent = `${v.nazev} — ${v.mesic} ${CENIK.mena} za firmu a měsíc`;
+        $("ob-celkem").textContent = `Celkem ${(mesice * v.mesic).toLocaleString("cs-CZ")} `
+          + `${CENIK.mena} za ${mesice} ${mesice === 1 ? "měsíc" : mesice < 5 ? "měsíce" : "měsíců"}`;
       };
       prepocti();
       $("ob-mesice").addEventListener("change", prepocti);
+      cil.querySelectorAll('input[name="ob-varianta"]').forEach((r) =>
+        r.addEventListener("change", prepocti));
       $("ob-spotrebitel").addEventListener("change", () => {
         $("ob-souhlas-radek").classList.toggle("skryte", !$("ob-spotrebitel").checked);
       });
@@ -2143,9 +2277,11 @@
         zprava.className = "hlaska";
         zprava.textContent = "Odesílám…";
         const mesice = Number($("ob-mesice").value);
+        const varianta = vybrana();
         const { ok, data } = await api("/api/objednavka", "POST", {
           mesice,
-          cena_czk: CENIK ? mesice * CENIK.mesic : null,
+          varianta: varianta.klic,
+          cena_czk: mesice * varianta.mesic,
           fakturace: $("ob-fakturace").value,
           spotrebitel: $("ob-spotrebitel").checked,
           souhlas_zahajeni: $("ob-spotrebitel").checked && $("ob-souhlas").checked,
@@ -2157,6 +2293,7 @@
         }
         zprava.className = "hlaska uspech";
         zprava.textContent = "Děkujeme, objednávku máme. Fakturu pošleme e-mailem.";
+        toast("Objednávku máme.");
       });
     }
 

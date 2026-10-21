@@ -14,7 +14,9 @@
 
 import { json, ted } from "./spolecne.js";
 
-export const ZKUSEBNI_DNI = 30;
+// Schválená zkušební doba (build 10). Účtům, které vznikly ještě za 30denní
+// zkušební doby, ji dorovnává migrace 0010_zkusebni_prechod.sql.
+export const ZKUSEBNI_DNI = 14;
 
 function dni(sekundy) {
   return Math.max(0, Math.ceil(sekundy / 86400));
