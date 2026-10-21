@@ -84,6 +84,10 @@ export async function onRequestPost(context) {
   if (CENIK) {
     const zCeniku = variantaZ(klic);
     if (!zCeniku) return json({ chyba: "Zvolte prosím variantu předplatného z ceníku." }, 422);
+    if (!zCeniku.objednat) {
+      return json({ chyba: `Variantu ${zCeniku.nazev} zatím objednat nejde — objednat můžete `
+        + `${variantaZ().nazev}.` }, 422);
+    }
     varianta = zCeniku.nazev;
   } else {
     varianta = ocistiVariantu(klic);

@@ -276,10 +276,25 @@
         {
           "jako": "A",
           "pozadavek": "POST /api/objednavka",
-          "telo": { "mesice": 1, "varianta": "tym", "cena_czk": 449,
+          "telo": { "mesice": 1, "varianta": "standard", "cena_czk": 249,
                     "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
           "ocekavam": 409,
           "obsahuje": ["Cena se mezitím změnila"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/objednavka",
+          "telo": { "mesice": 1, "varianta": "tym", "cena_czk": 890,
+                    "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
+          "ocekavam": 422,
+          "obsahuje": ["zatím objednat nejde"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/objednavka",
+          "telo": { "mesice": 1, "varianta": "solo", "cena_czk": 249,
+                    "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
+          "ocekavam": 422
         },
         {
           "jako": "A",
@@ -292,7 +307,7 @@
           "jako": "A",
           "pozadavek": "GET /api/objednavka",
           "ocekavam": 200,
-          "neobsahuje": ["Tým"]
+          "neobsahuje": ["Tým", "Sólo", "\"cena_czk\":249"]
         },
         {
           "jako": "A",

@@ -24,13 +24,18 @@
 // Schváleno majitelem (build 10): tři varianty za firmu a měsíc, výchozí
 // Standard. `mesic` nahoře je cena výchozí varianty — tu čte i web/index.html
 // (window.CENIK) a podle ní se zakládá předplatné v Google Play.
+//
+// `objednat`: objednat jde jen varianta s definovaným obsahem (Standard).
+// Sólo a Tým v této verzi odemykají totéž co Standard — prodávat stejné
+// plnění za tři ceny by bylo klamavé, takže se jen zobrazují, dokud majitel
+// neurčí, čím se liší.
 export const CENIK = {
   mesic: 449,
   mena: "Kč",
   varianty: {
-    solo: { nazev: "SimteGen Kusovník – Sólo", mesic: 249 },
-    standard: { nazev: "SimteGen Kusovník – Standard", mesic: 449 },
-    tym: { nazev: "SimteGen Kusovník – Tým", mesic: 890 },
+    solo: { nazev: "SimteGen Kusovník – Sólo", mesic: 249, objednat: false },
+    standard: { nazev: "SimteGen Kusovník – Standard", mesic: 449, objednat: true },
+    tym: { nazev: "SimteGen Kusovník – Tým", mesic: 890, objednat: false },
   },
 };
 

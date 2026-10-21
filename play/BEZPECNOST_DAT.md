@@ -29,7 +29,7 @@ Než se zaregistrujete, můžete si aplikaci projít tlačítkem Vyzkoušet uká
 
 Přihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.
 
-Jak se platí: zkušební doba 14 dní je zdarma, bez platební karty a bez závazku. Potom se aplikace platí předplatným. Ceník: SimteGen Kusovník – Sólo 249 Kč, SimteGen Kusovník – Standard 449 Kč a SimteGen Kusovník – Tým 890 Kč, vždy za firmu a měsíc. V aplikaci si předplatné koupíte přímo přes Google Play; cenu a délku období vidíte před nákupem. Předplatné se obnovuje automaticky a zrušíte ho kdykoli v Google Play.
+Jak se platí: zkušební doba 14 dní je zdarma, bez platební karty a bez závazku. Potom se aplikace platí předplatným, které si koupíte přímo v aplikaci přes Google Play. Cenu a délku období předplatného uvidíte v aplikaci před nákupem. Předplatné se obnovuje automaticky a zrušíte ho kdykoli v Google Play.
 
 Rozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte.
 ```

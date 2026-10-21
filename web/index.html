@@ -93,12 +93,17 @@
       border-top: 1px solid var(--barva-linka); }
     html:not(.sg-ukazka) .uvod-ukazka { display: none; }
 
+    /* Ceník variant jen na webu: Google Play v aplikaci prodává jen svůj
+       produkt (play.js), takže tam ceník s variantami, které koupit nejdou,
+       nepatří. Stejně opatrně jako [data-objednavka] ve styl.css: dokud
+       play.js nepotvrdí prohlížeč (sg-web), ceník variant se neukáže. */
+    html[data-aplikace]:not(.sg-web) .cena-web,
+    html.sg-v-aplikaci .cena-web { display: none; }
+    html:not(.sg-v-aplikaci) .cena-aplikace { display: none; }
+
     /* Účet: bloky pravého sloupce pod sebou. */
     #ucet-mrizka .s7 > * + * { margin-top: var(--mezera-4); }
     #ucet-mrizka .s7 > :empty { display: none; }
-    .varianty { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column;
-      gap: var(--mezera-2); }
-    .varianty legend { padding: 0; margin-bottom: var(--mezera-2); }
   </style>
   <!-- aplikace: vykresli_aplikaci.py -->
   <link rel="manifest" href="/manifest.webmanifest">
@@ -211,14 +216,16 @@
     // — nic se z nich nedopočítává (jen celková částka objednávky = měsíce ×
     // cena varianty, stejně jako na serveru v cenik.js).
     window.CENIK = { mesic: 449, mena: "Kč" };
+    // `objednat` jako na serveru: objednat jde jen Standard (jediná varianta
+    // s definovaným obsahem), Sólo a Tým se jen zobrazují.
     window.CENIK_VARIANTY = [
-      { klic: "solo", nazev: "SimteGen Kusovník – Sólo", mesic: 249,
+      { klic: "solo", nazev: "SimteGen Kusovník – Sólo", mesic: 249, objednat: false,
         popis: "249 Kč za firmu a měsíc" },
-      { klic: "standard", nazev: "SimteGen Kusovník – Standard", mesic: 449,
+      { klic: "standard", nazev: "SimteGen Kusovník – Standard", mesic: 449, objednat: true,
         popis: "449 Kč za firmu a měsíc; obsahuje: neomezený počet zakázek a uložených "
           + "projektů, návrh a vizualizace kuchyně/skříněk v tabletu i telefonu, automatické "
           + "generování kusovníku (rozměry desek a polic) pro nářezové centrum" },
-      { klic: "tym", nazev: "SimteGen Kusovník – Tým", mesic: 890,
+      { klic: "tym", nazev: "SimteGen Kusovník – Tým", mesic: 890, objednat: false,
         popis: "890 Kč za firmu a měsíc" },
     ];
     window.ZKUSEBNI_DOBA = "Zkušební doba 14 dní";
@@ -875,12 +882,13 @@
 
     /** Ceník přesně podle schválení — řádek na variantu, nic dopočítaného. */
     function cenikSeznam() {
+      const neobjednatelne = VARIANTY.filter((v) => !v.objednat).map((v) => v.nazev);
       return `<ul class="seznam">${VARIANTY.map((v, i) => `
           <li class="radek"><span class="poradi">${String(i + 1).padStart(2, "0")}</span>
             <span class="hlavni"><strong>${esc(v.nazev)}</strong>
             <span>${esc(v.popis)}</span></span></li>`).join("")}</ul>
-        <p class="popisek">${esc(window.ZKUSEBNI_DOBA)}. Během ní nic neplatíte
-        a nezadáváte platební kartu.</p>`;
+        ${neobjednatelne.length ? `<p class="popisek">${esc(neobjednatelne.join(" a "))}
+          zatím objednat nejde.</p>` : ""}`;
     }
 
     function vykresliUvod() {
@@ -906,9 +914,19 @@
         </ul>
         <p class="rozmer">Skříňka 600 × 720 × 510: bok 2× 510 × 720 · dno 564 × 510 · záda 580 × 700</p>
         ${sekce("02", "Cena")}
-        <div class="cislo-radek"><span class="cislo-obri">${standard.mesic}</span>
-          <p>${esc(CENIK.mena)} za firmu a měsíc<br>${esc(standard.nazev)}</p></div>
-        ${cenikSeznam()}`;
+        <div class="cena-web">
+          <div class="cislo-radek"><span class="cislo-obri">${standard.mesic}</span>
+            <p>${esc(CENIK.mena)} za firmu a měsíc<br>${esc(standard.nazev)}</p></div>
+          ${cenikSeznam()}
+        </div>
+        <div class="cena-aplikace">
+          <div class="cislo-radek"><span class="cislo-obri">14</span>
+            <p>dní zkušební doby<br>zdarma, bez karty</p></div>
+          <p class="popisek">Potom se aplikace platí předplatným přes Google Play.
+          Cenu a délku období uvidíte u účtu před nákupem.</p>
+        </div>
+        <p class="popisek">${esc(window.ZKUSEBNI_DOBA)}. Během ní nic neplatíte
+        a nezadáváte platební kartu.</p>`;
       $("uvod-prihlaseni").innerHTML = `
         ${sekce("03", "Vyzkoušet nebo se přihlásit")}
         <p class="popisek">Zadejte svůj e-mail — pošleme vám jednorázový přihlašovací
@@ -2226,11 +2244,7 @@
     function vykresliObjednavku(cil) {
       cil.innerHTML = `
         <p class="stitek">Objednávka s fakturou</p>
-        <fieldset class="varianty"><legend class="stitek">Varianta</legend>
-          ${VARIANTY.map((v) => `<label class="volba"><input type="radio" name="ob-varianta"
-            value="${esc(v.klic)}"${v.klic === "standard" ? " checked" : ""}>
-            <span><strong>${esc(v.nazev)}</strong> — ${esc(v.popis)}</span></label>`).join("")}
-        </fieldset>
+        ${cenikSeznam()}
         <div class="pole"><label for="ob-mesice">Délka</label>
           <select id="ob-mesice">
             <option value="1">1 měsíc</option>
@@ -2254,10 +2268,8 @@
     }
 
     function nastavObjednavku(cil) {
-      const vybrana = () => {
-        const zaskrtnuta = cil.querySelector('input[name="ob-varianta"]:checked');
-        return VARIANTY.find((v) => v.klic === (zaskrtnuta && zaskrtnuta.value)) || VARIANTY[1];
-      };
+      // Objednat jde jen varianta s definovaným obsahem (viz CENIK_VARIANTY).
+      const vybrana = () => VARIANTY.find((v) => v.objednat);
       const prepocti = () => {
         const mesice = Number($("ob-mesice").value);
         const v = vybrana();
@@ -2267,8 +2279,6 @@
       };
       prepocti();
       $("ob-mesice").addEventListener("change", prepocti);
-      cil.querySelectorAll('input[name="ob-varianta"]').forEach((r) =>
-        r.addEventListener("change", prepocti));
       $("ob-spotrebitel").addEventListener("change", () => {
         $("ob-souhlas-radek").classList.toggle("skryte", !$("ob-spotrebitel").checked);
       });
