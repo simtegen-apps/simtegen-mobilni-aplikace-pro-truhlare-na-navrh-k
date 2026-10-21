@@ -60,7 +60,7 @@ V `zkouska_predplatneho.mjs` (`node zkouska_predplatneho.mjs`, ručně jako `zko
 - **Čím se liší Sólo a Tým** (např. počet uživatelů nebo zařízení). Do té doby je nejde objednat.
 - **DPH:** `cena_dph` v manifestu je prázdné, v podmínkách zůstává červený slot.
 - **Servisní účet** pro ověření nákupů (`PLAY_NAKUPY_UCET`, `PLAY_BALICEK`) nastaví majitel / workflow Vydání.
-- **Kontaktní schránka** `podpora@simtegen.cz` musí existovat a někdo ji musí číst. Během stavby se v manifestu mimo stavitele objevila `support@simtegen.com` a byla vrácena, protože změnu nikdo neschválil. Chce-li ji majitel, stačí změnit jedno pole a přegenerovat.
+- **Kontaktní schránka:** majitel potvrdil `podpora@simtegen.cz` (výhrada majitele k build 10). Během stavby se v manifestu opakovaně mimo stavitele objevovala `support@simtegen.com` — pokud ji tam zapisuje nějaký automat nebo šablona, je potřeba ho opravit, jinak kontakt v zásadách a v Google Play znovu přepíše.
 
 ## Vady šablony — v produktu se opravit nesmí, nutné opravit před vydáním do produkce
 - `functions/api/ukazka.js` (ř. 73) vrací zákazníkovi tykající hlášku „Ukázek je teď moc, zkus to za chvíli.“ — má vykat („zkuste to prosím za chvíli“). `play.js` ji zobrazí přímo v tlačítku.
