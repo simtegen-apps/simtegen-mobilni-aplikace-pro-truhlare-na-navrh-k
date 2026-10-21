@@ -10,7 +10,7 @@ Workflow Vydání ho nahrává sám, jakmile má servisní účet. Ručně jen p
 - **Název aplikace:** Kusovník pro truhláře
 - **Krátký popis:** Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.
 - **Kategorie:** Firmy (`BUSINESS`) — v Play Console: Nastavení obchodu
-- **Kontaktní e-mail:** podpora@simtegen.cz
+- **Kontaktní e-mail:** support@simtegen.com
 - **Web:** `<adresa>`
 - **Úplný popis:**
 
