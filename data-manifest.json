@@ -10,7 +10,7 @@
   "verze_dokumentu": "2.0",
   "ucinnost_od": "",
   "cena_dph": "",
-  "zkusebni_dni": 30,
+  "zkusebni_dni": 14,
   "retence_logy": "",
   "retence_podpora": "",
   "retence_doklady": "10 let",
@@ -185,6 +185,19 @@
       "ucel": "vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl",
       "pole": "odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas",
       "retence": "do smazání účtu zákazníkem"
+    },
+    {
+      "entita": "play_nakupy",
+      "play_typy": [
+        "historie_nakupu"
+      ],
+      "play_ucely": [
+        "funkce",
+        "ucet"
+      ],
+      "ucel": "evidence předplatného koupeného v Google Play",
+      "pole": "odkaz na účet, doklad o nákupu od Googlu, produkt, konec zaplaceného období, stav, čas ověření",
+      "retence": "do smazání účtu zákazníkem"
     }
   ],
   "agregaty": [
@@ -208,6 +221,11 @@
       "ucel": "evidence hlášení zákazníků pro podporu (jen text hlášení, bez údajů o účtu)",
       "domena": "api.github.com",
       "dpa": "https://github.com/customer-terms/github-data-protection-agreement"
+    },
+    {
+      "nazev": "Google Play",
+      "ucel": "prodej předplatného v aplikaci z Google Play a ověření nákupu (platbu zpracovává Google)",
+      "domena": "androidpublisher.googleapis.com"
     }
   ],
   "uloziste_v_prohlizeci": [
@@ -223,6 +241,11 @@
       "nazev": "relace",
       "ucel": "udržení přihlášení (technická, HttpOnly)",
       "trvani": "30 dní"
+    },
+    {
+      "nazev": "aplikace",
+      "ucel": "pozná aplikaci z Google Play, aby v ní nebyla nabídka placení mimo Google Play (technická, HttpOnly)",
+      "trvani": "1 rok"
     }
   ],
   "aplikace": {
@@ -234,7 +257,49 @@
       "A2:90:CB:31:B4:E3:4F:8A:95:87:66:D2:86:FE:42:FE:36:FD:A0:09:41:7C:49:1D:1B:9F:76:19:99:DD:0E:95"
     ],
     "kategorie": "BUSINESS",
-    "dlouhy_popis": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru, kteří měří přímo u zákazníka v telefonu nebo tabletu.\n\nCo aplikace dělá:\n• Zadáte rozměry stěn, oken a dveří a na stěny postavíte skříňky — spodní, horní, vysoké i rohové.\n• Výkres stěny ukazuje skříňky, okna a dveře v měřítku.\n• Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.\n• Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.\n• Kusovník stáhnete jako soubor CSV pro nářezové centrum.\n• Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.\n\nPřihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.\n\nAplikace se platí měsíčním předplatným. Prvních 30 dní je zdarma, bez zadávání platební karty a bez závazku.\n\nRozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte."
+    "dlouhy_popis": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru, kteří měří přímo u zákazníka v telefonu nebo tabletu.\n\nCo aplikace dělá:\n• Zadáte rozměry stěn, oken a dveří a na stěny postavíte skříňky — spodní, horní, vysoké i rohové.\n• Výkres stěny ukazuje skříňky, okna a dveře v měřítku.\n• Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.\n• Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.\n• Kusovník stáhnete jako soubor CSV pro nářezové centrum.\n• Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.\n\nNež se zaregistrujete, můžete si aplikaci projít tlačítkem Vyzkoušet ukázku: dostanete dočasný účet s vymyšlenou kuchyní a kusovníkem, který za 24 hodin zmizí.\n\nPřihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.\n\nJak se platí: zkušební doba 14 dní je zdarma, bez platební karty a bez závazku. Potom se aplikace platí předplatným, které si koupíte přímo v aplikaci přes Google Play. Cenu a délku období předplatného uvidíte v aplikaci před nákupem. Předplatné se obnovuje automaticky a zrušíte ho kdykoli v Google Play.\n\nRozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte.",
+    "hlavni_veta": "Od měření u zákazníka ke kusovníku",
+    "snimky": [
+      {
+        "obrazovka": "o-zakazky",
+        "stitek": "Zakázky",
+        "titulek": "Všechny zakázky uložené v účtu"
+      },
+      {
+        "obrazovka": "o-zakazky",
+        "stitek": "Měření stěny",
+        "titulek": "Stěna s oknem a skříňkami v měřítku",
+        "kliky": [
+          "#seznam-zakazek [data-zakazka]",
+          "#seznam-sten [data-stena]"
+        ],
+        "tablet": true
+      },
+      {
+        "obrazovka": "o-zakazky",
+        "stitek": "Náhled kuchyně",
+        "titulek": "Celá linka před očima zákazníka",
+        "kliky": [
+          "#seznam-zakazek [data-zakazka]",
+          "[data-akce=nahled]"
+        ],
+        "tablet": true
+      },
+      {
+        "obrazovka": "o-zakazky",
+        "stitek": "Kusovník",
+        "titulek": "Kusovník pro nářezové centrum",
+        "kliky": [
+          "#seznam-zakazek [data-zakazka]",
+          "#lista-dole [data-akce=kusovnik]"
+        ]
+      },
+      {
+        "obrazovka": "o-standard",
+        "stitek": "Standard dílny",
+        "titulek": "Díly podle konstrukce vaší dílny"
+      }
+    ]
   },
   "poznamka": "Jediny zdroj pravdy o datech produktu. Zasady, obchodni podminky, zpracovatelska smlouva, formular pro odstoupeni, zaznam o zpracovani i postup pri incidentu se GENERUJI z tohoto souboru (python3 vykresli_zasady.py) a kontrola_manifestu.py shazuje build, kdyz se kod nebo vygenerovane soubory s manifestem rozejdou. Kazda nova tabulka = zaznam v ukladame + migrace v db/migrace/ se sloupcem uzivatel_id. Prazdne sloty (ico, sidlo, dic, zapis_or, kontakt_email, ucinnost_od, cena_dph, retence_logy, retence_podpora, odpovedna_osoba, zastup, ucetni, balancni_test) se vykresli cervene jako (doplnit ...) - s nimi se nesmi jit do produkce. obsah_zakaznika_popis a subjekty_obsahu popisuji obsah, ktery do produktu vklada zakaznik (zpracovatelska smlouva, cl. 2) - stavitel je vyplni podle produktu. agregaty = tabulky bez uzivatel_id, ktere smi obsahovat jen souhrnna cisla (den, stranka, pocet) - kontrola hlida, ze v nich neni zadny osobni sloupec."
 }

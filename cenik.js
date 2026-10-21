@@ -21,15 +21,41 @@
 // Kdyby se 1 a 2 rozešly, objednávka skončí hláškou o změně ceny — raději
 // hlasitě, než tiše fakturovat něco jiného, než zákazník viděl.
 
-export const CENIK = null;
+// Schváleno majitelem (build 10): tři varianty za firmu a měsíc, výchozí
+// Standard. `mesic` nahoře je cena výchozí varianty — tu čte i web/index.html
+// (window.CENIK) a podle ní se zakládá předplatné v Google Play.
+//
+// `objednat`: objednat jde jen varianta s definovaným obsahem (Standard).
+// Sólo a Tým v této verzi odemykají totéž co Standard — prodávat stejné
+// plnění za tři ceny by bylo klamavé, takže se jen zobrazují, dokud majitel
+// neurčí, čím se liší.
+export const CENIK = {
+  mesic: 449,
+  mena: "Kč",
+  varianty: {
+    solo: { nazev: "SimteGen Kusovník – Sólo", mesic: 249, objednat: false },
+    standard: { nazev: "SimteGen Kusovník – Standard", mesic: 449, objednat: true },
+    tym: { nazev: "SimteGen Kusovník – Tým", mesic: 890, objednat: false },
+  },
+};
+
+export const VYCHOZI_VARIANTA = "standard";
 
 export const MIN_MESICU = 1;
 export const MAX_MESICU = 24;
 
-/** Celková cena za daný počet měsíců v Kč, nebo null, není-li ceník schválený. */
-export function cenaZa(mesice) {
+/** Varianta podle klíče (solo / standard / tym), bez klíče výchozí; jinak null. */
+export function variantaZ(klic) {
   if (!CENIK) return null;
+  const k = klic === undefined || klic === null || klic === "" ? VYCHOZI_VARIANTA : String(klic);
+  return Object.prototype.hasOwnProperty.call(CENIK.varianty, k) ? CENIK.varianty[k] : null;
+}
+
+/** Celková cena za daný počet měsíců varianty v Kč, nebo null, není-li ceník schválený. */
+export function cenaZa(mesice, klic) {
+  const varianta = variantaZ(klic);
+  if (!varianta) return null;
   const n = Math.round(Number(mesice));
   if (!Number.isInteger(n) || n < MIN_MESICU || n > MAX_MESICU) return null;
-  return Math.round(CENIK.mesic * n);
+  return Math.round(varianta.mesic * n);
 }

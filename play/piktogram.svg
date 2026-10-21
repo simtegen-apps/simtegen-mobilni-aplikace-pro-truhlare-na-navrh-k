@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- horní skříňky -->
+  <rect x="4" y="3" width="7" height="5"/>
+  <rect x="13" y="3" width="7" height="5"/>
+  <!-- pracovní deska a spodní skříňky -->
+  <line x1="3" y1="12" x2="21" y2="12"/>
+  <rect x="4" y="12" width="16" height="7"/>
+  <line x1="9" y1="12" x2="9" y2="19"/>
+  <line x1="15" y1="12" x2="15" y2="19"/>
+  <!-- úchytky -->
+  <line x1="7" y1="14" x2="7" y2="16"/>
+  <line x1="17" y1="14" x2="17" y2="16"/>
+  <!-- kóta délky linky -->
+  <g class="detail">
+    <line x1="4" y1="21" x2="20" y2="21"/>
+    <line x1="4" y1="20" x2="4" y2="22"/>
+    <line x1="20" y1="20" x2="20" y2="22"/>
+  </g>
+</svg>

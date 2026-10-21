@@ -57,6 +57,7 @@
       <tr><td>naměřené stěny místnosti včetně oken a dveří</td><td>odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas</td><td>plnění smlouvy</td><td>se zakázkou, nejpozději do smazání účtu zákazníkem</td></tr>
       <tr><td>navržené skříňky a jejich rozměry jako podklad pro kusovník</td><td>odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas</td><td>plnění smlouvy</td><td>se zakázkou, nejpozději do smazání účtu zákazníkem</td></tr>
       <tr><td>vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl</td><td>odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas</td><td>plnění smlouvy</td><td>do smazání účtu zákazníkem</td></tr>
+      <tr><td>evidence předplatného koupeného v Google Play</td><td>odkaz na účet, doklad o nákupu od Googlu, produkt, konec zaplaceného období, stav, čas ověření</td><td>plnění smlouvy</td><td>do smazání účtu zákazníkem</td></tr>
       <tr><td>provozní a bezpečnostní záznamy (logy)</td><td>IP adresa, čas a typ požadavku, identifikace prohlížeče</td><td>oprávněný zájem — provoz a zabezpečení služby</td><td><span class="doplnit">(doplnit skutečnou dobu, typicky 30 dnů)</span></td></tr>
       <tr><td>vyřízení dotazu nebo požadavku podpory</td><td>e-mailová adresa a obsah komunikace</td><td>plnění smlouvy, u nezákazníků oprávněný zájem</td><td><span class="doplnit">(doplnit, typicky 1 rok)</span></td></tr>
       <tr><td>účetní a daňové doklady</td><td>fakturační údaje, částka, datum</td><td>plnění právní povinnosti (zákon o účetnictví, zákon o DPH)</td><td>10 let; vedeno mimo aplikaci</td></tr>
@@ -75,6 +76,7 @@
     <li><strong>Cloudflare, Inc.</strong> — hosting aplikace a databáze (primární instance v EU) (primární instance databáze v EU) (<a href="https://www.cloudflare.com/cloudflare-customer-dpa/">zpracovatelská smlouva</a>)</li>
     <li><strong>Resend (Plus Five Five, Inc.)</strong> — odeslání přihlašovacího odkazu na e-mail (USA / EU) (<a href="https://resend.com/legal/dpa">zpracovatelská smlouva</a>)</li>
     <li><strong>GitHub, Inc. (Microsoft)</strong> — evidence hlášení zákazníků pro podporu (jen text hlášení, bez údajů o účtu) (USA / EU) (<a href="https://github.com/customer-terms/github-data-protection-agreement">zpracovatelská smlouva</a>)</li>
+    <li><strong>Google Ireland Limited / Google Commerce Limited</strong> — prodej předplatného v aplikaci z Google Play a ověření nákupu (platbu zpracovává Google) (EU)</li>
   </ul>
 
   <h2>Předávání mimo Evropskou unii</h2>
@@ -93,6 +95,7 @@
   (§ 89 odst. 3 zákona č. 127/2005 Sb., o elektronických komunikacích):</p>
   <ul>
     <li><code>relace</code> — udržení přihlášení (technická, HttpOnly); platnost 30 dní.</li>
+    <li><code>aplikace</code> — pozná aplikaci z Google Play, aby v ní nebyla nabídka placení mimo Google Play (technická, HttpOnly); platnost 1 rok.</li>
   </ul>
 
   <h2>Vaše práva</h2>

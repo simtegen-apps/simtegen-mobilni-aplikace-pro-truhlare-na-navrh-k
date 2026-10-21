@@ -185,6 +185,173 @@
           "ocekavam": 200
         }
       ]
+    },
+    {
+      "nazev": "Účet B nevidí zakázky, kusovníky ani objednávky účtu A",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-oddeleni-A kuchyň", "oznaceni_zakaznika": "UAT-zakaznik-A" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-oddeleni-A kuchyň", "oznaceni_zakaznika": "UAT-zakaznik-A" },
+            "steny": [
+              {
+                "nazev": "UAT-stena-A",
+                "delka_mm": 3000,
+                "vyska_mm": 2600,
+                "otvory": [],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0 }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/kusovnik",
+          "telo": { "zakazka_id": "{zakazka}" },
+          "ocekavam": 200,
+          "uloz": { "kusovnik": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}",
+          "ocekavam": 200,
+          "obsahuje": ["UAT-oddeleni-A kuchyň"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/zakazky",
+          "ocekavam": 200,
+          "neobsahuje": ["UAT-oddeleni-A", "UAT-zakaznik-A"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}",
+          "ocekavam": 404
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}/csv",
+          "ocekavam": 404
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/objednavka",
+          "ocekavam": 200,
+          "neobsahuje": ["UAT-faktura-A", "SimteGen Kusovník"]
+        }
+      ]
+    },
+    {
+      "nazev": "Nový účet má zkušební dobu 14 dní",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/ja",
+          "ocekavam": 200,
+          "obsahuje": ["\"prihlasen\":true", "\"stav\":\"zkusebni\"", "\"dni_zbyva\":14"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/ja",
+          "ocekavam": 200,
+          "obsahuje": ["\"stav\":\"zkusebni\"", "\"dni_zbyva\":14"]
+        }
+      ]
+    },
+    {
+      "nazev": "Objednávka varianty podle schváleného ceníku",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/objednavka",
+          "telo": { "mesice": 1, "varianta": "standard", "cena_czk": 249,
+                    "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
+          "ocekavam": 409,
+          "obsahuje": ["Cena se mezitím změnila"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/objednavka",
+          "telo": { "mesice": 1, "varianta": "tym", "cena_czk": 890,
+                    "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
+          "ocekavam": 422,
+          "obsahuje": ["zatím objednat nejde"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/objednavka",
+          "telo": { "mesice": 1, "varianta": "solo", "cena_czk": 249,
+                    "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
+          "ocekavam": 422
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/objednavka",
+          "telo": { "mesice": 1, "varianta": "premium", "cena_czk": 449,
+                    "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
+          "ocekavam": 422
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/objednavka",
+          "ocekavam": 200,
+          "neobsahuje": ["Tým", "Sólo", "\"cena_czk\":249"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/objednavka",
+          "telo": { "mesice": 1, "varianta": "standard", "cena_czk": 449,
+                    "fakturace": "UAT-faktura-A, Dílenská 1, Brno", "spotrebitel": false },
+          "ocekavam": 200,
+          "uloz": { "objednavka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/objednavka",
+          "ocekavam": 200,
+          "obsahuje": ["SimteGen Kusovník – Standard", "\"cena_czk\":449", "\"mesice\":1"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/objednavka",
+          "ocekavam": 200,
+          "neobsahuje": ["SimteGen Kusovník – Standard"]
+        }
+      ]
+    },
+    {
+      "nazev": "Účet a vlastní data zůstávají dostupné vždy",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/ucet/export",
+          "ocekavam": 200,
+          "obsahuje": ["predplatne"]
+        },
+        {
+          "jako": "nikdo",
+          "pozadavek": "GET /api/zakazky",
+          "ocekavam": 401
+        },
+        {
+          "jako": "nikdo",
+          "pozadavek": "GET /api/ja",
+          "ocekavam": 200,
+          "obsahuje": ["\"prihlasen\":false"]
+        }
+      ]
     }
   ]
 }

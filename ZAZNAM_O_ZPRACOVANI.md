@@ -33,6 +33,7 @@ správcem, a **B** pro zpracování prováděná pro zákazníky, kde je SimteGe
 | steny | naměřené stěny místnosti včetně oken a dveří | zákazníci služby | odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas | čl. 6/1/b — plnění smlouvy | se zakázkou, nejpozději do smazání účtu zákazníkem |
 | skrinky | navržené skříňky a jejich rozměry jako podklad pro kusovník | zákazníci služby | odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas | čl. 6/1/b — plnění smlouvy | se zakázkou, nejpozději do smazání účtu zákazníkem |
 | kusovniky | vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl | zákazníci služby | odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
+| play_nakupy | evidence předplatného koupeného v Google Play | zákazníci služby | odkaz na účet, doklad o nákupu od Googlu, produkt, konec zaplaceného období, stav, čas ověření | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
 | provozní a bezpečnostní logy | provozní a bezpečnostní záznamy (logy) | zákazníci a návštěvníci | IP adresa, čas a typ požadavku, identifikace prohlížeče | čl. 6/1/f — oprávněný zájem | (doplnit skutečnou dobu, typicky 30 dnů) |
 | podpora a komunikace | vyřízení dotazu nebo požadavku podpory | zákazníci, zájemci | e-mailová adresa a obsah komunikace | čl. 6/1/b, u nezákazníků čl. 6/1/f | (doplnit, typicky 1 rok) |
 | účetní a daňové doklady | účetní a daňové doklady | zákazníci | fakturační údaje, částka, datum | čl. 6/1/c — právní povinnost | 10 let; vedeno mimo aplikaci |
@@ -53,6 +54,7 @@ v rozsahu, v jakém to ukládá zákon. Údaje se neprodávají ani nepředávaj
 | Cloudflare, Inc. (USA) | hosting aplikace a databáze (primární instance v EU) | primární instance databáze v EU | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
 | Resend (Plus Five Five, Inc.) (USA) | odeslání přihlašovacího odkazu na e-mail | USA / EU | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
 | GitHub, Inc. (Microsoft) (USA) | evidence hlášení zákazníků pro podporu (jen text hlášení, bez údajů o účtu) | USA / EU | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
+| Google Ireland Limited / Google Commerce Limited (Irsko) | prodej předplatného v aplikaci z Google Play a ověření nákupu (platbu zpracovává Google) | EU | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
 
 Kopie záruk: uloženy u správce, na žádost poskytovány subjektům údajů.
 
@@ -79,7 +81,7 @@ do aplikace vkládají údaje třetích osob. Právním rámcem je
 | **Kategorie subjektů údajů** | koncoví zákazníci truhláře, u kterých se kuchyň nebo skříň měří a montuje, případně kontaktní osoby na stavbě |
 | **Kategorie údajů** | označení zakázky a koncového zákazníka, které truhlář sám vyplní (typicky jméno nebo název, někdy obec či adresa místa montáže), naměřené rozměry místnosti, stěn, oken a dveří, rozměry a parametry navržených skříněk a volné poznámky k zakázce |
 | **Zvláštní kategorie (čl. 9/10)** | služba k nim není určena; jejich vkládání je smluvně vyloučeno |
-| **Další zpracovatelé** | Cloudflare, Inc.; Resend (Plus Five Five, Inc.); GitHub, Inc. (Microsoft) (viz A.3) |
+| **Další zpracovatelé** | Cloudflare, Inc.; Resend (Plus Five Five, Inc.); GitHub, Inc. (Microsoft); Google Ireland Limited / Google Commerce Limited (viz A.3) |
 | **Předání mimo EU** | jen na pokyn správce nebo v rámci dalších zpracovatelů, se zárukami podle A.3 |
 | **Doba zpracování** | po dobu trvání smlouvy o službě; poté výmaz nebo vrácení dle volby správce |
 | **Technická a organizační opatření** | shodná s A.4 |
