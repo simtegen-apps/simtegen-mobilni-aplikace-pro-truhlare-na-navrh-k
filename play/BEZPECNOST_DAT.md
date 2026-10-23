@@ -52,10 +52,10 @@ Vyplní se sama: workflow Vydání ji s každým vydáním posílá Googlu (`bez
 
 | Kategorie | Typ údajů | Shromažďováno | Povinné? | Účely | Odkud (manifest) |
 |---|---|---|---|---|---|
-| Osobní údaje (Personal info) | E-mailová adresa (Email address) | Ano | povinné | Správa účtu (Account management), Prevence podvodů, zabezpečení a dodržování předpisů (Fraud prevention, security, and compliance) | uzivatele, prihlasovaci_odkazy |
+| Osobní údaje (Personal info) | E-mailová adresa (Email address) | Ano | povinné | Správa účtu (Account management), Komunikace vývojáře (Developer communications), Prevence podvodů, zabezpečení a dodržování předpisů (Fraud prevention, security, and compliance) | uzivatele, prihlasovaci_odkazy |
 | Osobní údaje (Personal info) | Jméno (Name) | Ano | povinné | Funkce aplikace (App functionality), Správa účtu (Account management) | objednavky |
 | Osobní údaje (Personal info) | Adresa (Address) | Ano | povinné | Funkce aplikace (App functionality), Správa účtu (Account management) | objednavky |
-| Osobní údaje (Personal info) | ID uživatelů (User IDs) | Ano | povinné | Správa účtu (Account management) | uzivatele |
+| Osobní údaje (Personal info) | ID uživatelů (User IDs) | Ano | povinné | Funkce aplikace (App functionality), Správa účtu (Account management), Komunikace vývojáře (Developer communications) | uzivatele, zkusebni_doba, upominky, ukazkova_data |
 | Osobní údaje (Personal info) | Jiné informace (Other info) | Ano | povinné | Funkce aplikace (App functionality) | zakazky |
 | Finanční údaje (Financial info) | Historie nákupů (Purchase history) | Ano | povinné | Funkce aplikace (App functionality), Správa účtu (Account management) | predplatne, platby, objednavky, play_nakupy |
 | Zprávy (Messages) | Jiné zprávy v aplikaci (Other in-app messages) | Ano | volitelné | Funkce aplikace (App functionality), Komunikace vývojáře (Developer communications) | hlaseni, hlášení chyb (tlačítko Nahlásit chybu) |

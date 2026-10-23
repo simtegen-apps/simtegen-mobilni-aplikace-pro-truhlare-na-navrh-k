@@ -31,7 +31,8 @@
         "id_uzivatele"
       ],
       "play_ucely": [
-        "ucet"
+        "ucet",
+        "komunikace"
       ],
       "ucel": "účet zákazníka a přihlášení",
       "pole": "e-mailová adresa, čas založení účtu",
@@ -198,6 +199,44 @@
       "ucel": "evidence předplatného koupeného v Google Play",
       "pole": "odkaz na účet, doklad o nákupu od Googlu, produkt, konec zaplaceného období, stav, čas ověření",
       "retence": "do smazání účtu zákazníkem"
+    },
+    {
+      "entita": "zkusebni_doba",
+      "ucel": "upozornění na blížící se a uplynulý konec zkušebního období (v aplikaci a nejvýš třemi provozními e-maily — 2–3 dny a 1 den před koncem a po jeho uplynutí; žádná reklama)",
+      "pole": "odkaz na účet, datum konce zkušebního období, jak ho aplikace odvodí z vašeho účtu",
+      "retence": "do smazání účtu zákazníkem",
+      "play_typy": [
+        "id_uzivatele"
+      ],
+      "play_ucely": [
+        "ucet",
+        "komunikace"
+      ]
+    },
+    {
+      "entita": "upominky",
+      "ucel": "aby každé upozornění na konec zkušebního období odešlo nejvýš jednou",
+      "pole": "odkaz na účet, druh upozornění, čas odeslání",
+      "retence": "do smazání účtu zákazníkem",
+      "play_typy": [
+        "id_uzivatele"
+      ],
+      "play_ucely": [
+        "ucet",
+        "komunikace"
+      ]
+    },
+    {
+      "entita": "ukazkova_data",
+      "ucel": "na vaše přání naplnit prázdný účet vymyšlenými ukázkovými záznamy a jedním klepnutím je zase odstranit",
+      "pole": "odkaz na účet, čísla ukázkových záznamů, čas nahrání (ukázková data sama jsou vymyšlená)",
+      "retence": "do odstranění ukázkových dat nebo smazání účtu zákazníkem",
+      "play_typy": [
+        "id_uzivatele"
+      ],
+      "play_ucely": [
+        "funkce"
+      ]
     }
   ],
   "agregaty": [
@@ -212,7 +251,7 @@
     },
     {
       "nazev": "Resend",
-      "ucel": "odeslání přihlašovacího odkazu na e-mail",
+      "ucel": "odeslání přihlašovacího odkazu na e-mail; upozornění na konec zkušebního období",
       "domena": "api.resend.com",
       "dpa": "https://resend.com/legal/dpa"
     },
