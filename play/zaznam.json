@@ -62,6 +62,7 @@
         "typ": "Email address",
         "ucely": [
           "Account management",
+          "Developer communications",
           "Fraud prevention, security, and compliance"
         ],
         "volitelne": false,
@@ -101,11 +102,16 @@
         "kategorie": "Personal info",
         "typ": "User IDs",
         "ucely": [
-          "Account management"
+          "Account management",
+          "Developer communications",
+          "App functionality"
         ],
         "volitelne": false,
         "zdroje": [
-          "uzivatele"
+          "uzivatele",
+          "zkusebni_doba",
+          "upominky",
+          "ukazkova_data"
         ]
       },
       {
