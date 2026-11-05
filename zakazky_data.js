@@ -75,6 +75,24 @@ export function ocistiSkrinku(vstup, poradi) {
   };
 }
 
+/**
+ * Rozměry zakázky bez názvů, poznámek a materiálů jako jeden text — to, z čeho
+ * se počítá kusovník. Stejný tvar dá dokument z databáze i tělo PUT požadavku,
+ * takže jde porovnat, jestli je zakázka pořád ta ukázková.
+ */
+export function tvarZakazky(dokument) {
+  const steny = Array.isArray(dokument?.steny) ? dokument.steny.slice(0, 12) : [];
+  return JSON.stringify(steny.map((vstup, i) => {
+    const { poradi, nazev, ...stena } = ocistiStenu(vstup, i);
+    const skrinky = (Array.isArray(vstup?.skrinky) ? vstup.skrinky.slice(0, 40) : [])
+      .map((s, j) => {
+        const { poradi: _p, material_id, poznamka, ...rozmery } = ocistiSkrinku(s, j);
+        return rozmery;
+      });
+    return { ...stena, skrinky };
+  }));
+}
+
 /** Standard účtu; když ho zákazník ještě nemá, založí se výchozí. */
 export async function zajistiStandard(env, uzivatelId) {
   const radek = await env.DB.prepare("SELECT * FROM standardy WHERE uzivatel_id = ?")

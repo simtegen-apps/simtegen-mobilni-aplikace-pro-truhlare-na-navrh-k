@@ -11,7 +11,26 @@
 import { json } from "../../spolecne.js";
 import { vyzadujPredplatne } from "../../predplatne.js";
 import { kusovnikZakazky } from "../../rozpad.js";
-import { nactiDokument, nactiMaterialy, zajistiStandard } from "../../zakazky_data.js";
+import { nactiDokument, nactiMaterialy, tvarZakazky, zajistiStandard } from "../../zakazky_data.js";
+
+// Účet z „Vyzkoušet ukázku“ vzniká bez přihlášení a s předplatným na 24 hodin.
+// Kusovník je placený výsledek, proto ho v ukázce počítáme jen pro ukázkové
+// kuchyně z /ukazka.json — jinak by si kdokoli zadal vlastní zakázku, odnesl
+// CSV a druhý den si založil novou ukázku.
+const UKAZKOVY_UCET = "@ukazka.invalid";
+
+async function jeUkazkovaZakazka(context, dokument) {
+  try {
+    const odpoved = await context.env.ASSETS.fetch(new URL("/ukazka.json", context.request.url));
+    const ukazka = odpoved.ok ? await odpoved.json() : null;
+    const hledany = tvarZakazky(dokument);
+    return (Array.isArray(ukazka?.kroky) ? ukazka.kroky : []).some((krok) =>
+      String(krok?.pozadavek || "").startsWith("PUT /api/zakazky/")
+      && tvarZakazky(krok.telo) === hledany);
+  } catch {
+    return false;
+  }
+}
 
 export async function onRequestPost(context) {
   const { env, data, request } = context;
@@ -36,6 +55,12 @@ export async function onRequestPost(context) {
   const maSkrinku = (dokument.steny || []).some((s) => (s.skrinky || []).length > 0);
   if (!maSkrinku) {
     return json({ chyba: "Zakázka zatím nemá žádnou skříňku — nejdřív nějakou přidejte." }, 422);
+  }
+
+  if (String(data.uzivatel.email || "").endsWith(UKAZKOVY_UCET)
+      && !(await jeUkazkovaZakazka(context, dokument))) {
+    return json({ chyba: "V ukázce se kusovník počítá jen pro ukázkové zakázky. "
+      + "Pro vlastní zakázku se prosím přihlaste svým e-mailem." }, 403);
   }
 
   const standard = await zajistiStandard(env, data.uzivatel.id);

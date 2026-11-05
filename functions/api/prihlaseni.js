@@ -19,6 +19,9 @@ import { json, novyToken, otisk, ted, ODKAZ_TRVANI } from "../../spolecne.js";
 
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,189}\.[^\s@]{2,}$/;
 const MISTNI = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+// A small product's customers log in a few times an hour; this is far above
+// that and far below what a spam run needs.
+const ODKAZU_ZA_HODINU = 50;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -52,6 +55,20 @@ export async function onRequestPost(context) {
   ).bind(email, ted() - 3600).first();
   if (pocet.n >= 3) {
     return json({ chyba: "Příliš mnoho pokusů. Zkuste to prosím za hodinu." }, 429);
+  }
+
+  // The per-address limit alone still lets a script send three e-mails an
+  // hour to any number of strangers in our name. A ceiling for the whole
+  // product stops that (counted in D1, the same place the links live); the
+  // expired links go first, so the table cannot grow without a login either.
+  await env.DB.prepare("DELETE FROM prihlasovaci_odkazy WHERE expirace < ?")
+    .bind(ted()).run();
+  const vsech = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM prihlasovaci_odkazy WHERE vytvoreno > ?"
+  ).bind(ted() - 3600).first();
+  if (vsech.n >= ODKAZU_ZA_HODINU) {
+    return json({ chyba: "Přihlašovacích odkazů teď odchází moc. Zkuste to prosím "
+      + "za chvíli znovu." }, 429);
   }
 
   const token = novyToken();
