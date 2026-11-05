@@ -20,22 +20,23 @@ import {
 
 const DOMENA = "@ukazka.invalid";
 const TRVANI = 24 * 3600;
-// Per hour for the whole product, without storing who asked (no IP): enough
-// for real visitors, a wall for a script filling the database.
+// Per data centre and hour, without storing who asked (no IP): enough for
+// real visitors, a wall for a script filling the database.
 const LIMIT = 60;
 
-// Counted in D1, not the Cache API: the cache is per data centre, racy, and
-// on *.pages.dev stores nothing at all — a limit there is no limit. If the
-// count cannot be read, the answer is no (fail closed).
-async function vLimitu(env) {
+async function vLimitu() {
   try {
-    // mimo-uzivatele: counts demo accounts of everybody by their reserved domain — that is the limit.
-    const radek = await env.DB.prepare(
-      "SELECT COUNT(*) AS n FROM uzivatele WHERE email LIKE ? AND vytvoreno > ?"
-    ).bind(`%${DOMENA}`, ted() - 3600).first();
-    return Boolean(radek) && Number(radek.n) < LIMIT;
+    const hodina = Math.floor(Date.now() / 3600000);
+    const klic = new Request(`https://limit.simtegen.invalid/ukazka/${hodina}`);
+    const ulozeno = await caches.default.match(klic);
+    const pocet = ulozeno ? Number(await ulozeno.text()) || 0 : 0;
+    if (pocet >= LIMIT) return false;
+    await caches.default.put(klic, new Response(String(pocet + 1), {
+      headers: { "Cache-Control": "max-age=3600" },
+    }));
+    return true;
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -69,9 +70,7 @@ export async function onRequestPost(context) {
     ukazka = null;
   }
   if (!ukazka || !Array.isArray(ukazka.kroky)) return json({ chyba: "Ukázka tu není." }, 404);
-  if (!(await vLimitu(env))) {
-    return json({ chyba: "Ukázek je teď moc, zkuste to prosím za chvíli." }, 429);
-  }
+  if (!(await vLimitu())) return json({ chyba: "Ukázek je teď moc, zkus to za chvíli." }, 429);
 
   await uklid(env);
   const email = `ukazka-${novyToken().slice(0, 16)}${DOMENA}`;
