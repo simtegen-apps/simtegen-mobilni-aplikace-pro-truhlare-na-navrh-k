@@ -117,6 +117,7 @@
   <meta property="og:url" content="https://kusovnik.simtegen.com/">
   <meta property="og:image" content="https://kusovnik.simtegen.com/ikona-512.png">
   <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Kusovník pro truhláře","description":"Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.","url":"https://kusovnik.simtegen.com/","image":"https://kusovnik.simtegen.com/ikona-512.png","inLanguage":"cs","operatingSystem":"Web, Android","provider":{"@type":"Organization","name":"SimteGen, s.r.o.","identifier":{"@type":"PropertyValue","propertyID":"IČO","value":"13980351"},"address":"Korunní 2569/108, Vinohrady, 101 00 Praha 10","email":"support@simtegen.com"},"offers":[{"@type":"Offer","name":"Předplatné","price":"449","priceCurrency":"CZK","priceSpecification":{"@type":"UnitPriceSpecification","price":449,"priceCurrency":"CZK","unitText":"měsíc","billingDuration":"P1M"}},{"@type":"Offer","name":"Zkušební období 14 dní","price":"0","priceCurrency":"CZK"}]}</script>
   <!-- /SEO -->
 </head>
 <body>
@@ -177,7 +178,7 @@
           <div class="karta vykres">
             <div id="uvod-prihlaseni"></div>
             <div class="uvod-ukazka">
-              <button type="button" class="tlacitko" data-ukazka>Vyzkoušet ukázku</button>
+              <button type="button" class="tlacitko vedlejsi" data-ukazka>Vyzkoušet ukázku</button>
               <p class="popisek">Bez registrace: vymyšlená kuchyň s kusovníkem, na 24 hodin.</p>
             </div>
           </div>
@@ -884,6 +885,7 @@
     // ── Obrazovka: úvod a přihlášení ───────────────────────────────────
     const PATICKA = `
         <div class="paticka">
+          <a href="napoveda.html">Nápověda</a>
           <a href="zasady.html">Zásady zpracování údajů</a>
           <a href="podminky.html">Obchodní podmínky</a>
           <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a>
@@ -1238,8 +1240,10 @@
 
     async function smazZakazku() {
       const z = stav.dokument.zakazka;
-      if (!confirm(`Opravdu smazat zakázku „${z.nazev}“ včetně stěn a kusovníků? `
-        + "Krok je nevratný.")) return;
+      // Server maže zakázku natvrdo, proto otázka místo vrácení.
+      if (!await SimteGen.potvrd(`Smazat zakázku „${z.nazev}“?`, {
+        popis: "Smaže se i se stěnami a kusovníky. Krok je nevratný.",
+        ano: "Smazat zakázku", nebezpecne: true })) return;
       const { ok, data } = await api(`/api/zakazky/${z.id}`, "DELETE")
         .catch(() => ({ ok: false, data: {} }));
       if (!ok) { toast(data.chyba || "Smazání se nepovedlo."); return; }
@@ -1356,11 +1360,21 @@
 
       pridejAkci($("akce-steny"), "Náhled a kontrola", "", () => jdi("nahled"));
       pridejAkci($("akce-steny"), "Smazat stěnu", "i se skříňkami na ní", () => {
-        if (!confirm(`Opravdu smazat ${stena.nazev} i se skříňkami?`)) return;
-        stav.dokument.steny.splice(index, 1);
+        const zakazkaId = stav.dokument.zakazka.id;
+        const [vyjmuta] = stav.dokument.steny.splice(index, 1);
         zmeneno();
-        toast("Stěna smazána.");
-        jdi("zakazka", { id: stav.dokument.zakazka.id }, true);
+        SimteGen.vratitelne("Stěna smazána.", () => {
+          // Dokument se po uložení na server vyměňuje — vrací se do aktuálního.
+          if (!stav.dokument || stav.dokument.zakazka.id !== zakazkaId) {
+            toast("Stěnu už vrátit nejde — zakázka je zavřená.");
+            return;
+          }
+          const kam = Math.min(index, stav.dokument.steny.length);
+          stav.dokument.steny.splice(kam, 0, vyjmuta);
+          zmeneno();
+          jdi("stena", { index: kam });
+        });
+        jdi("zakazka", { id: zakazkaId }, true);
       });
 
       $("st-uprava").addEventListener("click", () => {
@@ -2339,7 +2353,9 @@
     }
 
     async function smazUcet() {
-      if (!confirm("Opravdu smazat účet, všechny zakázky i kusovníky? Krok je nevratný.")) return;
+      if (!await SimteGen.potvrd("Smazat účet a všechna data?", {
+        popis: "Smažou se všechny zakázky i kusovníky. Krok je nevratný.",
+        ano: "Smazat účet", nebezpecne: true })) return;
       const { ok, data } = await api("/api/ucet/smazat", "POST")
         .catch(() => ({ ok: false, data: {} }));
       if (!ok) { toast(data.chyba || "Smazání se nepovedlo."); return; }

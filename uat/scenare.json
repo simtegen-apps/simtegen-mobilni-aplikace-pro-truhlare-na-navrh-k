@@ -332,6 +332,161 @@
       ]
     },
     {
+      "nazev": "Smazanou stěnu jde vrátit i se skříňkami",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-vraceni-A kuchyň" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-vraceni-A kuchyň" },
+            "steny": [
+              {
+                "nazev": "UAT-stena-vratit-A",
+                "delka_mm": 3000,
+                "vyska_mm": 2600,
+                "otvory": [],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0,
+                    "poznamka": "UAT-skrinka-vratit-A" }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": { "zakazka": { "nazev": "UAT-vraceni-A kuchyň" }, "steny": [] },
+          "ocekavam": 200,
+          "neobsahuje": ["UAT-stena-vratit-A"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-vraceni-A kuchyň" },
+            "steny": [
+              {
+                "nazev": "UAT-stena-vratit-A",
+                "delka_mm": 3000,
+                "vyska_mm": 2600,
+                "otvory": [],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0,
+                    "poznamka": "UAT-skrinka-vratit-A" }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 200,
+          "obsahuje": ["UAT-stena-vratit-A", "UAT-skrinka-vratit-A"]
+        }
+      ]
+    },
+    {
+      "nazev": "Smazání zakázky smaže stěny i kusovníky a cizí účet ji smazat nemůže",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-smazat-A kuchyň" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-smazat-A kuchyň" },
+            "steny": [
+              {
+                "nazev": "UAT-stena-smazat-A",
+                "delka_mm": 2400,
+                "vyska_mm": 2600,
+                "otvory": [],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 800, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 2, "pocet_zasuvek": 0 }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/kusovnik",
+          "telo": { "zakazka_id": "{zakazka}" },
+          "ocekavam": 200,
+          "uloz": { "kusovnik": "id" }
+        },
+        {
+          "jako": "B",
+          "pozadavek": "DELETE /api/zakazky/{zakazka}",
+          "ocekavam": [200, 404]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 200,
+          "obsahuje": ["UAT-smazat-A kuchyň", "UAT-stena-smazat-A"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}",
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky",
+          "ocekavam": 200,
+          "obsahuje": ["UAT-smazat-A kuchyň"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "DELETE /api/zakazky/{zakazka}",
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 404
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}",
+          "ocekavam": 404
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/zakazky",
+          "ocekavam": 200,
+          "neobsahuje": ["UAT-smazat-A kuchyň"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/ja",
+          "ocekavam": 200,
+          "obsahuje": ["\"prihlasen\":true"]
+        }
+      ]
+    },
+    {
       "nazev": "Účet a vlastní data zůstávají dostupné vždy",
       "kroky": [
         {
