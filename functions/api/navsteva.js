@@ -7,10 +7,54 @@
 // visitors we care about are the ones without an account yet. Bots
 // inflate it; a product with real customers does not decide on this
 // number alone.
+//
+// Where the visit came from (zdroje_navstev) is written by the template's
+// _middleware.js after this handler, from the Referer's utm_source /
+// utm_campaign, and only when this handler answers 2xx. A script can put any
+// labels into Referer, so past MAX_ZDROJU (source, campaign) pairs a day a
+// NEW pair is not added: the visit itself is still counted here, and the
+// answer is 429 so the middleware leaves the source out. Known pairs keep
+// counting — a flood can inflate a number, never grow the table.
 
 import { json } from "../../spolecne.js";
 
 const STRANKY = new Set(["uvod", "cenik", "prihlaseni"]);
+const MAX_ZDROJU = 100;
+
+// The same label the middleware stores (its stitek / zdrojZ), so "is this
+// pair already there" asks about the very row it would write.
+const ZNAK = /[^a-z0-9._-]/g;
+
+function stitek(hodnota) {
+  const s = String(hodnota || "").trim().toLowerCase().replace(ZNAK, "-").replace(/-+/g, "-").slice(0, 40);
+  return s.replace(/^-|-$/g, "");
+}
+
+function zdrojZ(referer) {
+  try {
+    const parametry = new URL(referer).searchParams;
+    const zdroj = stitek(parametry.get("utm_source"));
+    return zdroj ? { zdroj, kampan: stitek(parametry.get("utm_campaign")) } : null;
+  } catch {
+    return null;
+  }
+}
+
+async function novyZdrojNadStrop(env, den, z) {
+  try {
+    const znamy = await env.DB.prepare(
+      "SELECT 1 AS ano FROM zdroje_navstev WHERE den = ? AND zdroj = ? AND kampan = ?"
+    ).bind(den, z.zdroj, z.kampan).first();
+    if (znamy) return false;
+    const radku = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM zdroje_navstev WHERE den = ?"
+    ).bind(den).first();
+    return !radku || radku.n >= MAX_ZDROJU;
+  } catch {
+    // No table yet (before 0910_zdroje): the middleware's write fails anyway.
+    return false;
+  }
+}
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -27,5 +71,9 @@ export async function onRequestPost(context) {
     "INSERT INTO navstevy (den, stranka, pocet) VALUES (?, ?, 1) " +
     "ON CONFLICT(den, stranka) DO UPDATE SET pocet = pocet + 1"
   ).bind(den, stranka).run();
+  const z = zdrojZ(request.headers.get("Referer"));
+  if (z && await novyZdrojNadStrop(env, den, z)) {
+    return json({ ok: true, zdroj: "nezapsan" }, 429);
+  }
   return json({ ok: true });
 }

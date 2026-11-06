@@ -1,67 +1,47 @@
-# Specifikace — build 10
+# Specifikace — build 13
 
-Hotová aplikace Kusovník pro truhláře se stane instalovatelnou aplikací z Google Play. Truhlář si v ní koupí předplatné přes Google Play, které se samo obnovuje a ruší se v Google Play. Na webu zůstává fakturační objednávka. Obě cesty prodlužují stejné zaplacené období (`predplatne.plati_do`). Vznikají i podklady pro obchod: piktogram linky s kótou, hlavní věta, pět snímků z ukázkové kuchyně, ukázková data, „Co je nového“ a formulář Bezpečnost údajů. Na přihlašovací obrazovce je tlačítko „Vyzkoušet ukázku“ (dočasný účet na 24 hodin). Zakázky, stěny, kusovník, standard, data ani návrhový systém v2 se nemění.
+Jde o údržbu, ne o nový produkt. Tři okna prohlížeče `confirm()` ve `web/index.html` se nahradí komponentami ze `simtegen.js`. Smazání stěny proběhne hned a půjde vrátit (`SimteGen.vratitelne`). Smazání zakázky a smazání účtu na serveru vrátit nejde, proto u nich zůstane potvrzení, jen přes `SimteGen.potvrd` s červeným tlačítkem a fokusem na „Zrušit“. Chování, data, API ani texty pro zákazníka se jinak nemění. Opravuje se jen nález kontroly `kontrola_manifestu.py`.
 
 ## Placená hodnota (proč přijde druhý nákup)
-Truhlář platí za to, že kusovník pro nářezové centrum vznikne z měření jedním klepnutím a zakázky má uložené jako šablony pro další. Vrací se s každou novou kuchyní nebo skříní, tedy několikrát za měsíc. Předplatné z Google Play se obnovuje automaticky a koupí se na tom tabletu, na kterém měří, takže druhá a každá další platba nepotřebuje fakturu ani převod.
+Platí se dál předplatným za uložené zakázky a kusovníky pro nářezové centrum při každé nové kuchyni. Tahle oprava placenou hodnotu nemění, jen udrží aplikaci v Google Play a v souladu s návrhovým systémem, takže ji předplatitelé můžou dál používat.
 
-## Ceník (schválený majitelem, zobrazuje se doslova)
-- SimteGen Kusovník – Sólo — 249 Kč za firmu a měsíc
-- SimteGen Kusovník – Standard — 449 Kč za firmu a měsíc; obsahuje: neomezený počet zakázek a uložených projektů, návrh a vizualizace kuchyně/skříněk v tabletu i telefonu, automatické generování kusovníku (rozměry desek a polic) pro nářezové centrum
-- SimteGen Kusovník – Tým — 890 Kč za firmu a měsíc
-- Zkušební doba 14 dní
+## Design (obrazovky, navigace, stavy)
+Barva produktu, obrazovky, navigace ani rozvržení se nemění — tahle stavba podle zadání opravuje jen nález kontroly. Mění se tři místa a vzhled dialogů dodá šablona (`simtegen.js` a `.panel` ve `styl.css`):
 
-**Objednat jde jen Standard** — jediná varianta s definovaným obsahem. Sólo a Tým v této verzi odemykají přesně totéž co Standard, a prodávat stejné plnění za tři ceny by bylo vůči zákazníkovi klamavé. Na webu se proto obě jen zobrazují s větou „… zatím objednat nejde“. Server je odmítne (422, `cenik.js` → `objednat: false`), dokud majitel neurčí, čím se liší.
+1) Obrazovka Stěna (nástroj), akce „Smazat stěnu“: bez otázky. Stěna zmizí hned, toast „Stěna smazána.“ zůstane jako text `SimteGen.vratitelne` s tlačítkem Vrátit a aplikace přejde na zakázku jako dnes. Vrácení vloží stěnu i se skříňkami zpět na původní pořadí do aktuální `stav.dokument` (dokument se po uložení vyměňuje, proto se bere ten aktuální, stejně jako u vrácení posunu `st-vratit`). Pak zavolá `zmeneno()`. PUT `/api/zakazky/:id` přepisuje stěny a skříňky celé, takže stará data se uloží znovu. Je-li mezitím otevřená jiná zakázka, vrácení nic neudělá a ukáže toast „Stěnu už vrátit nejde — zakázka je zavřená.“
 
-Server (`cenik.js`) i stránka (`window.CENIK`, `window.CENIK_VARIANTY`) mají stejná čísla. Objednávka posílá jen klíč varianty, do databáze se uloží název z ceníku. Celkovou částku (měsíce × 449 Kč) spočítá server a nesoulad s tím, co zákazník viděl, odmítne (409).
+2) Detail zakázky, „Smazat zakázku“: DELETE na serveru je nevratný (stěny, skříňky i kusovníky se mažou natvrdo a obnovovací endpoint neexistuje), proto potvrzení: `SimteGen.potvrd("Smazat zakázku „<název>“?", {popis: "Smaže se i se stěnami a kusovníky. Krok je nevratný.", ano: "Smazat zakázku", nebezpecne: true})`. Po smazání stejný toast i navigace jako dnes.
 
-## Design
-- Barva produktu beze změny: `--barva-produktu #2f6b43` (dřevozelená, v tmavém režimu #4fa36b). Jen jako ukazatel.
-- Navigace beze změny: Zakázky · Standard · Účet + Nahlásit chybu. Každá podřízená obrazovka má tlačítko Zpět a vlastní historii, právní stránky mají „Zpět do aplikace“.
-- **Úvod na webu:** obří číslo 449 (Kč za firmu a měsíc, Standard), ceník tří variant doslova s větou, že Sólo a Tým zatím objednat nejde.
-- **Úvod v aplikaci z Google Play:** ceník variant se neukazuje, protože v Play koupit nejdou. Obří číslo je 14 (dní zkušební doby zdarma) a věta „Potom se aplikace platí předplatným přes Google Play. Cenu a délku období uvidíte u účtu před nákupem.“ Ceník variant se skrývá stejně opatrně jako fakturační objednávka: dokud `play.js` nepotvrdí prohlížeč (`sg-web`), neukáže se.
-- Obě podoby Úvodu mají sekce 01 Co to dělá, 02 Cena a 03 Vyzkoušet nebo se přihlásit. Hlavní akce „Poslat přihlašovací odkaz“ je v liště a „Vyzkoušet ukázku“ pod přihlášením. Na tabletu a notebooku `.dva-sloupce`.
-- **Účet:** obří číslo = dní zbývá, stupnice čtyř týdnů s ryskami po 7 dnech a mono datem konce období. 01 Předplatné (v aplikaci nákup přes Google Play v `[data-predplatne-play]`, na webu karta `[data-objednavka]` s ceníkem a objednávkou Standardu), 02 Vaše hlášení, 03 Vaše data. Na tabletu `.mrizka`, vlevo `.s5`, vpravo `.s7`. Stav se čte pokaždé znovu z `/api/ja`. Načítání `.kostra`, chyba s tlačítkem Zkusit znovu.
-- Úvod a Účet mají kostru v HTML (`[data-ukazka]`, `[data-predplatne-play]`, `[data-objednavka]`…). `simtegen.js` totiž načte `play.js` jen tehdy, když tyto prvky najde při načtení stránky, a obrazovky se kreslí až po `/api/ja`.
-- Mimo kartu `[data-objednavka]` aplikace nemluví o faktuře ani o převodu.
+3) Účet, „Smazat účet“: `SimteGen.potvrd("Smazat účet a všechna data?", {popis: "Smažou se všechny zakázky i kusovníky. Krok je nevratný.", ano: "Smazat účet", nebezpecne: true})`. Dál beze změny (`/api/ucet/smazat`, `zahodKoncept`, reload).
 
-## Datový model
-Nová tabulka jen ze šablony: `play_nakupy` (migrace `0900_play_nakupy.sql`: uzivatel_id, token, produkt, plati_do, stav, overeno, zapsano; retence do smazání účtu). Data migrace `0010_zkusebni_prechod.sql`: účtům, kterým ke dni nasazení ještě běží původní 30denní zkušební doba, zapíše její konec do `predplatne.plati_do`. Ostatní entity a retence beze změny. V manifestu přibyla entita `play_nakupy`, služba Google Play (androidpublisher.googleapis.com) a technická cookie `aplikace`. Kontaktní e-mail zůstává `podpora@simtegen.cz` jako v build 9.
+Stavy: při zrušení dialogu se nic nestane. Chyba serveru vypíše stejný toast jako dnes. Úspěch ukáže toast nebo pruh s nabídkou vrácení. Žádné nové obrazovky, tlačítka ani texty mimo dialogy.
 
-## Záznam v obchodě
-- `hlavni_veta`: „Od měření u zákazníka ke kusovníku“.
-- `dlouhy_popis` u placení uvádí jen to, co aplikace z Google Play opravdu prodává: předplatné přes Google Play, cenu a délku období vidí zákazník před nákupem, automatické obnovení a zrušení v Google Play. Ceník variant v něm není.
-- Snímky: Zakázky · Měření stěny (tablet) · Náhled kuchyně (tablet) · Kusovník · Standard dílny. Snímky 2–4 začínají na `o-zakazky` a proklikají se přes háčky `[data-zakazka]`, `[data-stena]`, `[data-akce=nahled]` a `#lista-dole [data-akce=kusovnik]`.
-- `play/ukazka.json`: standard „Dílna Ukázka – LTD 18“, dva materiály, vestavná skříň a kuchyň „Kuchyň Rodinný dům Lipová“ do L s kusovníkem. Kuchyň se zakládá poslední, aby byla v seznamu první.
+## Plán
+1. Ve `web/index.html` v `smazZakazku()` (asi ř. 1228) nahradit `confirm(…)` za `if (!await SimteGen.potvrd(…, {popis, ano: "Smazat zakázku", nebezpecne: true})) return;`. Zbytek funkce nechat.
+2. Ve vykreslení stěny u akce „Smazat stěnu“ (asi ř. 1347) odstranit `confirm`. Před `splice` si zapamatovat `zakazkaId`, `index` a vyjmutý objekt stěny. Volání `toast("Stěna smazána.")` nahradit za `SimteGen.vratitelne("Stěna smazána.", () => { if (!stav.dokument || stav.dokument.zakazka.id !== zakazkaId) { toast("Stěnu už vrátit nejde — zakázka je zavřená."); return; } stav.dokument.steny.splice(Math.min(index, stav.dokument.steny.length), 0, vyjmuta); zmeneno(); jdi("stena", { index }, true); })`. Navigace na zakázku zůstane. Na tvar volání a název obrazovky stěny se podívat v souboru (`jdi`, `vykresliStenu`) a sladit je s ním.
+3. V `smazUcet()` (asi ř. 2330) nahradit `confirm` za `SimteGen.potvrd` podle DESIGN.md (ano: „Smazat účet“, nebezpecne: true). Zbytek nechat.
+4. Ověřit, že v `web/` nezůstal žádný `confirm(`, `prompt(` ani `alert(`. V `web/` by měly zůstat nula výskytů.
+5. Přepsat `play/co_je_noveho.txt` (zadání žádá u každé stavby): „Mazání v aplikaci je přehlednější: smazanou stěnu vrátíte jedním klepnutím a smazání zakázky nebo účtu potvrzujete v okně aplikace, ne prohlížeče.“
+6. Spustit `python3 kontrola_manifestu.py` a vizuální kontrolu. Infrastrukturu šablony (`simtegen.js`, `styl.css`, DESIGN.md, generátory), manifest, API ani migrace needitovat.
 
-## Akceptační scénáře
-V `uat/scenare.json` (CI je spouští proti API):
-- Truhlář A — změří skříňku 600 × 720 × 510 a vygeneruje kusovník — 8 dílů, CSV jde stáhnout (stávající scénář).
-- Truhlář B — načte zakázky, kusovník A podle id, jeho CSV a objednávky — nic z účtu A, u kusovníku 404.
-- Nový účet — `/api/ja` — stav „zkusebni“, 14 dní.
-- Truhlář A — objedná Standard na 1 měsíc za 449 Kč — uloží se „SimteGen Kusovník – Standard“ za 449.
-- Truhlář A — objedná Standard za 249 místo 449 — 409 „Cena se mezitím změnila“. Objedná Tým nebo Sólo — 422 „zatím objednat nejde“. Nic z toho se neuloží.
-- Export vlastních dat je dostupný vždy a bez přihlášení produktová API vrací 401.
+## Soubory
+- web/index.html
+- play/co_je_noveho.txt
 
-V `zkouska_predplatneho.mjs` (`node zkouska_predplatneho.mjs`, ručně jako `zkouska_rozpadu.mjs`): vypršelé předplatné se přes API v akceptačních testech nastavit nedá. Test proto pouští skutečné handlery s falešnou databází, ve které má účet `plati_do` v minulosti:
-- POST/PUT zakázky, POST kusovníku a PUT standardu vrátí 402 „Předplatné vypršelo.“
-- `/api/ucet/export` vrátí 200 a `/api/ja` ukáže stav „vyprselo“.
-- Navíc ověřuje 14denní zkušební dobu nového účtu a účet po migraci 0010.
+## Rizika
+- `SimteGen.potvrd` a `SimteGen.vratitelne` v současném `web/simtegen.js` zatím nejsou. Doplní je obnova šablony při stavbě. Kdyby obnova neproběhla, mazání skončí chybou JS, takže kontrolu je potřeba pouštět až po obnově.
+- Vrácení stěny po automatickém uložení: server dostane stěnu znovu jako nová data. Skříňky a stěny se ukládají celé, takže by to mělo fungovat. Jestli se ID stěny a skříněk změní, ověřit, že na ně nic jiného neodkazuje, hlavně kusovník (`kusovnik.js` maže kusovníky podle ID).
+- Smazání zakázky dál nejde vrátit. Je to záměr: přidat obnovovací endpoint by šlo nad rámec zadání („nic dalšího“).
+- Funkce s `confirm` jsou už `async`, ale obsluha „Smazat stěnu“ je synchronní šipková funkce. Kvůli `vratitelne` to nevadí, protože se nečeká na odpověď.
 
-## Odchylky od schválené specifikace (ověřujte podle tohoto)
-1. **Ukázkový účet:** pruh nekreslí produkt, ale šablona (`web/play.js`). Text je „Prohlížíte ukázku s vymyšlenými daty. Za 24 hodin zmizí.“ s tlačítkem „Odejít z ukázky“, ne „Ukázka — data zmizí do 24 hodin.“ / „Založit vlastní účet“. „Odejít z ukázky“ odhlásí a vrátí na Úvod. V ukázce je nákup v Play vidět, ale je zablokovaný.
-2. **Nákup v Google Play:** `play.js` (šablona) prodává produkty `predplatne_mesic` a `predplatne_rok`, ne varianty Sólo / Standard / Tým. Validační krok „testovací nákup Standardu“ znamená testovací nákup `predplatne_mesic`.
-3. **Varianty:** objednat jde jen Standard, Sólo a Tým se jen zobrazují (viz Ceník). Scénář „Tým za 449 → cena se změnila“ je proto nahrazený: Tým → 422, Standard za špatnou cenu → 409.
-4. **Ceník v aplikaci:** na Úvodu aplikace z Google Play se ceník variant neukazuje (viz Design).
-5. **Scénář 402** je deterministický test `zkouska_predplatneho.mjs`, ne krok v `uat/scenare.json`.
+## Jak ověřit
+Na telefonu se přihlásit a naplnit účet ukázkovými daty. (a) Otevřít zakázku, pak stěnu a dát „Smazat stěnu“: stěna zmizí bez otázky a dole se ukáže „Stěna smazána.“ s tlačítkem Vrátit. Klepnout na Vrátit: stěna se vrátí i se skříňkami na původní místo. Po obnovení stránky tam pořád je. (b) U zakázky dát „Smazat zakázku“: otevře se okno aplikace (ne prohlížeče) s otázkou, červeným tlačítkem „Smazat zakázku“ a fokusem na „Zrušit“. Zrušit nechá zakázku beze změny, potvrzení ji smaže a vrátí seznam zakázek. (c) Na Účtu dát „Smazat účet“: stejné okno s tlačítkem „Smazat účet“. Escape ho zavře a nic se nesmaže. (d) `python3 kontrola_manifestu.py` už nehlásí `confirm()` ve `web/index.html` a `grep -n "confirm(\|prompt(\|alert(" web/` nic nenajde.
 
-## Otevřené body pro majitele — BLOKUJÍ vydání do Google Play
-- **Cena v Google Play:** v Play Console založit `predplatne_mesic` za schválených **449 Kč** (Standard). `predplatne_rok` majitel neschválil — nezakládat, dokud ho neschválí, jinak ho `play.js` zákazníkovi nabídne. Aplikace cenu z Play zobrazuje tak, jak ji vrátí Google, sama ji nehlídá.
-- **Čím se liší Sólo a Tým** (např. počet uživatelů nebo zařízení). Do té doby je nejde objednat.
-- **DPH:** `cena_dph` v manifestu je prázdné, v podmínkách zůstává červený slot.
-- **Servisní účet** pro ověření nákupů (`PLAY_NAKUPY_UCET`, `PLAY_BALICEK`) nastaví majitel / workflow Vydání.
-- **Kontaktní schránka:** majitel potvrdil `podpora@simtegen.cz` (výhrada majitele k build 10). Během stavby se v manifestu opakovaně mimo stavitele objevovala `support@simtegen.com` — pokud ji tam zapisuje nějaký automat nebo šablona, je potřeba ho opravit, jinak kontakt v zásadách a v Google Play znovu přepíše.
+## Akceptační scénáře (CI je spustí proti API)
+- Přihlášený truhlář smaže stěnu zakázky a do 5 s klepne na Vrátit — v zakázce (GET /api/zakazky/:id) musí stěnu znovu vidět i se všemi skříňkami.
+- Přihlášený truhlář klepne na Smazat zakázku a v okně aplikace zvolí Zrušit — zakázka musí zůstat v seznamu beze změny.
+- Přihlášený truhlář potvrdí Smazat zakázku — zakázka, její stěny i kusovníky musí zmizet a v seznamu zakázek ji už nesmí vidět.
+- Účet B zavolá DELETE /api/zakazky/:id na zakázku účtu A — zakázka účtu A musí účtu A zůstat beze změny a účet B ji neuvidí.
+- Přihlášený truhlář klepne na Smazat účet a zavře okno Escapem — účet i všechny zakázky musí zůstat a /api/ja ho dál hlásí přihlášeného.
 
-## Vady šablony — v produktu se opravit nesmí, nutné opravit před vydáním do produkce
-- `functions/api/ukazka.js` (ř. 73) vrací zákazníkovi tykající hlášku „Ukázek je teď moc, zkus to za chvíli.“ — má vykat („zkuste to prosím za chvíli“). `play.js` ji zobrazí přímo v tlačítku.
-- `vykresli_zasady.py` → `web/podminky.html` (ř. 56): obchodní podmínky dostupné z aplikace z Google Play dál popisují úhradu „na základě faktury“. V aplikaci z Play by podmínky platbu fakturou zmiňovat neměly, nebo jen jako způsob platby na webu bez odkazu z aplikace. Rozhodne šablona (generátor), produkt podmínky ručně neupravuje.
+_Schvaluje se přes ARGA (simtegen_approve_spec) nebo na mini PC._

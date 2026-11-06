@@ -1,0 +1,30 @@
+{
+  "uvod": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru. U zákazníka v telefonu nebo tabletu zadáte stěny a skříňky a aplikace z nich spočítá kusovník desek pro nářezové centrum.",
+  "temata": [
+    {
+      "nadpis": "Jak založit zakázku",
+      "text": "V Zakázkách klepněte na Nová zakázka a vyplňte název, třeba jméno zákazníka a místnost. Zakázka se ukládá průběžně, takže měření na tabletu u zákazníka dopracujete později v dílně na počítači."
+    },
+    {
+      "nadpis": "Jak zadat stěnu, okna a skříňky",
+      "text": "V zakázce klepněte na Přidat stěnu a zadejte její délku a výšku. Na stěně pak přidáte okna a dveře a tlačítkem Přidat skříňku spodní, horní, vysoké nebo rohové skříňky.\n\nVýkres stěny ukazuje vše v měřítku. Když se skříňky překrývají nebo zasahují do okna, aplikace vás upozorní."
+    },
+    {
+      "nadpis": "Jak vygenerovat kusovník",
+      "text": "V zakázce klepněte na Vygenerovat kusovník. Díly se spočítají podle standardu vaší dílny — tloušťky desky, typu zad, spár a olepení hran, které nastavíte v Můj standard.\n\nTlačítkem Stáhnout CSV stáhnete soubor pro nářezové centrum. Rozměry před odesláním vždy zkontrolujte."
+    },
+    {
+      "nadpis": "Jak použít starší zakázku jako šablonu",
+      "text": "V zakázce klepněte na Kopírovat jako šablonu. Vznikne nová zakázka se stejnými stěnami a skříňkami, kterou upravíte pro nového zákazníka."
+    },
+    {
+      "nadpis": "Jak smazat stěnu nebo zakázku",
+      "text": "Na stěně klepněte na Smazat stěnu. Stěna zmizí hned i se skříňkami; když jste ji smazali omylem, klepněte v hlášení dole na Vrátit.\n\nSmazání zakázky vrátit nejde, proto se vás aplikace nejdřív zeptá. Zakázka se smaže i se stěnami a kusovníky."
+    },
+    {
+      "nadpis": "Jak stáhnout svá data nebo smazat účet",
+      "text": "Na obrazovce Účet klepněte na Stáhnout moje data — dostanete všechno, co o vás vedeme, v jednom souboru.\n\nTamtéž je Smazat účet a všechna data. Krok je nevratný, proto ho aplikace nechá potvrdit."
+    }
+  ],
+  "otazky": []
+}

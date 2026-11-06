@@ -22,12 +22,14 @@ All other network is mapped to nowhere (--host-resolver-rules): product
 JavaScript is model-written, and a check that runs it must not be the
 thing that lets it phone home.
 
-Run alone:  python vizualni_kontrola.py [--snimky DIR] [--json] [--povinne]
+Run alone:  python vizualni_kontrola.py [--snimky DIR] [--json] [--povinne] [--prihlasit]
 """
 
 from __future__ import annotations
 
 import base64
+import contextlib
+import gzip
 import http.server
 import json
 import os
@@ -56,6 +58,15 @@ SIRKY = (
     ("notebook", 1440, 900, True),
 )
 TELEFON_DO = 768          # below this the thumb rules apply
+# The first screen on a slow phone (DESIGN.md, Rychlost): mobile 4G at its
+# worse end and a mid-range phone's processor. Measured on the page's load
+# event — everything the screen needs has arrived and its scripts ran.
+RYCHLOST_LIMIT_MS = 2500
+POMALY_MOBIL = {"latency": 150, "downloadThroughput": 1_600_000 / 8, "uploadThroughput": 750_000 / 8}
+POMALY_PROCESOR = 4
+# Text the local server compresses, as Cloudflare Pages does — without it a
+# page would be judged on bytes no customer ever downloads.
+_KOMPRIMOVAT = {".html", ".htm", ".css", ".js", ".mjs", ".svg", ".json", ".txt", ".webmanifest"}
 MAX_SNIMKU = 14           # what the reviewer can usefully look at in one turn
 SIROCE_OBRAZOVEK = 2      # screens shown at all three widths; the rest phone only
 MAX_PROBLEMU_NA_DRUH = 6  # per screen and kind — the first few say enough
@@ -260,8 +271,22 @@ def _server(web: Path) -> http.server.ThreadingHTTPServer:
             return True
 
         def do_GET(self):
-            if not self._api():
-                super().do_GET()
+            if self._api():
+                return
+            cesta = Path(self.translate_path(self.path.split("?", 1)[0]))
+            if cesta.is_dir():
+                cesta = cesta / "index.html"
+            if ("gzip" in (self.headers.get("Accept-Encoding") or "") and cesta.is_file()
+                    and cesta.suffix.lower() in _KOMPRIMOVAT):
+                telo = gzip.compress(cesta.read_bytes(), compresslevel=6)
+                self.send_response(200)
+                self.send_header("Content-Type", self.extensions_map.get(cesta.suffix.lower(), "text/html"))
+                self.send_header("Content-Encoding", "gzip")
+                self.send_header("Content-Length", str(len(telo)))
+                self.end_headers()
+                self.wfile.write(telo)
+                return
+            super().do_GET()
 
         def do_POST(self):
             if not self._api():
@@ -285,7 +310,9 @@ _MERENI = r"""
   // The report form is measured on its own: the page behind it already was.
   const koren = window.__sgKoren || document.body;
   const telefon = W < %(telefon)d;
-  const out = {preteka: [], popisky: [], tlacitka: [], obrazky: [], kontrast: [], male: []};
+  const out = {preteka: [], popisky: [], tlacitka: [], obrazky: [], kontrast: [], male: [],
+               akce: [], drobne: [], kricici: [], format: [], tabindex: [], vykres: [],
+               texty_tlacitko: [], texty_technicke: [], texty_tykani: []};
   const vid = (el) => {
     const r = el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) return false;
@@ -336,6 +363,45 @@ _MERENI = r"""
   for (const el of koren.querySelectorAll('img')) {
     if (vid(el) && !el.hasAttribute('alt')) pridej(out.obrazky, popis(el));
   }
+  // 11. Texts (DESIGN.md, Texty). A button says what it does — "OK" and
+  // English leftovers do not; a screen never shows what the code meant for
+  // itself (undefined, Error: …, HTTP 500); the customer is addressed
+  // formally — a builder's informal "Klikni" or "tvůj" is the tell.
+  // simtegen.js's own bars and panels are the template's and pass.
+  const OBECNA = new Set(['ok', 'ano', 'ne', 'zde', 'sem', 'klikněte zde', 'klikni sem', 'submit', 'cancel',
+                          'save', 'delete', 'edit', 'send', 'close', 'yes', 'no']);
+  for (const el of koren.querySelectorAll('button, [role=button], a.tlacitko, input[type=submit], input[type=button]')) {
+    if (!vid(el) || el.closest('[class^="sg-"], [class*=" sg-"]')) continue;
+    const t = (el.innerText || el.value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    if (OBECNA.has(t)) pridej(out.texty_tlacitko, popis(el));
+  }
+  const TECHNICKE = /\b(?:undefined|NaN)\b|\[object Object\]|\bnull\b|\b(?:Type|Syntax|Reference)Error\b|\bError:|\bHTTP \d{3}\b|\bChyba \d{3}\b|\bstatus \d{3}\b/;
+  // \b is ASCII in JS: "Napiš" ends at "š", and "Napište" used to match it.
+  const TYKANI = /^(?:Klikni|Zadej|Vyber|Ulož|Zkus|Napiš|Počkej|Otevři|Přidej|Smaž|Uprav|Vyplň|Zkontroluj|Pošli|Stáhni|Nahraj|Přihlas se|Odhlas se|Podívej se|Vytvoř|Zvol)(?!\p{L})|(?<!\p{L})(?:tvůj|tvoje|tvého|tvému|tvých|tvými|tobě|tebe)(?!\p{L})/u;
+  for (const el of koren.querySelectorAll('*')) {
+    if (el.closest('svg, script, style, code, pre, [class^="sg-"], [class*=" sg-"]')) continue;
+    const vlastni = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join(' ').trim();
+    if (!vlastni || !vid(el)) continue;
+    const kus = vlastni.replace(/\s+/g, ' ').slice(0, 60);
+    if (TECHNICKE.test(vlastni)) pridej(out.texty_technicke, popis(el) + ' („' + kus + '“)');
+    else if (TYKANI.test(vlastni)) pridej(out.texty_tykani, popis(el) + ' („' + kus + '“)');
+  }
+  // 9. Keyboard order is the order on screen: a positive tabindex pulls an
+  // element ahead of everything else, wherever it sits.
+  for (const el of koren.querySelectorAll('[tabindex]')) {
+    if (parseInt(el.getAttribute('tabindex'), 10) > 0 && vid(el)) pridej(out.tabindex, popis(el));
+  }
+  // 10. A drawing a screen reader can follow: the svg has a name, and the
+  // parts with their sizes are there as text (.seznam-dilu, may be
+  // .jen-ctecka) — a picture of a kitchen says nothing to someone who
+  // cannot see it.
+  for (const svg of koren.querySelectorAll('.platno svg')) {
+    if (!vid(svg)) continue;
+    const jmeno = svg.getAttribute('aria-label') || svg.getAttribute('aria-labelledby') || (svg.querySelector('title') || {}).textContent;
+    const obrazovka = svg.closest('.obrazovka, main, body');
+    if (!jmeno) pridej(out.vykres, popis(svg) + ' bez aria-label');
+    else if (!obrazovka.querySelector('.seznam-dilu')) pridej(out.vykres, popis(svg) + ' bez .seznam-dilu');
+  }
 
   // 3. Thumb-sized targets on a phone (DESIGN.md: 44 px; 40 leaves room for borders).
   if (telefon) {
@@ -379,6 +445,23 @@ _MERENI = r"""
     const text = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();
     if (!text || !vid(el) || el.closest('.sg-start') || el.disabled) continue;
     const cs = getComputedStyle(el);
+    // 5. Readable at arm's length: v2 printed labels at 10–11 px and the
+    // owner's customers called the apps cluttered. SVG text is in drawing
+    // units (scaled), so the drawing is judged by the reviewer instead.
+    if (!el.closest('svg')) {
+      const px = parseFloat(cs.fontSize);
+      if (px < 12.5) pridej(out.drobne, popis(el) + ' ' + Math.round(px * 10) / 10 + ' px');
+      // 6. Sentences are not set in spaced capitals or in mono — mono is
+      // for what is measured or coded (205/55 R16, A-12, 600 × 720).
+      const delka = text.replace(/\s+/g, ' ').length;
+      const pismen = (text.match(/\p{L}/gu) || []).length;
+      if (cs.textTransform === 'uppercase' && delka > 24) pridej(out.kricici, popis(el) + ' (velká písmena)');
+      else if (/mono/i.test(cs.fontFamily) && delka > 40 && pismen / delka > 0.6) pridej(out.kricici, popis(el) + ' (mono)');
+      // 8. Czech forms (simtegen.js: SimteGen.kc, SimteGen.datum): a sum
+      // with ungrouped thousands or a decimal point, an ISO date on screen.
+      const spatne = text.match(/(?:^|[^\d\s ])\s?\d{4,}(?:[.,]\d+)?\s?Kč|\d\.\d{2}\s?Kč|\b\d{4}-\d{2}-\d{2}\b/);
+      if (spatne) pridej(out.format, popis(el) + ' (' + spatne[0].trim() + ')');
+    }
     let fg = barva(cs.color), bg = pozadi(el);
     if (!fg || !bg) continue;
     let pruhlednost = fg[3];
@@ -389,6 +472,25 @@ _MERENI = r"""
     const velikost = parseFloat(cs.fontSize), tucne = parseInt(cs.fontWeight, 10) >= 700;
     const limit = (velikost >= 24 || (velikost >= 18.66 && tucne)) ? 3 : 4.5;
     if (pomer < limit - 0.05) pridej(out.kontrast, popis(el) + ' ' + pomer.toFixed(2) + ':1');
+  }
+
+  // 7. One main action per screen (DESIGN.md). Main = filled with ink,
+  // whatever class made it so; the whole screen counts, not just the
+  // viewport — the first product's landing had one black button in a card
+  // and another stuck to the bottom, and neither looked like the way in.
+  // Bars and panels simtegen.js draws over the screen are its own; a
+  // selected chip or tab is a state, not an action (Pneusklad's filters).
+  if (telefon) {
+    const sonda = document.createElement('span');
+    sonda.style.color = 'var(--barva-inkoust)';
+    document.body.appendChild(sonda);
+    const inkoust = getComputedStyle(sonda).color;
+    sonda.remove();
+    const hlavni = [...koren.querySelectorAll('button, a[href], [role=button], input[type=submit]')].filter((el) =>
+      vid(el) && !el.closest('.sg-start, .sg-pruhy, .sg-ukazka-pruh, .sg-hlaseni, .panel, .toast')
+      && !el.matches('[aria-pressed="true"], [aria-selected="true"], [aria-current], [role=tab], [role=radio]')
+      && getComputedStyle(el).backgroundColor === inkoust);
+    if (hlavni.length > 1) out.akce.push(hlavni.slice(0, 4).map(popis).join(', '));
   }
   return out;
 })()
@@ -401,7 +503,84 @@ _DRUHY = {
     "obrazky": "obrázek bez alt",
     "male": "dotykový cíl menší než 44 px",
     "kontrast": "text s nedostatečným kontrastem",
+    "akce": "víc než jedna hlavní (černá) akce na obrazovce — ostatní patří do .tlacitko.vedlejsi",
+    "drobne": "text menší než 13 px",
+    "kricici": "věta velkými písmeny nebo v mono písmu (mono jen na rozměry a kódy)",
+    "format": "částka nebo datum v nečeském tvaru — piš přes SimteGen.kc / SimteGen.datum",
+    "tabindex": "tabindex větší než 0 rozhází pořadí klávesnice — pořadí určuje pořadí v HTML",
+    "vykres": "výkres, který čtečka nepřečte — svg potřebuje aria-label a obrazovka seznam dílů "
+              "s rozměry (.seznam-dilu, klidně .jen-ctecka)",
+    "texty_tlacitko": "tlačítko neříká, co udělá — sloveso a věc („Uložit zakázku“), ne „OK“ ani anglicky",
+    "texty_technicke": "na obrazovce je technický text (undefined, null, Error, HTTP 500) — zákazník má vidět, "
+                       "co se stalo a co s tím",
+    "texty_tykani": "text tyká — zákazníkovi se vyká („Klikněte“, „váš“)",
+    "fokus_skryty": "Tab skončí na prvku, který není vidět",
+    "fokus_bez_znacky": "prvek po Tabu nemá viditelný fokus (outline, rámeček nebo stín)",
 }
+
+# The keyboard walk (DESIGN.md, Klávesnice a čtečka): real Tab presses, so
+# :focus-visible applies as it does for a customer. Before the first one,
+# each focusable element's look is noted unfocused; after each press the
+# focused one must look different, and be visible at all.
+_PRED_TABEM = r"""
+(() => {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const vzhled = (el) => { const s = getComputedStyle(el);
+    return [s.outlineStyle, s.outlineWidth, s.outlineColor, s.boxShadow, s.borderTopColor, s.borderBottomColor,
+            s.borderLeftColor, s.backgroundColor, s.color, s.textDecorationLine].join('|'); };
+  window.__sgVzhled = new WeakMap();
+  window.__sgVzhledFn = vzhled;
+  for (const el of document.querySelectorAll('a[href], button, input, select, textarea, [tabindex]'))
+    window.__sgVzhled.set(el, vzhled(el));
+  window.__sgVideno = new Set();
+  return true;
+})()
+"""
+
+_PO_TABU = r"""
+(() => {
+  const el = document.activeElement;
+  if (!el || el === document.body || el === document.documentElement) return {konec: true};
+  if (window.__sgVideno.has(el)) return {konec: true};
+  window.__sgVideno.add(el);
+  let s = el.tagName.toLowerCase();
+  if (el.id) s += '#' + el.id; else { const c = [...el.classList].slice(0, 2).join('.'); if (c) s += '.' + c; }
+  const t = (el.innerText || el.value || el.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30);
+  const popis = t ? s + ' „' + t + '“' : s;
+  const r = el.getBoundingClientRect();
+  let videt = r.width >= 2 && r.height >= 2 && r.bottom > 0 && r.right > 0
+    && r.top < innerHeight && r.left < innerWidth;
+  for (let e = el; e && videt; e = e.parentElement) {
+    const cs = getComputedStyle(e);
+    if (cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) videt = false;
+  }
+  const pred = window.__sgVzhled.get(el);
+  const znacka = pred === undefined || pred !== window.__sgVzhledFn(el);
+  return {popis, videt, znacka, uvnitr: !!el.closest('.sg-start')};
+})()
+"""
+
+KROKU_TABU = 40  # per screen — past this a page is long enough to judge
+
+
+def _klavesnice(dt: "_DevTools") -> dict[str, list[str]]:
+    """Tab through the shown screen; {druh: [element, …]} of what failed."""
+    out: dict[str, list[str]] = {"fokus_skryty": [], "fokus_bez_znacky": []}
+    dt.js(_PRED_TABEM)
+    for _ in range(KROKU_TABU):
+        for typ in ("keyDown", "keyUp"):
+            dt.volej("Input.dispatchKeyEvent", type=typ, key="Tab", code="Tab",
+                     windowsVirtualKeyCode=9, nativeVirtualKeyCode=9)
+        stav = dt.js(_PO_TABU) or {"konec": True}
+        if stav.get("konec"):
+            break
+        if stav.get("uvnitr"):
+            continue
+        if not stav.get("videt") and len(out["fokus_skryty"]) < MAX_PROBLEMU_NA_DRUH:
+            out["fokus_skryty"].append(stav["popis"])
+        elif stav.get("videt") and not stav.get("znacka") and len(out["fokus_bez_znacky"]) < MAX_PROBLEMU_NA_DRUH:
+            out["fokus_bez_znacky"].append(stav["popis"])
+    return out
 
 _UVODNI = r"""
 (() => {
@@ -430,6 +609,10 @@ document.addEventListener('securitypolicyviolation', (e) => {
 """
 
 _OBRAZOVKY = "[...document.querySelectorAll('.obrazovka[id]')].map((e) => e.id)"
+_AKTIVNI = r"""
+(() => { const o = [...document.querySelectorAll('.obrazovka[id]')].find((e) =>
+  !e.hidden && getComputedStyle(e).display !== 'none'); return o ? o.id : null; })()
+"""
 
 # Reporting is mandatory: some .nahlasit-chybu must be on screen (scrolling
 # allowed — the footer counts), and clicking it must open the form that
@@ -505,7 +688,7 @@ _UKAZ = r"""
 """
 
 
-def _spust_prohlizec(exe: str, profil: Path, log) -> tuple[subprocess.Popen, _DevTools]:
+def _spust_prohlizec(exe: str, profil: Path, log, sit: bool = False) -> tuple[subprocess.Popen, _DevTools]:
     """Start the browser and open our own tab over the browser-level socket.
 
     Not /json/list + the default tab: on a GitHub runner Chrome came up,
@@ -519,6 +702,10 @@ def _spust_prohlizec(exe: str, profil: Path, log) -> tuple[subprocess.Popen, _De
             "--force-color-profile=srgb", "--font-render-hinting=none",
             "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1",
             "about:blank"]
+    if sit:
+        # SimteGen's check of a live product after deploy (overeni.py) loads
+        # the real site; everything else here stays offline.
+        argv.remove("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1")
     if sys.platform.startswith("linux"):
         # GitHub runners and containers lack the user namespaces Chrome's
         # sandbox wants; the page is our own, served from 127.0.0.1.
@@ -544,17 +731,143 @@ def _spust_prohlizec(exe: str, profil: Path, log) -> tuple[subprocess.Popen, _De
     return proces, dt
 
 
+def _sekundy(ms: int) -> str:
+    return f"{ms / 1000:.1f}".replace(".", ",")
+
+
+def _rychlost(dt: "_DevTools", url: str) -> dict:
+    """The page on a slow phone: {"ms": load, "kb": transferred}. Twice with
+    an empty cache, the better run kept — one hiccup of the machine running
+    CI must not fail a product. The throttling is always lifted after."""
+    vysledky = []
+    try:
+        dt.volej("Network.enable")
+        dt.volej("Network.setCacheDisabled", cacheDisabled=True)
+        # A first visit: the product's service worker (offline, Play app)
+        # installs on the first load and answers the second from its cache,
+        # past the network and its throttling — 0.1 s for 150 kB.
+        dt.volej("Network.setBypassServiceWorker", bypass=True)
+        dt.volej("Network.emulateNetworkConditions", offline=False, **POMALY_MOBIL)
+        dt.volej("Emulation.setCPUThrottlingRate", rate=POMALY_PROCESOR)
+        for _ in range(2):
+            dt.volej("Page.navigate", url=url)
+            if not dt.cekej_na("Page.loadEventFired", 60):
+                continue
+            mereni = dt.js("""(() => {
+              const n = performance.getEntriesByType('navigation')[0];
+              const bajty = performance.getEntriesByType('resource').reduce((a, x) => a + (x.transferSize || 0), 0);
+              return {ms: Math.round(n.loadEventStart), kb: Math.round((n.transferSize + bajty) / 1024)};
+            })()""")
+            if mereni:
+                vysledky.append(mereni)
+    finally:
+        dt.volej("Emulation.setCPUThrottlingRate", rate=1)
+        dt.volej("Network.emulateNetworkConditions", offline=False, latency=0,
+                 downloadThroughput=-1, uploadThroughput=-1)
+        dt.volej("Network.setCacheDisabled", cacheDisabled=False)
+        dt.volej("Network.setBypassServiceWorker", bypass=False)
+    return min(vysledky, key=lambda m: m["ms"]) if vysledky else {"ms": None, "kb": None}
+
+
 def _velikost(dt: _DevTools, sirka: int, vyska: int) -> None:
     dt.volej("Emulation.setDeviceMetricsOverride", width=sirka, height=vyska,
              deviceScaleFactor=1, mobile=False)
     time.sleep(0.15)
 
 
+def _snimky_s_daty(root: Path) -> list[dict]:
+    """The manifest's store shots that click into data (aplikace.snimky with
+    kliky) — at most four, the ones a plain screen switch cannot show."""
+    try:
+        manifest = json.loads((root / "data-manifest.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    vse = (manifest.get("aplikace") or {}).get("snimky") or []
+    return [x for x in vse if isinstance(x, dict) and x.get("kliky")][:4]
+
+
+def _snimek_s_daty(dt: "_DevTools", zaklad: str, snimek: dict, snimky: Path,
+                   snimky_out: list[dict], nalezy: dict) -> None:
+    """Fresh load, the screen, its clicks; measured and photographed on a
+    phone (and a tablet when the shot says so). Findings join the rest
+    under the shot's label, so the builder knows where it was."""
+    stitek = str(snimek.get("stitek") or snimek.get("titulek") or "snímek")[:40]
+    rozmery = [SIRKY[1]] + ([SIRKY[2]] if snimek.get("tablet") else [])
+    for nazev, sirka, vyska, _ in rozmery:
+        if len(snimky_out) >= MAX_SNIMKU:
+            return
+        _velikost(dt, sirka, vyska)
+        dt.volej("Page.navigate", url=zaklad + "/index.html")
+        if not dt.cekej_na("Page.loadEventFired", 20):
+            return
+        konec = time.monotonic() + 5
+        while dt.js(_UVODNI) == "videt" and time.monotonic() < konec:
+            time.sleep(0.1)
+        time.sleep(1.5)
+        if snimek.get("obrazovka"):
+            dt.js(_UKAZ % json.dumps(snimek["obrazovka"]))
+            time.sleep(0.4)
+        for selektor in snimek.get("kliky") or []:
+            dt.js("(() => { const e = document.querySelector(%s); if (e) e.click(); return !!e; })()"
+                  % json.dumps(selektor))
+            time.sleep(0.8)
+        time.sleep(1.0)
+        nalez = dt.js(_MERENI) or {}
+        for druh, popis in _DRUHY.items():
+            for polozka in nalez.get(druh) or ():
+                kde_nalez = nalezy.setdefault(("index.html", "light", popis, polozka), {"obrazovky": [], "sirky": []})
+                for pole, hodnota in (("obrazovky", f"snímek „{stitek}“"), ("sirky", str(sirka))):
+                    if hodnota not in kde_nalez[pole]:
+                        kde_nalez[pole].append(hodnota)
+        vyska_stranky = dt.js("document.documentElement.scrollHeight") or vyska
+        data = dt.volej("Page.captureScreenshot", format="jpeg", quality=72, captureBeyondViewport=True,
+                        clip={"x": 0, "y": 0, "width": sirka, "height": min(int(vyska_stranky), vyska * 2),
+                              "scale": 1})["data"]
+        jmeno = f"data-{len(snimky_out) + 1:02d}-{nazev}.jpg"
+        (snimky / jmeno).write_bytes(base64.b64decode(data))
+        snimky_out.append({"soubor": str(snimky / jmeno),
+                           "popis": f"„{stitek}“ (otevřeno klepnutím z manifestu), {nazev} {sirka}×{vyska} px, "
+                                    "přihlášeně s ukázkovými daty",
+                           "prihlaseno": True})
+
+
+def _ukazkovy_ucet(root: Path, zasobnik: contextlib.ExitStack) -> tuple[str, str] | str:
+    """(base URL, cookie) of the product's real API running locally with
+    the demo data logged in — or a sentence why not. The same machinery as
+    the store screenshots (obchod) and the acceptance tests: local D1, no
+    production data, the demo account from play/ukazka.json."""
+    if not ((root / "db").exists() and (root / "play" / "ukazka.json").exists()
+            and (root / "wrangler.toml.sablona").exists()):
+        return "produkt nemá databázi s ukázkovými daty"
+    npx = shutil.which("npx")
+    if npx is None:
+        return "chybí Node.js (npx)"
+    import uat_kontrola
+
+    try:
+        zaklad = zasobnik.enter_context(uat_kontrola.api_produktu(root, npx))
+    except Exception as e:  # noqa: BLE001 — the signed-out check still runs
+        return f"API produktu se nespustilo: {e}"[:240]
+    klient = uat_kontrola.Klient(zaklad, "ukazka")
+    chyba = klient.prihlas(uat_kontrola.UKAZKOVY_UCET)
+    chyby = [chyba] if chyba else uat_kontrola.spust_ukazku(root, klient)
+    if chyby:
+        return ("ukázková data se nenahrála: " + "; ".join(chyby))[:240]
+    return zaklad, klient.cookie
+
+
 def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
-               povinne: bool = False) -> tuple[list[str], list[dict], str]:
+               povinne: bool = False, prihlasit: bool = False) -> tuple[list[str], list[dict], str]:
     """Returns (problems, screenshots, note). Problems are Czech sentences for
     the builder; screenshots are {soubor, popis} for the reviewer; the note
-    says which browser ran, or why nothing did."""
+    says which browser ran, or why nothing did.
+
+    prihlasit (the reviewer's run): a product with accounts is measured and
+    photographed logged in as the demo account, on its real API with the
+    demo data. Signed out, every list and number was empty, and the
+    reviewer judged the design of a login page and blank states. When the
+    API or the data will not come up, the check falls back to signed out
+    and the note says why — a review must never wait on wrangler."""
     root = Path(root or Path(__file__).resolve().parent)
     web = root / "web"
     stranky = sorted(p for p in web.glob("*.html") if p.name not in PRESKOCIT) if web.is_dir() else []
@@ -571,10 +884,18 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
     # one problem, not fourteen — the first real product printed it per screen.
     nalezy: dict[tuple, dict[str, list[str]]] = {}
     obrazovek_na_strance: dict[str, int] = {}
+    rychlosti: dict[str, dict] = {}
     snimky_out: list[dict] = []
     if snimky is not None:
         snimky.mkdir(parents=True, exist_ok=True)
-    server = _server(web)
+    zasobnik = contextlib.ExitStack()
+    prihlaseni = _ukazkovy_ucet(root, zasobnik) if prihlasit else "nepožádáno"
+    server = None
+    if isinstance(prihlaseni, tuple):
+        zaklad, cookie = prihlaseni
+    else:
+        server = _server(web)
+        zaklad, cookie = f"http://127.0.0.1:{server.server_address[1]}", None
     profil = Path(tempfile.mkdtemp(prefix="simtegen-prohlizec-"))
     proces = None
     dt = None
@@ -585,8 +906,28 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
         proces, dt = _spust_prohlizec(exe, profil, log)
         dt.volej("Page.enable")
         dt.volej("Page.addScriptToEvaluateOnNewDocument", source=_HLIDAC_UVODNI)
-        port = server.server_address[1]
+        if cookie:
+            jmeno, _, hodnota = cookie.partition("=")
+            dt.volej("Network.setCookie", name=jmeno, value=hodnota, url=zaklad + "/", path="/")
+        # Logged in, the store shots (aplikace.snimky with their clicks) are
+        # the screens that hold data — an opened order, a drawing — which
+        # ukaz() alone cannot reach. They are taken last but keep places.
+        s_daty = _snimky_s_daty(root) if (cookie and snimky is not None) else []
+        rezerva = sum(1 + bool(x.get("tablet")) for x in s_daty)
         for stranka in stranky:
+            # Speed first, on its own load: the checks below wait and click,
+            # and would only blur what a customer's first visit costs.
+            _velikost(dt, SIRKY[1][1], SIRKY[1][2])
+            rychlost = _rychlost(dt, f"{zaklad}/{stranka.name}")
+            rychlosti[stranka.name] = rychlost
+            if rychlost["ms"] is None:
+                problemy.append(f"web/{stranka.name}: na pomalém mobilu se stránka nenačetla do 60 s")
+            elif rychlost["ms"] > RYCHLOST_LIMIT_MS:
+                problemy.append(
+                    f"web/{stranka.name}: první obrazovka se na pomalém mobilu (4G, {POMALY_PROCESOR}× pomalejší "
+                    f"procesor) načte za {_sekundy(rychlost['ms'])} s, limit {_sekundy(RYCHLOST_LIMIT_MS)} s; "
+                    f"přenese se {rychlost['kb']} kB — rozděl stránku nebo odlož, co první obrazovka "
+                    "nepotřebuje (viz Rychlost v DESIGN.md).")
             for schema in ("light", "dark"):
                 # Reduced motion: the screen fade-in must not be photographed
                 # half-way (it once made a finished screen look washed out).
@@ -594,7 +935,7 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
                     {"name": "prefers-color-scheme", "value": schema},
                     {"name": "prefers-reduced-motion", "value": "reduce"}])
                 _velikost(dt, SIRKY[1][1], SIRKY[1][2])
-                dt.volej("Page.navigate", url=f"http://127.0.0.1:{port}/{stranka.name}")
+                dt.volej("Page.navigate", url=f"{zaklad}/{stranka.name}")
                 if not dt.cekej_na("Page.loadEventFired", 20):
                     problemy.append(f"web/{stranka.name}: stránka se nenačetla do 20 s")
                     break
@@ -610,21 +951,37 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
                         problemy.append(f"web/{stranka.name}: úvodní obrazovka nezmizela ani po 4 s")
                 else:
                     time.sleep(1.0)
-                time.sleep(0.4)  # the app's first /api/ answer (401) settles
+                # The app's first /api/ answers settle (401 signed out; with
+                # the demo data real lists, which take longer).
+                time.sleep(1.5 if cookie else 0.4)
                 obrazovky = dt.js(_OBRAZOVKY) or [None]
+                # Logged in, the screen the app itself opened is the one a
+                # customer sees first: it goes first, so it gets all widths.
+                aktivni = dt.js(_AKTIVNI) if cookie else None
+                if aktivni in obrazovky:
+                    obrazovky = [aktivni] + [o for o in obrazovky if o != aktivni]
                 obrazovek_na_strance[stranka.name] = len(obrazovky)
                 bez_hlaseni: list[str] = []
                 fotografovano = 0
+                vyfoceno: set = set()
                 for obrazovka in obrazovky:
                     if obrazovka:
                         dt.js(_UKAZ % json.dumps(obrazovka))
                     kde = f"web/{stranka.name}" + (f" #{obrazovka}" if obrazovka else "")
+                    # A screen that needs a selection (an order's detail) falls
+                    # back to the list; the same picture twice says nothing.
+                    ukazano = dt.js(_AKTIVNI) if obrazovka else None
+                    znovu = obrazovka is not None and ukazano in vyfoceno and ukazano != obrazovka
                     # The loading skeleton is a state worth checking, not worth
                     # a reviewer's picture; the first screens get all widths.
-                    fotit_obrazovku = schema == "light" and "nacitani" not in (obrazovka or "")
-                    siroce = fotografovano < SIROCE_OBRAZOVEK
+                    # Dark mode gets one picture — the first screen on a phone —
+                    # so the reviewer sees the scheme, not only its contrast.
+                    fotit_obrazovku = "nacitani" not in (obrazovka or "") and not znovu and (
+                        schema == "light" or fotografovano == 0)
+                    siroce = fotografovano < SIROCE_OBRAZOVEK and schema == "light"
                     if fotit_obrazovku:
                         fotografovano += 1
+                        vyfoceno.add(ukazano or obrazovka)
                     # Dark mode changes colours, not layout: contrast only.
                     sirky = SIRKY if schema == "light" else (SIRKY[1],)
                     for nazev, sirka, vyska, fotit in sirky:
@@ -641,7 +998,9 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
                                 for pole, hodnota in (("obrazovky", obrazovka), ("sirky", str(sirka))):
                                     if hodnota not in kde_nalez[pole]:
                                         kde_nalez[pole].append(hodnota)
-                        if (snimky is not None and fotit and fotit_obrazovku and len(snimky_out) < MAX_SNIMKU
+                        # One place is kept for the dark picture.
+                        volno = MAX_SNIMKU - (1 + rezerva if schema == "light" else rezerva)
+                        if (snimky is not None and fotit and fotit_obrazovku and len(snimky_out) < volno
                                 and (siroce or nazev == "telefon")):
                             vyska_stranky = dt.js("document.documentElement.scrollHeight") or vyska
                             data = dt.volej("Page.captureScreenshot", format="jpeg", quality=72,
@@ -649,10 +1008,25 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
                                             clip={"x": 0, "y": 0, "width": sirka,
                                                   "height": min(int(vyska_stranky), vyska * 2),
                                                   "scale": 1})["data"]
-                            jmeno = f"{stranka.stem}-{obrazovka or 'stranka'}-{nazev}.jpg"
+                            tmave = "-tmavy" if schema == "dark" else ""
+                            jmeno = f"{stranka.stem}-{obrazovka or 'stranka'}-{nazev}{tmave}.jpg"
                             (snimky / jmeno).write_bytes(base64.b64decode(data))
                             snimky_out.append({"soubor": str(snimky / jmeno),
-                                               "popis": f"{kde}, {nazev} {sirka}×{vyska} px"})
+                                               "popis": f"{kde}, {nazev} {sirka}×{vyska} px"
+                                                        + (", tmavý režim" if tmave else "")
+                                                        + (", přihlášeně s ukázkovými daty" if cookie else ""),
+                                               "prihlaseno": bool(cookie)})
+                    if schema == "light":
+                        # The keyboard on a notebook, where people use one.
+                        _velikost(dt, 1440, 900)
+                        for druh, polozky in _klavesnice(dt).items():
+                            for polozka in polozky:
+                                kde_nalez = nalezy.setdefault((stranka.name, schema, _DRUHY[druh], polozka),
+                                                              {"obrazovky": [], "sirky": []})
+                                if obrazovka not in kde_nalez["obrazovky"]:
+                                    kde_nalez["obrazovky"].append(obrazovka)
+                                if "1440" not in kde_nalez["sirky"]:
+                                    kde_nalez["sirky"].append("1440")
                 if schema == "light":
                     if bez_hlaseni:
                         problemy.append(f"web/{stranka.name}: na obrazovce {', '.join('#' + o for o in bez_hlaseni)} "
@@ -663,6 +1037,12 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
                         problemy.append(f"web/{stranka.name}: Content-Security-Policy zablokovala "
                                         + "; ".join(zablokovano[:5]) + " — v produkci by to nefungovalo "
                                         "(nebo stránka volá cizí server).")
+        if s_daty:
+            dt.volej("Emulation.setEmulatedMedia", features=[
+                {"name": "prefers-color-scheme", "value": "light"},
+                {"name": "prefers-reduced-motion", "value": "reduce"}])
+            for snimek in s_daty:
+                _snimek_s_daty(dt, zaklad, snimek, snimky, snimky_out, nalezy)
         radky: dict[tuple, list[str]] = {}
         for (jmeno, schema, popis, polozka), kde_nalez in nalezy.items():
             klic = (jmeno, schema, popis, tuple(kde_nalez["obrazovky"]), tuple(kde_nalez["sirky"]))
@@ -674,11 +1054,17 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
             elif len(obrazovky_nalezu) > 1 and len(obrazovky_nalezu) == obrazovek_na_strance.get(jmeno):
                 kde = f"web/{jmeno} (všechny obrazovky)"
             else:
-                kde = f"web/{jmeno} " + ", ".join(o if o.startswith("formulář") else f"#{o}"
+                kde = f"web/{jmeno} " + ", ".join(o if o.startswith(("formulář", "snímek")) else f"#{o}"
                                                   for o in obrazovky_nalezu)
             problemy.append(f"{kde} ({'/'.join(sirky_nalezu)} px{rezim}): {popis} — "
                             + "; ".join(polozky))
-        poznamka = f"prohlížeč: {Path(exe).name}"
+        poznamka = f"prohlížeč: {Path(exe).name}" + (
+            "; přihlášeně jako ukázkový účet" if cookie
+            else f"; nepřihlášeně ({prihlaseni})" if prihlasit else "")
+        # The reviewer sees what a slow phone waits, not only whether it passed.
+        zmereno = [f"{jmeno} {_sekundy(r['ms'])} s ({r['kb']} kB)" for jmeno, r in rychlosti.items() if r["ms"]]
+        if zmereno:
+            poznamka += "; pomalý mobil: " + ", ".join(zmereno)
     except (OSError, RuntimeError, ConnectionError, ValueError) as e:
         # A browser that will not start is the machine's problem, not the
         # product's — unless the caller (CI) said the check is mandatory.
@@ -706,8 +1092,10 @@ def zkontroluj(root: Path | None = None, *, snimky: Path | None = None,
             except subprocess.TimeoutExpired:
                 proces.kill()
                 proces.wait()
-        server.shutdown()
-        server.server_close()
+        if server is not None:
+            server.shutdown()
+            server.server_close()
+        zasobnik.close()  # the product's API (wrangler) and its local D1
         log.close()
         # Edge's helper processes inherit the stderr handle and may outlive
         # the browser by a moment; Windows will not delete an open file.
@@ -743,7 +1131,7 @@ MAX_TABLETU = 4
 # small form, drawn by styl.css (.znacka-ctverec — block with the bite,
 # the piece in the product's colour), so the graphic and the app can never
 # show two different logos.
-ZNACKA_HTML = '<span class="znacka-ctverec"></span><span class="znacka-slovo">simtegen</span>'
+ZNACKA_HTML = '<span class="znacka-ctverec"></span><span class="znacka-slovo">SimteGen</span>'
 
 # The store pictures are composed in the app's own origin: /styl.css brings
 # the same fonts and colours the app uses, and the inline styles here are
@@ -987,7 +1375,8 @@ def main() -> int:
         print("Podklady pro Google Play:", ", ".join(soubory))
         return 0
     povinne = "--povinne" in args or os.environ.get("GITHUB_ACTIONS") == "true"
-    problemy, fotky, poznamka = zkontroluj(root, snimky=snimky, povinne=povinne)
+    problemy, fotky, poznamka = zkontroluj(root, snimky=snimky, povinne=povinne,
+                                           prihlasit="--prihlasit" in args)
     if "--json" in args:
         print(json.dumps({"problemy": problemy, "snimky": fotky, "poznamka": poznamka},
                          ensure_ascii=False))

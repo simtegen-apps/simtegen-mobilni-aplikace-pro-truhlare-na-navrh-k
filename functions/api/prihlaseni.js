@@ -19,6 +19,14 @@ import { json, novyToken, otisk, ted, ODKAZ_TRVANI } from "../../spolecne.js";
 
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,189}\.[^\s@]{2,}$/;
 const MISTNI = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+// Ceilings per hour for the whole product, kept apart: links to addresses
+// with no account (a script spamming strangers in our name lands here, and
+// filling it only delays sign-ups) and links to existing customers (a script
+// cannot fill this one with made-up addresses, so it cannot lock them out).
+// Together they bound what the product can send in an hour. Reaching either
+// looks from outside exactly like a sent link — see below.
+const NOVYM_ZA_HODINU = 30;
+const ZAKAZNIKUM_ZA_HODINU = 300;
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -46,12 +54,39 @@ export async function onRequestPost(context) {
   }
 
   // Three links per hour per address: enough for a confused customer,
-  // useless for turning us into someone's spam cannon.
+  // useless for turning us into someone's spam cannon. Somebody else asking
+  // for a customer's address does not lock the customer out: the three links
+  // went to the customer's inbox and each works for an hour (ODKAZ_TRVANI).
   const pocet = await env.DB.prepare(
     "SELECT COUNT(*) AS n FROM prihlasovaci_odkazy WHERE email = ? AND vytvoreno > ?"
   ).bind(email, ted() - 3600).first();
   if (pocet.n >= 3) {
-    return json({ chyba: "Příliš mnoho pokusů. Zkuste to prosím za hodinu." }, 429);
+    return json({ chyba: "Na tuto adresu jsme v poslední hodině poslali už tři přihlašovací "
+      + "odkazy. Použijte prosím některý z nich — každý platí hodinu." }, 429);
+  }
+
+  // The per-address limit alone still lets a script send three e-mails an
+  // hour to any number of strangers in our name: the ceilings above stop
+  // that (counted in D1, where the links live). Expired links go first, so
+  // the table cannot grow without a login either.
+  await env.DB.prepare("DELETE FROM prihlasovaci_odkazy WHERE expirace < ?")
+    .bind(ted()).run();
+  const ucet = await env.DB.prepare("SELECT id FROM uzivatele WHERE email = ?")
+    .bind(email).first();
+  const odeslano = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM prihlasovaci_odkazy o WHERE o.vytvoreno > ? AND "
+    + "EXISTS (SELECT 1 FROM uzivatele u WHERE u.email = o.email) = ?"
+  ).bind(ted() - 3600, ucet ? 1 : 0).first();
+  if (odeslano.n >= (ucet ? ZAKAZNIKUM_ZA_HODINU : NOVYM_ZA_HODINU)) {
+    // Over a ceiling the answer is the same as a sent link, for both
+    // ceilings: a different one would tell a stranger which addresses have
+    // an account (fill the new-address ceiling, then try names). Nothing is
+    // stored or sent; the operator sees it in the Functions log (no address).
+    // An instant answer would give it away by timing, next to a real send
+    // that waits for the mail service — so it waits about as long.
+    console.warn(`prihlaseni: hodinový strop odkazů (${ucet ? "zákazníci" : "nové adresy"}) je plný`);
+    await new Promise((hotovo) => setTimeout(hotovo, 300 + Math.floor(Math.random() * 600)));
+    return json({ stav: "odeslano" });
   }
 
   const token = novyToken();
@@ -80,7 +115,7 @@ export async function onRequestPost(context) {
     body: JSON.stringify({
       from: env.EMAIL_ODESILATEL,
       to: [email],
-      subject: "Váš přihlašovací odkaz",
+      subject: context.data.produkt ? `${context.data.produkt}: přihlašovací odkaz` : "Váš přihlašovací odkaz",
       text:
         "Dobrý den,\n\npro přihlášení otevřete tento odkaz (platí 1 hodinu):\n"
         + `${odkaz}\n\nPokud jste o přihlášení nežádali, e-mail ignorujte.\n`,
