@@ -23,7 +23,8 @@ const MISTNI = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 // with no account (a script spamming strangers in our name lands here, and
 // filling it only delays sign-ups) and links to existing customers (a script
 // cannot fill this one with made-up addresses, so it cannot lock them out).
-// Together they bound what the product can send in an hour.
+// Together they bound what the product can send in an hour. Reaching either
+// looks from outside exactly like a sent link — see below.
 const NOVYM_ZA_HODINU = 30;
 const ZAKAZNIKUM_ZA_HODINU = 300;
 
@@ -77,8 +78,15 @@ export async function onRequestPost(context) {
     + "EXISTS (SELECT 1 FROM uzivatele u WHERE u.email = o.email) = ?"
   ).bind(ted() - 3600, ucet ? 1 : 0).first();
   if (odeslano.n >= (ucet ? ZAKAZNIKUM_ZA_HODINU : NOVYM_ZA_HODINU)) {
-    return json({ chyba: "Přihlašovacích odkazů teď odchází moc. Zkuste to prosím "
-      + "za chvíli znovu." }, 429);
+    // Over a ceiling the answer is the same as a sent link, for both
+    // ceilings: a different one would tell a stranger which addresses have
+    // an account (fill the new-address ceiling, then try names). Nothing is
+    // stored or sent; the operator sees it in the Functions log (no address).
+    // An instant answer would give it away by timing, next to a real send
+    // that waits for the mail service — so it waits about as long.
+    console.warn(`prihlaseni: hodinový strop odkazů (${ucet ? "zákazníci" : "nové adresy"}) je plný`);
+    await new Promise((hotovo) => setTimeout(hotovo, 300 + Math.floor(Math.random() * 600)));
+    return json({ stav: "odeslano" });
   }
 
   const token = novyToken();
