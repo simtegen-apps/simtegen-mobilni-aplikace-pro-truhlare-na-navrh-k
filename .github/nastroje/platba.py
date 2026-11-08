@@ -23,10 +23,14 @@ import subprocess
 import sys
 import urllib.request
 
+# The exact wrangler the workflow pins in its env (WRANGLER); the default
+# is the same version, for a run outside the workflow.
+WRANGLER = os.environ.get("WRANGLER") or "wrangler@3.114.17"
+
 
 def d1(db: str, sql: str) -> list[dict]:
     run = subprocess.run(
-        ["npx", "--yes", "wrangler@3", "d1", "execute", db, "--remote", "--json", "--command", sql],
+        ["npx", "--yes", WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
         capture_output=True, text=True, encoding="utf-8",
     )
     if run.returncode != 0:
@@ -83,6 +87,11 @@ def main() -> int:
         print(f"Objednávka {objednavka} v {db} neexistuje.")
         return 1
     o = rows[0]
+    # The template repo — where this runs — is public, and so are its Actions
+    # logs. The customer's address is masked before anything could print it:
+    # a failing Resend call or a wrangler error would otherwise carry it out.
+    if o.get("email"):
+        print(f"::add-mask::{o['email']}", flush=True)
     if o["stav"] == "zaplacena":
         print(f"Objednávka {objednavka} už je zaplacená — nic nedělám.")
         return 0
@@ -99,7 +108,7 @@ def main() -> int:
     d1(db, f"UPDATE objednavky SET stav = 'zaplacena' WHERE id = {objednavka};")
     konec = d1(db, f"SELECT date(plati_do, 'unixepoch') AS den FROM predplatne WHERE uzivatel_id = {uid}")
     den = (konec[0]["den"] if konec else "") or ""
-    print(f"Platba zapsána: {o['email']} má předplatné do {den}.")
+    print(f"Platba zapsána: objednávka {objednavka} (účet {uid}) má předplatné do {den}.")
 
     if env.get("RESEND_API_KEY") and env.get("EMAIL_ODESILATEL"):
         y, m, d = den.split("-") if den.count("-") == 2 else ("", "", "")
