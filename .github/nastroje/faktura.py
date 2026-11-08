@@ -27,6 +27,9 @@ import urllib.request
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
+# The exact wrangler the workflow pins in its env (WRANGLER); the default
+# is the same version, for a run outside the workflow.
+WRANGLER = os.environ.get("WRANGLER") or "wrangler@3.114.17"
 VYSTUP = Path("vystup")
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -97,7 +100,7 @@ def cz_datum(iso: str) -> str:
 
 def d1(db: str, sql: str) -> list[dict]:
     run = subprocess.run(
-        ["npx", "--yes", "wrangler@3", "d1", "execute", db, "--remote", "--json", "--command", sql],
+        ["npx", "--yes", WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
         capture_output=True, text=True, encoding="utf-8",
     )
     if run.returncode != 0:
@@ -241,6 +244,11 @@ def main() -> int:
         print(f"Objednávka {objednavka} v {db} neexistuje.")
         return 1
     o = rows[0]
+    # Public repo, public logs (see platba.py): mask the customer's address
+    # and each line of the billing block before anything could print them.
+    for citlive in [o.get("email") or "", *(o.get("fakturace") or "").splitlines()]:
+        if citlive.strip():
+            print(f"::add-mask::{citlive.strip()}", flush=True)
     if o["stav"] == "fakturovana":
         print(f"Objednávka {objednavka} už má fakturu — nic nedělám.")
         return 0
