@@ -385,6 +385,7 @@ jobs:
           NAHRANO: ${{ steps.nahrani.outcome }}
           STAV: ${{ steps.nahrani.outputs.stav }}
           BEZPECNOST: ${{ steps.nahrani.outputs.bezpecnost }}
+          ZAZNAM_PLAY: ${{ steps.nahrani.outputs.zaznam_play }}
           NAKUPY: ${{ steps.priprava.outputs.nakupy }}
           KLIC: ${{ steps.nakupy.outputs.klic }}
           PREDPLATNE_PLAY: ${{ steps.nahrani.outputs.predplatne }}
@@ -406,6 +407,11 @@ jobs:
               echo "- Google Play aplikaci **zatím nezná** — první verzi nahraj ručně v Play Console (Interní testování → Vytvořit vydání → \`app-release-bundle.aab\` z artefaktu). Další vydání už půjdou sama."
             elif [ "$NAHRANO" = "success" ]; then
               echo "- Google Play: nahráno na interní kanál (${STAV:-completed}). Povýšení do produkce je na tobě v Play Console."
+              if [ "$ZAZNAM_PLAY" = "1" ]; then
+                echo "- Záznam v obchodě: texty, kontakty a obrázky nahrané do Google Play."
+              elif [ "$ZAZNAM_PLAY" = "0" ]; then
+                echo "- Záznam v obchodě: Google ho **nepřijal** — v logu kroku Nahrani je důvod i oprávnění, které servisnímu účtu chybí; vydání tím neutrpělo."
+              fi
               if [ "$BEZPECNOST" = "1" ]; then
                 echo "- Bezpečnost údajů: formulář vyplněn z manifestu (\`obchod/bezpecnost_dat.csv\`)."
               elif [ "$BEZPECNOST" = "0" ]; then
@@ -445,6 +451,7 @@ jobs:
           NAHRANO: ${{ steps.nahrani.outcome }}
           STAV_PLAY: ${{ steps.nahrani.outputs.stav }}
           BEZPECNOST: ${{ steps.nahrani.outputs.bezpecnost }}
+          ZAZNAM_PLAY: ${{ steps.nahrani.outputs.zaznam_play }}
           NAKUPY: ${{ steps.priprava.outputs.nakupy }}
           PREDPLATNE_PLAY: ${{ steps.nahrani.outputs.predplatne }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
