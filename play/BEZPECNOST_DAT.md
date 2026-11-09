@@ -23,6 +23,7 @@ Co aplikace dělá:
 • Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.
 • Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.
 • Kusovník stáhnete jako soubor CSV pro nářezové centrum.
+• Aplikaci můžete používat česky nebo anglicky; kusovník stáhnete i jako anglické CSV se stejnými rozměry.
 • Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.
 
 Než se zaregistrujete, můžete si aplikaci projít tlačítkem Vyzkoušet ukázku: dostanete dočasný účet s vymyšlenou kuchyní a kusovníkem, který za 24 hodin zmizí.

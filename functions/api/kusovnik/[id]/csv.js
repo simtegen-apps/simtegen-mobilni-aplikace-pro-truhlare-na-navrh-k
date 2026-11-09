@@ -34,12 +34,16 @@ export async function onRequestGet(context) {
   const kusovnik = await nactiKusovnik(env, data.uzivatel.id, id);
   if (!kusovnik) return json({ chyba: "Kusovník jsme nenašli." }, 404);
 
-  const csv = csvKusovniku(kusovnik, kusovnik.zakazka, kusovnik.standard);
+  // ?jazyk=en = anglické popisky pro dílnu nebo centrum, které česky nečte.
+  // Cokoli jiného (i neznámý jazyk) dává české CSV jako dřív.
+  const jazyk = new URL(context.request.url).searchParams.get("jazyk") === "en" ? "en" : "cs";
+  const csv = csvKusovniku(kusovnik, kusovnik.zakazka, kusovnik.standard, jazyk);
+  const predpona = jazyk === "en" ? "cutting-list" : "kusovnik";
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition":
-        `attachment; filename="kusovnik-${bezpecnyNazev(kusovnik.zakazka.nazev)}.csv"`,
+        `attachment; filename="${predpona}-${bezpecnyNazev(kusovnik.zakazka.nazev)}.csv"`,
       "Cache-Control": "no-store",
     },
   });

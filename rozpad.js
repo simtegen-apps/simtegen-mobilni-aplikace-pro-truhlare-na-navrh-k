@@ -26,6 +26,8 @@
 // web/kolize.js — jedna implementace pro prohlížeč i pro server, viz
 // komentář v tom souboru.
 import { popisSkrinky, zkontrolujStenu } from "./web/kolize.js";
+// Anglická slova oboru sdílí CSV s obrazovkou — viz komentář v tom souboru.
+import { dilEn, hranyEn, materialEn, skrinkyEn } from "./web/texty-oboru.js";
 
 export const VYCHOZI_STANDARD = {
   nazev: "Můj standard",
@@ -507,11 +509,21 @@ function csvPole(hodnota) {
   return /[";\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
+// Anglická hlavička má stejné sloupce ve stejném pořadí: nářezové centrum,
+// které importuje podle pořadí sloupců, dostane z obou jazyků totéž.
+const CSV_HLAVICKA_EN = [
+  "material", "part", "length_mm", "width_mm", "qty", "thickness_mm", "grain",
+  "edge_length_1_mm", "edge_length_2_mm", "edge_width_1_mm", "edge_width_2_mm",
+  "edging", "cabinets",
+];
+
 /**
  * CSV pro nářezové centrum. Oddělovač je středník a soubor začíná BOM,
  * aby se v českém Excelu otevřel rovnou ve sloupcích a s háčky.
+ * jazyk = "en" vrátí totéž anglicky (popisky, ne čísla ani pořadí).
  */
-export function csvKusovniku(kusovnik, zakazka, standard) {
+export function csvKusovniku(kusovnik, zakazka, standard, jazyk = "cs") {
+  if (jazyk === "en") return csvAnglicky(kusovnik, zakazka, standard);
   const radky = [];
   radky.push(`# Kusovník — ${zakazka.nazev}`);
   radky.push(`# Rozměry jsou v mm, ${standard.rozmer_s_olepenim
@@ -528,6 +540,32 @@ export function csvKusovniku(kusovnik, zakazka, standard) {
       (p.hrany.sirka_1 / 10).toFixed(1).replace(".", ","),
       (p.hrany.sirka_2 / 10).toFixed(1).replace(".", ","),
       p.hrany_popis, p.skrinky.join(" + "),
+    ].map(csvPole).join(";"));
+  }
+  return "﻿" + radky.join("\r\n") + "\r\n";
+}
+
+/**
+ * Anglické CSV: stejné díly, rozměry a pořadí jako české, jen popisky
+ * anglicky a desetinná tečka. Název zakázky, stěn a desek je obsah
+ * truhláře a zůstává, jak ho zapsal.
+ */
+function csvAnglicky(kusovnik, zakazka, standard) {
+  const desetiny = (n) => (n / 10).toFixed(1);
+  const radky = [];
+  radky.push(`# Cutting list — ${zakazka.nazev}`);
+  radky.push(`# Dimensions in mm, ${standard.rozmer_s_olepenim
+    ? "sizes are FINISHED PARTS after edging (the cut is already reduced)"
+    : "sizes are the CUT before edging"}. Saw kerf ${standard.prorez_mm} mm.`);
+  radky.push("# Check the dimensions before sending them to the cutting centre.");
+  radky.push(CSV_HLAVICKA_EN.join(";"));
+  for (const p of kusovnik.polozky) {
+    radky.push([
+      materialEn(p.material), dilEn(p.nazev), p.delka_mm, p.sirka_mm, p.ks, p.tloustka_mm,
+      p.vlakno ? "along length" : "any",
+      desetiny(p.hrany.delka_1), desetiny(p.hrany.delka_2),
+      desetiny(p.hrany.sirka_1), desetiny(p.hrany.sirka_2),
+      hranyEn(p.hrany_popis), p.skrinky.map(skrinkyEn).join(" + "),
     ].map(csvPole).join(";"));
   }
   return "﻿" + radky.join("\r\n") + "\r\n";
