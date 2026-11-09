@@ -561,7 +561,7 @@ function csvAnglicky(kusovnik, zakazka, standard) {
   radky.push(CSV_HLAVICKA_EN.join(";"));
   for (const p of kusovnik.polozky) {
     radky.push([
-      materialEn(p.material), dilEn(p.nazev), p.delka_mm, p.sirka_mm, p.ks, p.tloustka_mm,
+      materialEn(p.material), dilEn(p.nazev, p.klic), p.delka_mm, p.sirka_mm, p.ks, p.tloustka_mm,
       p.vlakno ? "along length" : "any",
       desetiny(p.hrany.delka_1), desetiny(p.hrany.delka_2),
       desetiny(p.hrany.sirka_1), desetiny(p.hrany.sirka_2),

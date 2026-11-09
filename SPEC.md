@@ -94,4 +94,12 @@ Na telefonu (Android, aplikace i Chrome) a na tabletu:
 - Truhlář přepne na Účtu jazyk na English a znovu otevře aplikaci — musí vidět zakázky, stěnu, náhled i kusovník anglicky se stejnými zakázkami a rozměry jako předtím v češtině.
 - Nový návštěvník otevře aplikaci poprvé — musí vidět úvod a přihlášení česky a úvod musí dál jednou zavolat POST /api/navsteva.
 
+## Jak se stavba odchýlila (poznámka stavitele)
+Během stavby obnova šablony přinesla hotový vícejazyčný systém (DESIGN.md, Jazyky a měny), který CI přímo hlídá (`kontrola_jazyku.py`, vizuální kontrola s `?jazyk=en`). Riziko „Smíšený jazyk“ výš s tím počítalo, proto produkt překládá přes šablonu místo bodů 2, 3a–3c a 8 plánu:
+- Slova jsou ve `web/texty.js` (`SimteGen.slovnik({cs, en})`), texty ze skriptu jdou přes `SimteGen.t`, statické prvky přes `data-t`. V `<head>` je `<meta name="simtegen-jazyky" content="cs en">`. Soubor `web/texty-en.js` ani vlastní `t()` nevznikly. Pruh zkušební doby, offline pruh, „Vrátit“ a formulář Nahlásit chybu proto mluví anglicky také (překládá je šablona).
+- **Úložiště (bod 6):** volbu jazyka si pamatuje výhradně `web/simtegen.js` v localStorage pod klíčem `sg-volba` (`nactiVolbu` / `ulozVolbu`). `web/index.html` jazyk nikam neukládá, jen ho čte přes `SimteGen.jazyk()`. Klíč `jazyk` proto v kódu neexistuje a manifest deklaruje skutečný `sg-volba` v `uloziste_v_prohlizeci`.
+- **Přepínač** kreslí šablona do `<div data-prepinac-jazyka>` jako dvojici tlačítek Čeština / English. Je v patičce úvodu, v sekci „Jazyk aplikace“ na Účtu a v Náhledu.
+- **Výchozí jazyk** (riziko 3) vybírá šablona: ruční volba, jinak jazyk prohlížeče (český a slovenský dostane češtinu), jinak angličtina. Stávající zákazníci s českým telefonem nic nepoznají. Anglický prohlížeč ale napoprvé dostane angličtinu.
+- Kontrolu klíčů ze zrušeného `kontrola_prekladu.py` (bod 8) dělá `kontrola_jazyku.py` šablony.
+
 _Schvaluje se přes ARGA (simtegen_approve_spec) nebo na mini PC._

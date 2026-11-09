@@ -274,6 +274,12 @@
       "ucel": "rozepsané měření zakázky se drží v telefonu, aby se u zákazníka bez signálu neztratilo; po uložení na server se maže",
       "typ": "localStorage",
       "trvani": "do uložení zakázky nebo do smazání zákazníkem v prohlížeči"
+    },
+    {
+      "nazev": "sg-volba",
+      "ucel": "zapamatuje si jazyk aplikace (čeština, nebo angličtina), který jste si sami přepnuli, aby se na tomto zařízení příště nemusel volit znovu; nic jiného v ní není a nikam se neodesílá",
+      "typ": "localStorage",
+      "trvani": "do změny volby nebo smazání dat stránky v prohlížeči"
     }
   ],
   "cookies": [

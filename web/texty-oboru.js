@@ -23,8 +23,21 @@ export const TYPY_SKRINEK_EN = {
   rohova: "Corner",
 };
 
-// Klíčem je název dílu, jak ho píše rozpad.js — tak jde přeložit i starší
-// uložený kusovník a ukázka standardu, která klíč dílu nenese.
+// Díl se překládá podle svého klíče (rozpad.js, `klic`): kdyby se změnil
+// český název, anglický kusovník zůstane anglický. Záda mají jeden klíč pro
+// obě provedení — které to je, říká až název.
+const DILY_EN_PODLE_KLICE = {
+  bok: "Side panel",
+  dno: "Bottom",
+  viko: "Top",
+  traverza: "Rail",
+  police: "Shelf",
+  celo: "Drawer front",
+  dvirka: "Door",
+};
+
+// Záloha podle názvu, jak ho píše rozpad.js — pro ukázku standardu, která
+// klíč dílu nenese.
 const DILY_EN = {
   "Bok": "Side panel",
   "Dno": "Bottom",
@@ -45,9 +58,12 @@ const TYPY_V_POPISU_EN = {
   "skříňka": "cabinet",
 };
 
-/** Název dílu („Bok“ → „Side panel“). */
-export function dilEn(nazev) {
-  return DILY_EN[nazev] || String(nazev ?? "");
+/** Název dílu podle klíče („bok“ → „Side panel“), bez klíče podle názvu. */
+export function dilEn(nazev, klic) {
+  if (klic === "zada") {
+    return /nasazen/i.test(String(nazev ?? "")) ? "Back panel (overlaid)" : "Back panel (in groove)";
+  }
+  return DILY_EN_PODLE_KLICE[klic] || DILY_EN[nazev] || String(nazev ?? "");
 }
 
 /** Desetinná čárka v rozměru → tečka („0,8 mm“ → „0.8 mm“). */

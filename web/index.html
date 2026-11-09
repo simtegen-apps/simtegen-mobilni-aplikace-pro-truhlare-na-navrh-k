@@ -271,7 +271,7 @@
     const anglicky = () => SimteGen.jazyk() === "en";
     const typSkrinky = (typ) =>
       (anglicky() ? TYPY_SKRINEK_EN[typ] : TYPY_SKRINEK[typ]) || SimteGen.t("skrinka.nazev");
-    const nazevDilu = (nazev) => (anglicky() ? dilEn(nazev) : nazev);
+    const nazevDilu = (nazev, klic) => (anglicky() ? dilEn(nazev, klic) : nazev);
     const popisHran = (popis) => (anglicky() ? hranyEn(popis) : popis);
     const nazevMaterialu = (nazev) => (anglicky() ? materialEn(nazev) : nazev);
     const textHlasky = (text) => (anglicky() ? hlaskaEn(text) : text);
@@ -282,6 +282,9 @@
       return !anglicky() && data && data.chyba ? data.chyba : SimteGen.t(klic);
     }
 
+    // Volbu jazyka si pamatuje VÝHRADNĚ simtegen.js (localStorage „sg-volba“,
+    // v manifestu pod uloziste_v_prohlizeci); tahle stránka sama jazyk nikam
+    // neukládá — jen ho čte přes SimteGen.jazyk().
     // Přepnutí jazyka: simtegen.js si volbu zapamatuje a stránku načte znovu
     // přes location.replace(adresa). Aplikace má ale v adrese vždy #obrazovku,
     // a na adresu, která se liší jen kotvou, prohlížeč stránku znovu nenačte —
@@ -1996,7 +1999,7 @@
         ${sekce(nazev)}
         <ul class="seznam jen-telefon">${polozky.map((p) => `
           <li class="radek"><span class="hlavni">
-            <strong>${esc(nazevDilu(p.nazev))} ${p.a_mm} × ${p.b_mm}</strong>
+            <strong>${esc(nazevDilu(p.nazev, p.klic))} ${p.a_mm} × ${p.b_mm}</strong>
             <span>${esc(popisHran(p.hrany_popis))}${p.vlakno ? esc(SimteGen.t("kusovnik.vlakno_po_delce")) : ""}</span>
           </span><span class="vpravo">${p.ks}×</span></li>`).join("")}</ul>
         <div class="tabulka-obal jen-siroke"><table class="tabulka">
@@ -2006,7 +2009,7 @@
             <th>${esc(SimteGen.t("kusovnik.sloupec_olepeni"))}</th>
             <th>${esc(SimteGen.t("kusovnik.sloupec_ks"))}</th></tr></thead>
           <tbody>${polozky.map((p) => `<tr>
-            <td>${esc(nazevDilu(p.nazev))}</td>
+            <td>${esc(nazevDilu(p.nazev, p.klic))}</td>
             <td class="rozmer-bunka">${p.a_mm} × ${p.b_mm}</td>
             <td class="rozmer-bunka">${p.delka_mm} × ${p.sirka_mm}${p.vlakno ? esc(SimteGen.t("kusovnik.vlakno")) : ""}</td>
             <td><span class="kod">${esc(popisHran(p.hrany_popis))}</span></td>
