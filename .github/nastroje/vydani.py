@@ -178,28 +178,43 @@ _API = "https://androidpublisher.googleapis.com/androidpublisher/v3/applications
 _UPLOAD = "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications"
 
 
-def _ok(odpoved, co):
+# Play Console permission each part of a release needs, as the owner sees it
+# there. Google answers a missing one with a bare "The caller does not have
+# permission" — often only at the commit — so the hint names it. Kusovník and
+# Pneusklad both stopped on that for a day (9. 11. 2026) and nobody could tell
+# which permission it was.
+PRAVO_VYDANI = "Uvolňovat aplikace do testovacích kanálů (Release apps to testing tracks)"
+PRAVO_ZAZNAM = "Spravovat prezentaci v obchodě (Manage store presence)"
+PRAVO_PREDPLATNE = "Spravovat produkty a předplatná v obchodě (Manage store products and subscriptions)"
+
+
+def _ok(odpoved, co, pravo: str | None = None):
     if odpoved.status_code >= 300:
-        raise SystemExit(f"Google Play: {co} selhalo ({odpoved.status_code}): {odpoved.text[:500]}")
+        zprava = f"Google Play: {co} selhalo ({odpoved.status_code}): {odpoved.text[:500]}"
+        if pravo and odpoved.status_code in (401, 403):
+            zprava += (f"\nServisnímu účtu (PLAY_SERVICE_ACCOUNT_JSON) nejspíš chybí oprávnění „{pravo}“: "
+                       "Play Console → Uživatelé a oprávnění → servisní účet → Oprávnění k účtu "
+                       "(nebo Oprávnění aplikace u této aplikace). Změna se může projevit až za několik hodin.")
+        raise SystemExit(zprava)
     return odpoved.json() if odpoved.text else {}
 
 
 def nahraj_zaznam(session, balicek: str, edit: str, obchod: Path, host: str) -> list[str]:
-    """The store listing into the same edit as the bundle: texts from the
-    product's play/zaznam.json (generated from its manifest — the same claims
-    as its privacy policy), contacts, and the images the release rendered
-    from the product (vizualni_kontrola.py --obchod). Images are replaced
-    wholesale, so a removed screen does not linger in the store. Returns
-    what was uploaded, for the summary."""
+    """The store listing into an edit: texts from the product's
+    play/zaznam.json (generated from its manifest — the same claims as its
+    privacy policy), contacts, and the images the release rendered from the
+    product (vizualni_kontrola.py --obchod). Images are replaced wholesale,
+    so a removed screen does not linger in the store. Returns what was
+    uploaded, for the summary."""
     zaznam = json.loads((obchod / "zaznam.json").read_text(encoding="utf-8"))
     jazyk = zaznam.get("jazyk") or "cs-CZ"
     zaklad = f"{_API}/{balicek}/edits/{edit}"
     _ok(session.put(f"{zaklad}/listings/{jazyk}", json={
         "language": jazyk, "title": zaznam["nazev"], "shortDescription": zaznam["kratky_popis"],
-        "fullDescription": zaznam["dlouhy_popis"]}), "záznam v obchodě")
+        "fullDescription": zaznam["dlouhy_popis"]}), "záznam v obchodě", PRAVO_ZAZNAM)
     _ok(session.patch(f"{zaklad}/details", json={
         "defaultLanguage": jazyk, "contactEmail": zaznam["kontakt_email"],
-        "contactWebsite": f"https://{host}"}), "kontakty v obchodě")
+        "contactWebsite": f"https://{host}"}), "kontakty v obchodě", PRAVO_ZAZNAM)
     nahrano = ["texty"]
     # One set of tablet pictures serves both of Google's tablet sizes; without
     # any, Play hardly offers the app on tablets.
@@ -212,13 +227,34 @@ def nahraj_zaznam(session, balicek: str, edit: str, obchod: Path, host: str) -> 
         soubory = [s for s in soubory if s.exists()]
         if not soubory:
             continue
-        _ok(session.delete(f"{zaklad}/listings/{jazyk}/{typ}"), f"smazání starých obrázků {typ}")
+        _ok(session.delete(f"{zaklad}/listings/{jazyk}/{typ}"), f"smazání starých obrázků {typ}", PRAVO_ZAZNAM)
         for soubor in soubory:
             _ok(session.post(f"{_UPLOAD}/{balicek}/edits/{edit}/listings/{jazyk}/{typ}?uploadType=media",
                              data=soubor.read_bytes(),
                              headers={"Content-Type": "image/png" if soubor.suffix == ".png" else "image/jpeg"}),
-                f"nahrání {soubor.name}")
+                f"nahrání {soubor.name}", PRAVO_ZAZNAM)
         nahrano.append(f"{typ} ×{len(soubory)}")
+    return nahrano
+
+
+def nahraj_zaznam_zvlast(session, balicek: str, obchod: Path, host: str) -> list[str]:
+    """The listing in its own edit, after the release is committed. Until
+    9. 11. 2026 it rode in the release's edit, and Google refused the whole
+    commit with one bare 403 — the owner could not tell whether the release
+    or the listing lacked a permission, and the build that was fine had to be
+    uploaded by hand. Now a listing Google refuses costs only the listing
+    (reported, retried with the next release), and the hint names its
+    permission. A refused edit is deleted, so nothing half-done waits in it."""
+    edit = _ok(session.post(f"{_API}/{balicek}/edits", json={}), "založení úpravy záznamu", PRAVO_ZAZNAM)["id"]
+    try:
+        nahrano = nahraj_zaznam(session, balicek, edit, obchod, host)
+        _ok(session.post(f"{_API}/{balicek}/edits/{edit}:commit"), "potvrzení záznamu v obchodě", PRAVO_ZAZNAM)
+    except SystemExit:
+        try:
+            session.delete(f"{_API}/{balicek}/edits/{edit}")
+        except Exception:  # noqa: BLE001 — the edit expires on its own anyway
+            pass
+        raise
     return nahrano
 
 
@@ -285,6 +321,7 @@ def bezpecnost_csv(zaznam: dict, host: str, sablona: str | None = None) -> str:
         odpovedi[(otazka, moznost)] = hodnota
 
     adresa = f"https://{host}"
+    smazani = adresa + (zaznam.get("smazani_uctu_cesta") or "/zasady.html")
     odpovez("PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA", hodnota="TRUE" if b["sbira"] else "FALSE")
     if b["sbira"]:
         odpovez("PSL_DATA_COLLECTION_ENCRYPTED_IN_TRANSIT",
@@ -293,12 +330,18 @@ def bezpecnost_csv(zaznam: dict, host: str, sablona: str | None = None) -> str:
         # The e-mail is the user name, the one-time link from it the other
         # authentication — no password exists.
         odpovez("PSL_SUPPORTED_ACCOUNT_CREATION_METHODS", "PSL_ACM_USER_ID_OTHER_AUTH")
-        odpovez("PSL_ACCOUNT_DELETION_URL", hodnota=adresa + (zaznam.get("smazani_uctu_cesta") or "/zasady.html"))
+        odpovez("PSL_ACCOUNT_DELETION_URL", hodnota=smazani)
     else:
         odpovez("PSL_SUPPORTED_ACCOUNT_CREATION_METHODS", "PSL_ACM_NONE")
     if b["sbira"]:
         odpovez("PSL_SUPPORT_DATA_DELETION_BY_USER",
                 "DATA_DELETION_YES" if b.get("lze_smazat") else "DATA_DELETION_NO")
+        if b.get("lze_smazat"):
+            # The template marks it MAYBE_REQUIRED, but Google refuses the
+            # whole form ("Response missing for PSL_DATA_DELETION_URL") once
+            # deletion is claimed without it. Same page as the account
+            # deletion: it is where the privacy policy's erasure request lives.
+            odpovez("PSL_DATA_DELETION_URL", hodnota=smazani)
     for t in b["typy"]:
         psl = PSL_TYPY.get(t["klic"])
         if psl is None or psl not in kategorie:
@@ -325,7 +368,8 @@ def bezpecnost_csv(zaznam: dict, host: str, sablona: str | None = None) -> str:
 
 
 def nahraj_bezpecnost(session, balicek: str, csv_text: str) -> None:
-    _ok(session.post(f"{_API}/{balicek}/dataSafety", json={"safetyLabels": csv_text}), "bezpečnost údajů")
+    _ok(session.post(f"{_API}/{balicek}/dataSafety", json={"safetyLabels": csv_text}), "bezpečnost údajů",
+        PRAVO_ZAZNAM)
 
 
 def bezpecnost(adresar: Path = VYSTUP) -> Path | None:
@@ -430,7 +474,8 @@ def nahraj_predplatne(session, balicek: str, polozky: list[dict], nazev: str) ->
         pid = polozka["id"]
         rocni = polozka["obdobi"] == "P1Y"
         prevod = _ok(session.post(f"{_API}/{balicek}/pricing:convertRegionPrices", json={
-            "price": _penize("CZK", round(float(polozka["cena_czk"]) / _DPH, 2))}), "převod ceny do zemí")
+            "price": _penize("CZK", round(float(polozka["cena_czk"]) / _DPH, 2))}), "převod ceny do zemí",
+            PRAVO_PREDPLATNE)
         verze = (prevod.get("regionVersion") or {}).get("version") or "2022/02"
         telo = {
             "packageName": balicek, "productId": pid,
@@ -444,19 +489,19 @@ def nahraj_predplatne(session, balicek: str, polozky: list[dict], nazev: str) ->
         if odpoved.status_code == 404:
             _ok(session.post(f"{_API}/{balicek}/subscriptions",
                              params={"productId": pid, "regionsVersion.version": verze}, json=telo),
-                f"založení předplatného {pid}")
+                f"založení předplatného {pid}", PRAVO_PREDPLATNE)
             _ok(session.post(f"{_API}/{balicek}/subscriptions/{pid}/basePlans/{ZAKLADNI_PLAN}:activate",
-                             json={}), f"zapnutí předplatného {pid}")
+                             json={}), f"zapnutí předplatného {pid}", PRAVO_PREDPLATNE)
             hotovo.append(f"{pid}: založeno za {polozka['cena_czk']} Kč")
             continue
-        stavajici = _ok(odpoved, f"čtení předplatného {pid}")
+        stavajici = _ok(odpoved, f"čtení předplatného {pid}", PRAVO_PREDPLATNE)
         if _cz_cena(stavajici) == float(polozka["cena_czk"]) and (
                 not polozka.get("ceny") or _sedi(stavajici, telo["basePlans"][0])):
             hotovo.append(f"{pid}: beze změny ({polozka['cena_czk']} Kč)")
             continue
         _ok(session.patch(f"{_API}/{balicek}/subscriptions/{pid}",
                           params={"updateMask": "basePlans", "regionsVersion.version": verze}, json=telo),
-            f"změna ceny předplatného {pid}")
+            f"změna ceny předplatného {pid}", PRAVO_PREDPLATNE)
         hotovo.append(f"{pid}: nová cena {polozka['cena_czk']} Kč (stávající předplatitelé platí dál původní)")
     return hotovo
 
@@ -488,23 +533,25 @@ def predplatne_ze_vstupu(text: str) -> list[dict]:
 NEZNAMA = "neznama"
 
 
-def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznamka: str,
-                  pred_potvrzenim=None) -> dict:
-    """One edit: insert → upload bundle → internal track → (listing) →
-    commit. `session` is an authorised requests-like session (tests pass a
-    fake); `pred_potvrzenim(edit)` adds to the same edit before the commit,
-    so a release and its listing land together or not at all. Returns
-    {"versionCode", "status"}; status "neznama" when Google does not know
-    the package yet (the first upload is a human's, the API refuses it);
-    raises SystemExit with Google's words on anything else."""
-    ok = _ok
+def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznamka: str) -> dict:
+    """One edit with the release only: insert → upload bundle → internal
+    track → commit. `session` is an authorised requests-like session (tests
+    pass a fake). The listing goes in its own edit afterwards
+    (nahraj_zaznam_zvlast): a permission the listing lacks must not hold the
+    build back. Returns {"versionCode", "status"}; status "neznama" when
+    Google does not know the package yet (the first upload is a human's, the
+    API refuses it); raises SystemExit with Google's words — and, on a 403,
+    the permission to add — on anything else."""
+
+    def ok(odpoved, co):
+        return _ok(odpoved, co, PRAVO_VYDANI)
 
     odpoved = session.post(f"{_API}/{balicek}/edits", json={})
     if odpoved.status_code == 404:
         # Not a failure: the build is fine and the .aab in the artifact is
         # exactly what the owner uploads. As a failed job it read "sestavení
         # selhalo" after every deploy.
-        return {"versionCode": None, "status": NEZNAMA, "zaznam": None}
+        return {"versionCode": None, "status": NEZNAMA}
     edit = ok(odpoved, "založení úpravy")["id"]
     nahrano = ok(session.post(f"{_UPLOAD}/{balicek}/edits/{edit}/bundles?uploadType=media", data=bundle,
                               headers={"Content-Type": "application/octet-stream"}, timeout=900),
@@ -521,9 +568,8 @@ def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznam
         odpoved = session.put(f"{_API}/{balicek}/edits/{edit}/tracks/internal",
                               json={"track": "internal", "releases": [vydani]})
     ok(odpoved, "zařazení do interního testování")
-    zaznam = pred_potvrzenim(edit) if pred_potvrzenim else None
-    ok(session.post(f"{_API}/{balicek}/edits/{edit}:commit"), "potvrzení úpravy")
-    return {"versionCode": kod, "status": vydani["status"], "zaznam": zaznam}
+    ok(session.post(f"{_API}/{balicek}/edits/{edit}:commit"), "potvrzení vydání")
+    return {"versionCode": kod, "status": vydani["status"]}
 
 
 def poznamka_k_vydani(produkt: Path = Path("produkt")) -> str:
@@ -548,10 +594,8 @@ def nahraj(cesta_bundle: str) -> dict:
     twa = json.loads((VYSTUP / "twa-manifest.json").read_text(encoding="utf-8"))
     session = AuthorizedSession(pristup)
     obchod = VYSTUP / "obchod"
-    zaznam = ((lambda edit: nahraj_zaznam(session, twa["packageId"], edit, obchod, twa["host"]))
-              if (obchod / "zaznam.json").exists() else None)
     vysledek = nahraj_bundle(session, twa["packageId"], Path(cesta_bundle).read_bytes(),
-                             twa["appVersionName"], poznamka_k_vydani(), pred_potvrzenim=zaznam)
+                             twa["appVersionName"], poznamka_k_vydani())
     vystup = os.environ.get("GITHUB_OUTPUT")
     if vysledek["status"] == NEZNAMA:
         print(f"Google Play aplikaci {twa['packageId']} zatím nezná. První verzi nahraj ručně v Play Console "
@@ -560,8 +604,18 @@ def nahraj(cesta_bundle: str) -> dict:
             with open(vystup, "a", encoding="utf-8") as f:
                 f.write(f"stav={NEZNAMA}\n")
         return vysledek
-    if vysledek.get("zaznam"):
-        print("Záznam v obchodě:", ", ".join(vysledek["zaznam"]))
+    vysledek["zaznam"] = None
+    if (obchod / "zaznam.json").exists():
+        # Like the form below: the release is in; a refused listing is
+        # reported with its permission, and the next release tries again.
+        try:
+            vysledek["zaznam"] = nahraj_zaznam_zvlast(session, twa["packageId"], obchod, twa["host"])
+            print("Záznam v obchodě:", ", ".join(vysledek["zaznam"]))
+        except (Exception, SystemExit) as e:  # noqa: BLE001
+            print(f"::warning::Záznam v obchodě se nepodařilo nahrát: {e}")
+        if vystup:
+            with open(vystup, "a", encoding="utf-8") as f:
+                f.write(f"zaznam_play={'1' if vysledek['zaznam'] else '0'}\n")
     vysledek["bezpecnost"] = False
     formular = obchod / "bezpecnost_dat.csv"
     if formular.exists():
@@ -631,6 +685,9 @@ def vysledek(env: dict | None = None) -> dict:
         "nahrano": env.get("NAHRANO") == "success" and env.get("STAV_PLAY") != NEZNAMA,
         "stav_play": env.get("STAV_PLAY") or None,
         "zaznam": env.get("ZAZNAM") == "1",
+        # The listing reached Play (None: not attempted — no listing, unknown
+        # app, or the release itself did not go in).
+        "zaznam_play": {"1": True, "0": False}.get(env.get("ZAZNAM_PLAY", "")),
         # None: not attempted (no listing, unknown app, no upload at all).
         "bezpecnost_dat": {"1": True, "0": False}.get(env.get("BEZPECNOST", "")),
         # Selling in the app: built with Play Billing; subscription products
