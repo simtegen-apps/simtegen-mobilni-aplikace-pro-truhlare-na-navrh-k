@@ -1,21 +1,41 @@
-// GET /api/overeni?token=... — the link from the email. Verifies the token,
-// creates the account on first login, opens a session, redirects home.
+// /api/overeni — the link from the email.
+//
+//   GET  ?token=...  → only the confirmation page (ochrana.js). Mail
+//                      scanners and link previews open links with GET; a GET
+//                      that logged in would spend the customer's link first.
+//   POST {token}     → the page's button (urlencoded) or a script (JSON):
+//                      verifies the token, creates the account on first
+//                      login, opens a session, redirects home.
+//
+// With a POST handler here, functions/api/_middleware.js leaves both
+// methods to this file (it only bridges products that log in on GET).
 
 import {
   cookieHlavicka, novyToken, otisk, ted, RELACE_TRVANI,
 } from "../../spolecne.js";
+import { potvrzeniPrihlaseni, tokenZPotvrzeni } from "../../ochrana.js";
 
-export async function onRequestGet(context) {
-  const { request, env } = context;
-  const token = new URL(request.url).searchParams.get("token") || "";
-  const domu = new URL("/", request.url).toString();
+const TOKEN = /^[0-9a-f]{64}$/;
 
-  const chybova = () => new Response(
+function chybova() {
+  return new Response(
     "Přihlašovací odkaz je neplatný nebo vypršel. Nechte si prosím poslat nový.",
     { status: 403, headers: { "Content-Type": "text/plain; charset=utf-8" } },
   );
+}
 
-  if (!/^[0-9a-f]{64}$/.test(token)) return chybova();
+export async function onRequestGet(context) {
+  const token = new URL(context.request.url).searchParams.get("token") || "";
+  if (!TOKEN.test(token)) return chybova();
+  return potvrzeniPrihlaseni(token);
+}
+
+export async function onRequestPost(context) {
+  const { request, env } = context;
+  const token = await tokenZPotvrzeni(request);
+  const domu = new URL("/", request.url).toString();
+
+  if (!TOKEN.test(token)) return chybova();
 
   const digest = await otisk(token);
   const odkaz = await env.DB.prepare(
