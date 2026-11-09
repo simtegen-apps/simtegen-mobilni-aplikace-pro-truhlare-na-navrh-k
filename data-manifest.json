@@ -284,8 +284,8 @@
   ],
   "cookies": [
     {
-      "nazev": "relace",
-      "ucel": "udržení přihlášení (technická, HttpOnly)",
+      "nazev": "__Host-relace",
+      "ucel": "udržení přihlášení (technická, HttpOnly, platí jen pro tuto adresu aplikace)",
       "trvani": "30 dní od posledního použití, nejdéle 90 dní"
     },
     {

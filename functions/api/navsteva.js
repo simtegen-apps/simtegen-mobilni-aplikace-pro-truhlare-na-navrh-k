@@ -15,11 +15,20 @@
 // NEW pair is not added: the visit itself is still counted here, and the
 // answer is 429 so the middleware leaves the source out. Known pairs keep
 // counting — a flood can inflate a number, never grow the table.
+//
+// Per network at most LIMIT_SIT visits an hour (like chyba-stranky.js): a
+// visitor sends one per page load, a script sending thousands would inflate
+// the numbers the owner decides on and cost D1 writes. Over the limit the
+// answer is 429 before anything is written, so the middleware writes no
+// source either. IPv6 counts by its /64 (sit.js).
 
 import { json } from "../../spolecne.js";
+import { vLimitu } from "../../ochrana.js";
+import { sitKlienta } from "../../sit.js";
 
 const STRANKY = new Set(["uvod", "cenik", "prihlaseni"]);
 const MAX_ZDROJU = 100;
+const LIMIT_SIT = 60;
 
 // The same label the middleware stores (its stitek / zdrojZ), so "is this
 // pair already there" asks about the very row it would write.
@@ -66,6 +75,9 @@ export async function onRequestPost(context) {
   }
   const stranka = String((telo && telo.stranka) || "uvod");
   if (!STRANKY.has(stranka)) return json({ chyba: "Neznámá stránka." }, 422);
+  if (!(await vLimitu(env, "navsteva_sit", sitKlienta(request, env), LIMIT_SIT, 3600))) {
+    return json({ chyba: "Příliš mnoho požadavků." }, 429);
+  }
   const den = new Date().toISOString().slice(0, 10);
   await env.DB.prepare(
     "INSERT INTO navstevy (den, stranka, pocet) VALUES (?, ?, 1) " +

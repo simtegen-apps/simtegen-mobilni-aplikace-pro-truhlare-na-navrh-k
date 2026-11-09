@@ -74,7 +74,7 @@ export async function onRequestPost(context) {
     status: 303,
     headers: {
       Location: domu,
-      "Set-Cookie": cookieHlavicka(relaceToken, RELACE_TRVANI),
+      "Set-Cookie": cookieHlavicka(relaceToken, RELACE_TRVANI, request, env),
     },
   });
 }
