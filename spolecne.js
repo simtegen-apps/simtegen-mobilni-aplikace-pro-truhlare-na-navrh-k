@@ -2,6 +2,8 @@
 // purpose: everything under functions/ is a route candidate, and a helper
 // module that suddenly answers HTTP requests is a bug nobody looks for.
 
+import { vyvoj } from "./ochrana.js";
+
 const KODOVAC = new TextEncoder();
 
 export async function otisk(token) {
@@ -40,22 +42,40 @@ export function ctiCookie(request, nazev) {
   return null;
 }
 
-export const RELACE_COOKIE = "relace";
+// The session cookie carries the __Host- prefix: the browser then accepts it
+// only from this exact host (Secure, Path=/, no Domain). Every SimteGen
+// product lives under simtegen.com, and a plain "relace" could be planted by
+// any sibling subdomain with Domain=.simtegen.com — the customer would
+// silently work inside the planter's account (session fixation). A plain
+// "relace" is therefore NEVER accepted as a login: not read here, so the
+// template middleware never sees a user for it and never moves it to the new
+// name (it only clears it). Sessions from before the prefix end once; the
+// customer asks for a new link.
+//
+// The one exception is a local `wrangler pages dev` over http in
+// development mode, where a browser would refuse a __Host- cookie.
+export const RELACE_COOKIE = "__Host-relace";
+const RELACE_MISTNI = "relace";
 export const RELACE_TRVANI = 30 * 24 * 3600; // matches manifest: 30 days
 export const ODKAZ_TRVANI = 3600; // link valid 1 hour; rows purged after 24 h
 
-export function cookieHlavicka(token, maxAge) {
+export function jmenoRelace(request, env) {
+  if (request && vyvoj(env) && new URL(request.url).protocol === "http:") return RELACE_MISTNI;
+  return RELACE_COOKIE;
+}
+
+export function cookieHlavicka(token, maxAge, request, env) {
   // HttpOnly: the frontend never reads the session token — it only asks
   // /api/ja who it is. SameSite=Lax also blanks the cookie on cross-site
   // POSTs, which is the v1 CSRF story.
   return (
-    `${RELACE_COOKIE}=${token}; HttpOnly; Secure; SameSite=Lax; ` +
+    `${jmenoRelace(request, env)}=${token}; HttpOnly; Secure; SameSite=Lax; ` +
     `Path=/; Max-Age=${maxAge}`
   );
 }
 
 export async function nactiUzivatele(request, env) {
-  const token = ctiCookie(request, RELACE_COOKIE);
+  const token = ctiCookie(request, jmenoRelace(request, env));
   if (!token) return null;
   const radek = await env.DB.prepare(
     "SELECT u.id, u.email FROM relace r JOIN uzivatele u ON u.id = r.uzivatel_id " +

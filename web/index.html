@@ -8,6 +8,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="application-name" content="Kusovník pro truhláře">
   <meta name="simtegen-verze" content="1.0">
+  <!-- Česky i anglicky: slova jsou ve web/texty.js, volbu jazyka dělá
+       simtegen.js (DESIGN.md, Jazyky a měny). -->
+  <meta name="simtegen-jazyky" content="cs en">
   <title>Kusovník pro truhláře</title>
   <link rel="stylesheet" href="styl.css">
   <link rel="stylesheet" href="produkt.css">
@@ -108,39 +111,40 @@
   <!-- aplikace: vykresli_aplikaci.py -->
   <link rel="manifest" href="/manifest.webmanifest">
   <!-- SEO: GENEROVÁNO z data-manifest.json (vykresli_seo.py) — needituj ručně -->
-  <meta name="description" content="Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.">
+  <meta name="description" content="Návrh kuchyní a skříněk u zákazníka v tabletu nebo telefonu a kusovník desek a polic pro nářezové centrum — pro truhláře.">
   <link rel="canonical" href="https://kusovnik.simtegen.com/">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="cs_CZ">
   <meta property="og:title" content="Kusovník pro truhláře">
-  <meta property="og:description" content="Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.">
+  <meta property="og:description" content="Návrh kuchyní a skříněk u zákazníka v tabletu nebo telefonu a kusovník desek a polic pro nářezové centrum — pro truhláře.">
   <meta property="og:url" content="https://kusovnik.simtegen.com/">
   <meta property="og:image" content="https://kusovnik.simtegen.com/ikona-512.png">
   <meta name="twitter:card" content="summary">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Kusovník pro truhláře","description":"Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.","url":"https://kusovnik.simtegen.com/","image":"https://kusovnik.simtegen.com/ikona-512.png","inLanguage":"cs","operatingSystem":"Web, Android","provider":{"@type":"Organization","name":"SimteGen, s.r.o.","identifier":{"@type":"PropertyValue","propertyID":"IČO","value":"13980351"},"address":"Korunní 2569/108, Vinohrady, 101 00 Praha 10","email":"support@simtegen.com"},"offers":[{"@type":"Offer","name":"Předplatné","price":"449","priceCurrency":"CZK","priceSpecification":{"@type":"UnitPriceSpecification","price":449,"priceCurrency":"CZK","unitText":"měsíc","billingDuration":"P1M"}},{"@type":"Offer","name":"Zkušební období 14 dní","price":"0","priceCurrency":"CZK"}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Kusovník pro truhláře","description":"Návrh kuchyní a skříněk u zákazníka v tabletu nebo telefonu a kusovník desek a polic pro nářezové centrum — pro truhláře.","url":"https://kusovnik.simtegen.com/","image":"https://kusovnik.simtegen.com/ikona-512.png","inLanguage":"cs","operatingSystem":"Web, Android","provider":{"@type":"Organization","name":"SimteGen, s.r.o.","identifier":{"@type":"PropertyValue","propertyID":"IČO","value":"13980351"},"address":"Korunní 2569/108, Vinohrady, 101 00 Praha 10","email":"support@simtegen.com"},"offers":[{"@type":"Offer","name":"Předplatné","price":"449","priceCurrency":"CZK","priceSpecification":{"@type":"UnitPriceSpecification","price":449,"priceCurrency":"CZK","unitText":"měsíc","billingDuration":"P1M"}},{"@type":"Offer","name":"Zkušební období 14 dní","price":"0","priceCurrency":"CZK"}]}</script>
   <!-- /SEO -->
 </head>
 <body>
   <script src="simtegen.js"></script>
+  <script src="texty.js"></script>
   <div class="appka">
-    <nav class="navigace" aria-label="Hlavní menu">
+    <nav class="navigace" aria-label="Hlavní menu" data-t-aria-label="nav.menu">
       <a class="znacka" href="/" aria-label="SimteGen">
-        <span class="znacka-ctverec"></span><span class="znacka-slovo">simtegen</span></a>
-      <button type="button" data-cil="zakazky" aria-current="page"><svg class="ikona-svg"
+        <span class="znacka-ctverec"></span><span class="znacka-slovo">SimteGen</span></a>
+      <button type="button" data-cil="zakazky" aria-current="page" data-t="nav.zakazky"><svg class="ikona-svg"
         viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4"
         width="18" height="16"/><path d="M3 12h18M12 4v16M10.2 8.6v1.6M10.2 14.4v1.6M13.8 8.6v1.6M13.8 14.4v1.6"/>
         </svg>Zakázky</button>
-      <button type="button" data-cil="standard"><svg class="ikona-svg" viewBox="0 0 24 24"
+      <button type="button" data-cil="standard" data-t="nav.standard"><svg class="ikona-svg" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
         stroke-linejoin="round" aria-hidden="true"><rect x="2" y="8" width="20" height="8"/>
         <path d="M6.5 8v3.2M10 8v4.6M13.5 8v3.2M17 8v4.6"/></svg>Standard</button>
-      <button type="button" data-cil="ucet"><svg class="ikona-svg" viewBox="0 0 24 24"
+      <button type="button" data-cil="ucet" data-t="nav.ucet"><svg class="ikona-svg" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
         stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/>
         <path d="M4.8 20c0-3.7 3.2-5.8 7.2-5.8s7.2 2.1 7.2 5.8"/></svg>Účet</button>
       <span class="mezera"></span>
-      <button type="button" class="nahlasit-chybu"><svg class="ikona-svg" viewBox="0 0 24 24"
+      <button type="button" class="nahlasit-chybu" data-t="nav.nahlasit"><svg class="ikona-svg" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
         stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5 2.8 19.5h18.4Z"/>
         <path d="M12 10v4M12 16.8v.4"/></svg>Nahlásit chybu</button>
@@ -148,12 +152,14 @@
     </nav>
 
     <header class="hlavicka">
-      <button type="button" class="tlacitko ikona skryte" id="zpet" aria-label="Zpět">
+      <button type="button" class="tlacitko ikona skryte" id="zpet" aria-label="Zpět"
+        data-t-aria-label="nav.zpet">
         <svg class="ikona-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M14.5 5 7.5 12l7 7"/></svg></button>
       <h1 id="titulek">Kusovník pro truhláře</h1>
-      <button type="button" class="nahlasit-chybu jen-telefon" aria-label="Nahlásit chybu">
+      <button type="button" class="nahlasit-chybu jen-telefon" aria-label="Nahlásit chybu"
+        data-t-aria-label="nav.nahlasit">
         <svg class="ikona-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M12 4.5 2.8 19.5h18.4Z"/><path d="M12 10v4M12 16.8v.4"/></svg></button>
@@ -161,7 +167,7 @@
 
     <main class="obsah" id="obsah">
       <section class="obrazovka aktivni" id="o-nacitani" aria-live="polite">
-        <p class="stitek">Načítám</p>
+        <p class="stitek" data-t="sg.nacitam">Načítám</p>
         <div class="kostra kostra-nadpis"></div>
         <div class="kostra kostra-radka"></div>
         <div class="kostra kostra-karta"></div>
@@ -178,8 +184,10 @@
           <div class="karta vykres">
             <div id="uvod-prihlaseni"></div>
             <div class="uvod-ukazka">
-              <button type="button" class="tlacitko vedlejsi" data-ukazka>Vyzkoušet ukázku</button>
-              <p class="popisek">Bez registrace: vymyšlená kuchyň s kusovníkem, na 24 hodin.</p>
+              <button type="button" class="tlacitko vedlejsi" data-ukazka
+                data-t="uvod.ukazka">Vyzkoušet ukázku</button>
+              <p class="popisek" data-t="uvod.ukazka_popis">Bez registrace: vymyšlená kuchyň
+                s kusovníkem, na 24 hodin.</p>
             </div>
           </div>
         </div>
@@ -216,6 +224,9 @@
     // si aplikace bere ze stejného souboru jako server (web/kolize.js), aby
     // se varování na obrazovce nerozešla s varováními v uloženém kusovníku.
     import { TYPY_SKRINEK, celeCislo, svislyRozsah, zkontrolujStenu } from "./kolize.js";
+    // Anglická slova oboru (díly, olepení, hlášky kontroly) sdílí obrazovka
+    // s CSV ze serveru — stejný důvod jako u kolize.js.
+    import { TYPY_SKRINEK_EN, dilEn, hranyEn, hlaskaEn, materialEn } from "./texty-oboru.js";
 
     // Tohle je jen ZOBRAZENÍ ceny. Závazný ceník je na serveru (cenik.js) —
     // podle něj se počítá částka objednávky a číslo odtud slouží jen jako
@@ -241,7 +252,6 @@
         popis: "890 Kč za firmu a měsíc" },
     ];
     window.ZKUSEBNI_DOBA = "Zkušební doba 14 dní";
-    const CENIK = window.CENIK;
     const VARIANTY = window.CENIK_VARIANTY;
 
     const KLIC_KONCEPTU = "rozpracovana-zakazka";
@@ -250,7 +260,45 @@
     const esc = (text) => String(text ?? "").replace(/[&<>"']/g, (z) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[z]));
     const cislo = celeCislo;
-    const datum = (unix) => new Date(unix * 1000).toLocaleDateString("cs-CZ");
+    // Datum, číslo i částku píše šablona — v angličtině „9 Nov“, „0.52“, „CZK 449“.
+    const datum = (unix) => SimteGen.datum(unix);
+
+    // ── Jazyk ──────────────────────────────────────────────────────────
+    // Texty obrazovek jsou ve web/texty.js (česky i anglicky) a píšou se přes
+    // SimteGen.t. Data truhláře (názvy zakázek, stěn, desek) se nepřekládají;
+    // slova, která do dat píše aplikace sama (díly, olepení, hlášky kontroly),
+    // přeloží texty-oboru.js až při zobrazení.
+    const anglicky = () => SimteGen.jazyk() === "en";
+    const typSkrinky = (typ) =>
+      (anglicky() ? TYPY_SKRINEK_EN[typ] : TYPY_SKRINEK[typ]) || SimteGen.t("skrinka.nazev");
+    const nazevDilu = (nazev, klic) => (anglicky() ? dilEn(nazev, klic) : nazev);
+    const popisHran = (popis) => (anglicky() ? hranyEn(popis) : popis);
+    const nazevMaterialu = (nazev) => (anglicky() ? materialEn(nazev) : nazev);
+    const textHlasky = (text) => (anglicky() ? hlaskaEn(text) : text);
+
+    // Hláška ze serveru je česky. Anglická stránka ukáže místo ní svou větu
+    // pro danou akci — truhlář má vědět, co se stalo a co s tím.
+    function chybaServeru(data, klic) {
+      return !anglicky() && data && data.chyba ? data.chyba : SimteGen.t(klic);
+    }
+
+    // Volbu jazyka si pamatuje VÝHRADNĚ simtegen.js (localStorage „sg-volba“,
+    // v manifestu pod uloziste_v_prohlizeci); tahle stránka sama jazyk nikam
+    // neukládá — jen ho čte přes SimteGen.jazyk().
+    // Přepnutí jazyka: simtegen.js si volbu zapamatuje a stránku načte znovu
+    // přes location.replace(adresa). Aplikace má ale v adrese vždy #obrazovku,
+    // a na adresu, která se liší jen kotvou, prohlížeč stránku znovu nenačte —
+    // přepínač by vypadal mrtvý. Proto se před jeho klepnutím do adresy dočasně
+    // vloží ?jazyk=…, který simtegen.js zase smaže: adresa se pak liší a stránka
+    // se načte. Kotva zůstane, takže start() vrátí stejnou obrazovku.
+    document.addEventListener("click", (udalost) => {
+      const tlacitko = udalost.target.closest && udalost.target.closest("[data-prepinac-jazyka] button");
+      if (!tlacitko || tlacitko.getAttribute("aria-pressed") === "true") return;
+      const adresa = new URL(location.href);
+      if (adresa.searchParams.has("jazyk")) return;
+      adresa.searchParams.set("jazyk", SimteGen.jazyk());
+      history.replaceState(history.state, "", adresa.toString());
+    }, true);
 
     // Ikony kreslené jedním tahem na mřížce 24, tah 1,6 — z tématu dílny.
     const IKONY = {
@@ -272,8 +320,9 @@
         aria-hidden="true">${IKONY[nazev] || ""}</svg>`;
     }
 
-    function sekce(cisloSekce, nazev, akce) {
-      return `<div class="sekce-titulek"><span>${cisloSekce} — ${esc(nazev)}</span>${
+    // Nadpis sekce obyčejnými slovy (DESIGN.md v3: bez čísel „01 —“).
+    function sekce(nazev, akce) {
+      return `<div class="sekce-titulek"><span>${esc(nazev)}</span>${
         akce ? `<button type="button" data-sekce="${esc(akce.klic)}">${esc(akce.popisek)} →</button>` : ""
       }</div>`;
     }
@@ -312,7 +361,7 @@
       });
       const data = await odpoved.json().catch(() => ({}));
       if (odpoved.status === 402) {
-        toast("Předplatné vypršelo — podrobnosti najdete u účtu.");
+        toast(SimteGen.t("predplatne.vyprselo_toast"));
         jdi("ucet");
       }
       return { ok: odpoved.ok, status: odpoved.status, data };
@@ -332,25 +381,39 @@
     // Vlastní historie: aplikace běží bez adresního řádku, takže hardwarové
     // tlačítko zpět na Androidu musí mít co vracet. Každá obrazovka proto
     // přidá záznam do history a reaguje na popstate.
+    // titulek = klíč ve web/texty.js
     const OBRAZOVKY = {
-      uvod: { titulek: "Kusovník pro truhláře", vykresli: vykresliUvod },
-      zakazky: { titulek: "Zakázky", vykresli: vykresliZakazky },
-      zakazka: { titulek: "Zakázka", zpet: true, vykresli: vykresliZakazku },
-      stena: { titulek: "Stěna", zpet: true, vykresli: vykresliStenu },
-      nahled: { titulek: "Náhled", zpet: true, vykresli: vykresliNahled },
-      kusovnik: { titulek: "Kusovník", zpet: true, vykresli: vykresliKusovnik },
-      standard: { titulek: "Můj standard", vykresli: vykresliStandard },
-      ucet: { titulek: "Účet", vykresli: vykresliUcet },
+      uvod: { titulek: "obrazovka.uvod", vykresli: vykresliUvod },
+      zakazky: { titulek: "obrazovka.zakazky", vykresli: vykresliZakazky },
+      zakazka: { titulek: "obrazovka.zakazka", zpet: true, vykresli: vykresliZakazku },
+      stena: { titulek: "obrazovka.stena", zpet: true, vykresli: vykresliStenu },
+      nahled: { titulek: "obrazovka.nahled", zpet: true, vykresli: vykresliNahled },
+      kusovnik: { titulek: "obrazovka.kusovnik", zpet: true, vykresli: vykresliKusovnik },
+      standard: { titulek: "obrazovka.standard", vykresli: vykresliStandard },
+      ucet: { titulek: "obrazovka.ucet", vykresli: vykresliUcet },
     };
     const KORENOVE = { zakazky: 1, standard: 1, ucet: 1 };
+    // Obrazovky uvnitř zakázky: v adrese nesou číslo zakázky (#nahled/12,
+    // #stena/12/0), aby je start() po novém načtení stránky — přepnutí
+    // jazyka, obnovení v prohlížeči — otevřel znovu na stejném místě.
+    const VNITRNI = { zakazka: 1, stena: 1, nahled: 1, kusovnik: 1 };
 
     let aktualni = { nazev: "uvod", parametry: {} };
+
+    function adresaObrazovky(nazev, parametry) {
+      const zakazka = nazev === "zakazka" ? Number(parametry.id)
+        : stav.dokument ? stav.dokument.zakazka.id : 0;
+      if (!VNITRNI[nazev] || !zakazka) return "#" + nazev;
+      if (nazev === "stena") return `#stena/${zakazka}/${cislo(parametry.index, stav.stenaIndex)}`;
+      return `#${nazev}/${zakazka}`;
+    }
 
     function jdi(nazev, parametry, nahradit) {
       const kam = { nazev, parametry: parametry || {} };
       const stavHistorie = { obrazovka: nazev, parametry: kam.parametry };
-      if (nahradit) history.replaceState(stavHistorie, "", "#" + nazev);
-      else history.pushState(stavHistorie, "", "#" + nazev);
+      const adresa = adresaObrazovky(nazev, kam.parametry);
+      if (nahradit) history.replaceState(stavHistorie, "", adresa);
+      else history.pushState(stavHistorie, "", adresa);
       zobraz(kam);
     }
 
@@ -359,7 +422,7 @@
       const def = OBRAZOVKY[kam.nazev] || OBRAZOVKY.zakazky;
       document.querySelectorAll(".obrazovka").forEach((o) =>
         o.classList.toggle("aktivni", o.id === "o-" + kam.nazev));
-      $("titulek").textContent = def.titulek;
+      $("titulek").textContent = SimteGen.t(def.titulek);
       // .skryte, ne atribut hidden: komponenty návrhového systému mají
       // display v třídě, a ta by atribut přebila.
       $("zpet").classList.toggle("skryte", !def.zpet);
@@ -436,12 +499,11 @@
     function nutnePrihlaseni(cil) {
       if (stav.ja && stav.ja.prihlasen) return false;
       cil.innerHTML = `<div class="prazdno">${ikona("linka")}
-        <p>Nejste přihlášeni. Na úvodní obrazovce zadejte e-mail — pošleme vám
-        jednorázový odkaz a vaše zakázky i standard se zase objeví.</p></div>`;
+        <p>${esc(SimteGen.t("prihlaseni.nutne"))}</p></div>`;
       const tlacitko = document.createElement("button");
       tlacitko.type = "button";
       tlacitko.className = "tlacitko";
-      tlacitko.textContent = "Na úvodní obrazovku";
+      tlacitko.textContent = SimteGen.t("prihlaseni.na_uvod");
       tlacitko.addEventListener("click", () => jdi("uvod"));
       cil.querySelector(".prazdno").appendChild(tlacitko);
       nastavListu([]);
@@ -478,7 +540,8 @@
       panel.setAttribute("role", "dialog");
       panel.setAttribute("aria-modal", "true");
       panel.setAttribute("aria-label", titulek);
-      panel.innerHTML = `<p class="stitek">Úprava</p><h2>${esc(titulek)}</h2>${obsahHtml}`;
+      panel.innerHTML = `<p class="stitek">${esc(SimteGen.t("panel.uprava"))}</p>
+        <h2>${esc(titulek)}</h2>${obsahHtml}`;
       misto.appendChild(pozadi);
       misto.appendChild(panel);
       if (pripoj) pripoj(panel);
@@ -568,14 +631,13 @@
       document.querySelectorAll("[data-ulozeni]").forEach((prvek) => {
         if (stav.ukladani === "cisto") {
           prvek.className = "rozmer";
-          prvek.textContent = "Uloženo";
+          prvek.textContent = SimteGen.t("ulozeni.ulozeno");
         } else if (stav.ukladani === "ceka") {
           prvek.className = "rozmer";
-          prvek.textContent = "Ukládám…";
+          prvek.textContent = SimteGen.t("ulozeni.ukladam");
         } else {
           prvek.className = "hlaska varovani";
-          prvek.textContent = "Zatím neuloženo — měření máte v telefonu, "
-            + "uložíme ho, jakmile bude signál.";
+          prvek.textContent = SimteGen.t("ulozeni.neulozeno");
         }
       });
     }
@@ -770,8 +832,8 @@
 
       return `<svg class="vykres-plocha${uprava ? " uprava" : ""}"
         viewBox="${-okraj} ${-okraj} ${D + 2 * okraj} ${V + okraj + kota * 1.3}"
-        role="img" aria-label="Pohled na stěnu ${esc(stena.nazev || "")}, ${D} krát ${V}
-        milimetrů, ${skrinky.length} skříněk">${c.join("")}</svg>`;
+        role="img" aria-label="${esc(SimteGen.t("vykres.pohled_popis", {
+          nazev: stena.nazev || "", delka: D, vyska: V, pocet: skrinky.length }))}">${c.join("")}</svg>`;
     }
 
     function nakresliPudorys(steny) {
@@ -843,20 +905,24 @@
         <line x1="0" y1="0" x2="0" y2="140" stroke="var(--barva-tuzka-3)" stroke-width="24"/>
         </pattern></defs>`;
       return `<svg class="vykres-plocha" viewBox="${minX} ${minY} ${sirka} ${vyska}" role="img"
-        aria-label="Půdorys místnosti">${defs}${zdi.join("")}${kusy.join("")}</svg>`;
+        aria-label="${esc(SimteGen.t("vykres.pudorys_popis"))}">${defs}${zdi.join("")}${kusy.join("")}</svg>`;
     }
 
     // Pořadí položek odpovídá barvám, které jim styl.css dá: inkoust,
     // tužka, linka — tedy skříňka, okno, police.
     function legenda() {
-      return `<ul class="legenda"><li>Skříňka</li><li>Okno a dveře</li>
-        <li>Police (skrytá hrana)</li></ul>`;
+      return `<ul class="legenda"><li>${esc(SimteGen.t("legenda.skrinka"))}</li>
+        <li>${esc(SimteGen.t("legenda.otvory"))}</li>
+        <li>${esc(SimteGen.t("legenda.police"))}</li></ul>`;
     }
 
     // Kontrola stěny je JEDNA funkce sdílená se serverem (web/kolize.js);
     // tohle je jen zkratka, aby se nemusely pokaždé vypisovat skříňky.
+    // Hlášky přicházejí česky (stejné věty jdou do uloženého kusovníku);
+    // na anglické obrazovce se přeloží až tady.
     function kontrolaSteny(stena) {
-      return zkontrolujStenu(stena, stena.skrinky || [], stav.standard);
+      const vysledek = zkontrolujStenu(stena, stena.skrinky || [], stav.standard);
+      return { kolizni: vysledek.kolizni, hlasky: vysledek.hlasky.map(textHlasky) };
     }
 
     // Ukázková stěna pro úvodní obrazovku. Kreslí ji TÝŽ kód jako zakázky,
@@ -883,15 +949,37 @@
     };
 
     // ── Obrazovka: úvod a přihlášení ───────────────────────────────────
-    const PATICKA = `
-        <div class="paticka">
+    // Odkaz na nápovědu hlídá vykresli_napovedu.py přesně v tomhle tvaru,
+    // proto je česká patička napsaná doslova. Právní texty a nápověda jsou
+    // jen česky — anglická patička to řekne a odkazy vedou na tytéž stránky.
+    // Přepínač jazyka kreslí simtegen.js do [data-prepinac-jazyka].
+    function paticka(sPrepinacem) {
+      const odkazy = anglicky() ? `
+          <a href="napoveda.html">${esc(SimteGen.t("paticka.napoveda"))}</a>
+          <a href="zasady.html">${esc(SimteGen.t("paticka.zasady"))}</a>
+          <a href="podminky.html">${esc(SimteGen.t("paticka.podminky"))}</a>
+          <a href="zpracovatelska-smlouva.html">${esc(SimteGen.t("paticka.smlouva"))}</a>
+          <a href="odstoupeni-formular.html">${esc(SimteGen.t("paticka.odstoupeni"))}</a>` : `
           <a href="napoveda.html">Nápověda</a>
           <a href="zasady.html">Zásady zpracování údajů</a>
           <a href="podminky.html">Obchodní podmínky</a>
           <a href="zpracovatelska-smlouva.html">Zpracovatelská smlouva</a>
-          <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a>
-          <button type="button" class="nahlasit-chybu">Nahlásit chybu</button>
+          <a href="odstoupeni-formular.html">Odstoupení od smlouvy</a>`;
+      return `
+        ${anglicky() ? `<p class="popisek">${esc(SimteGen.t("paticka.jen_cesky"))}</p>` : ""}
+        ${sPrepinacem ? "<div data-prepinac-jazyka></div>" : ""}
+        <div class="paticka">${odkazy}
+          <button type="button" class="nahlasit-chybu">${esc(SimteGen.t("nav.nahlasit"))}</button>
         </div>`;
+    }
+
+    // Popis varianty se ukazuje přesně tak, jak ho majitel schválil; anglická
+    // stránka má jeho překlad se stejnou cenou.
+    function popisVarianty(v) {
+      return anglicky()
+        ? SimteGen.t(`cenik.popis_${v.klic}`, { cena: SimteGen.kc(v.mesic) })
+        : v.popis;
+    }
 
     /** Ceník přesně podle schválení — řádek na variantu, nic dopočítaného. */
     function cenikSeznam() {
@@ -899,60 +987,58 @@
       return `<ul class="seznam">${VARIANTY.map((v, i) => `
           <li class="radek"><span class="poradi">${String(i + 1).padStart(2, "0")}</span>
             <span class="hlavni"><strong>${esc(v.nazev)}</strong>
-            <span>${esc(v.popis)}</span></span></li>`).join("")}</ul>
-        ${neobjednatelne.length ? `<p class="popisek">${esc(neobjednatelne.join(" a "))}
-          zatím objednat nejde.</p>` : ""}`;
+            <span>${esc(popisVarianty(v))}</span></span></li>`).join("")}</ul>
+        ${neobjednatelne.length ? `<p class="popisek">${esc(SimteGen.t("cenik.zatim_nejde",
+          { varianty: neobjednatelne.join(SimteGen.t("cenik.spojka")) }))}</p>` : ""}`;
     }
 
     function vykresliUvod() {
       const standard = VARIANTY.find((v) => v.klic === "standard");
+      const ukazka = { ...UKAZKOVA_STENA, nazev: SimteGen.t("uvod.ukazka_stena") };
       $("uvod-levy").innerHTML = `
-        <p class="stitek">Pro truhláře, kteří měří u zákazníka</p>
-        <h2 class="titulek-velky">Kuchyň změříte na místě, kusovník máte hned</h2>
+        <p class="stitek">${esc(SimteGen.t("uvod.stitek"))}</p>
+        <h2 class="titulek-velky">${esc(SimteGen.t("uvod.nadpis"))}</h2>
         <div class="karta vykres">
-          ${nakresliPohled(UKAZKOVA_STENA, null, null)}
+          ${nakresliPohled(ukazka, null, null)}
           ${legenda()}
         </div>
-        ${sekce("01", "Co to dělá")}
+        ${sekce(SimteGen.t("uvod.co_dela"))}
         <ul class="seznam">
           <li class="radek"><span class="poradi">01</span><span class="hlavni">
-            <strong>Kusovník místo přepisování</strong>
-            <span>rozměry dílů i olepení hran</span></span></li>
+            <strong>${esc(SimteGen.t("uvod.bod1"))}</strong>
+            <span>${esc(SimteGen.t("uvod.bod1_popis"))}</span></span></li>
           <li class="radek"><span class="poradi">02</span><span class="hlavni">
-            <strong>Váš konstrukční standard</strong>
-            <span>tloušťka desky · záda v drážce · spáry</span></span></li>
+            <strong>${esc(SimteGen.t("uvod.bod2"))}</strong>
+            <span>${esc(SimteGen.t("uvod.bod2_popis"))}</span></span></li>
           <li class="radek"><span class="poradi">03</span><span class="hlavni">
-            <strong>Zakázky zůstanou uložené</strong>
-            <span>kopie staré zakázky jako šablona</span></span></li>
+            <strong>${esc(SimteGen.t("uvod.bod3"))}</strong>
+            <span>${esc(SimteGen.t("uvod.bod3_popis"))}</span></span></li>
         </ul>
-        <p class="rozmer">Skříňka 600 × 720 × 510: bok 2× 510 × 720 · dno 564 × 510 · záda 580 × 700</p>
-        ${sekce("02", "Cena")}
+        <p class="rozmer">${esc(SimteGen.t("uvod.priklad"))}</p>
+        ${sekce(SimteGen.t("uvod.cena"))}
         <div class="cena-web">
           <div class="cislo-radek"><span class="cislo-obri">${standard.mesic}</span>
-            <p>${esc(CENIK.mena)} za firmu a měsíc<br>${esc(standard.nazev)}</p></div>
+            <p>${esc(SimteGen.t("uvod.za_mesic"))}<br>${esc(standard.nazev)}</p></div>
           ${cenikSeznam()}
         </div>
         <div class="cena-aplikace">
           <div class="cislo-radek"><span class="cislo-obri">14</span>
-            <p>dní zkušební doby<br>zdarma, bez karty</p></div>
-          <p class="popisek">Potom se aplikace platí předplatným přes Google Play.
-          Cenu a délku období uvidíte u účtu před nákupem.</p>
+            <p>${esc(SimteGen.t("uvod.zkusebni_dni"))}<br>${esc(SimteGen.t("uvod.zdarma"))}</p></div>
+          <p class="popisek">${esc(SimteGen.t("uvod.play"))}</p>
         </div>
-        <p class="popisek">${esc(window.ZKUSEBNI_DOBA)}. Během ní nic neplatíte
-        a nezadáváte platební kartu.</p>`;
+        <p class="popisek">${esc(SimteGen.t("uvod.zkusebni_doba"))}</p>`;
       $("uvod-prihlaseni").innerHTML = `
-        ${sekce("03", "Vyzkoušet nebo se přihlásit")}
-        <p class="popisek">Zadejte svůj e-mail — pošleme vám jednorázový přihlašovací
-        odkaz. Žádné heslo nepotřebujete.</p>
+        ${sekce(SimteGen.t("uvod.prihlasit"))}
+        <p class="popisek">${esc(SimteGen.t("uvod.prihlasit_popis"))}</p>
         <div class="pole">
-          <label for="email">E-mail</label>
+          <label for="email">${esc(SimteGen.t("uvod.email"))}</label>
           <input id="email" type="email" autocomplete="email" inputmode="email"
-                 placeholder="vas@email.cz" enterkeyhint="send">
+                 placeholder="${esc(SimteGen.t("uvod.email_vzor"))}" enterkeyhint="send">
         </div>
         <div id="uvod-zprava" aria-live="polite"></div>`;
-      $("uvod-paticka").innerHTML = PATICKA;
+      $("uvod-paticka").innerHTML = paticka(true);
       $("email").addEventListener("keydown", (u) => { if (u.key === "Enter") posliOdkaz(); });
-      nastavListu([{ popisek: "Poslat přihlašovací odkaz", akce: posliOdkaz }]);
+      nastavListu([{ popisek: SimteGen.t("uvod.poslat"), akce: posliOdkaz }]);
       zapoctiNavstevu();
     }
 
@@ -966,31 +1052,31 @@
     async function posliOdkaz() {
       const zprava = $("uvod-zprava");
       zprava.className = "hlaska";
-      zprava.textContent = "Odesílám…";
+      zprava.textContent = SimteGen.t("obecne.odesilam");
       const { ok, data } = await api("/api/prihlaseni", "POST", { email: $("email").value })
         .catch(() => ({ ok: false, data: {} }));
       if (!ok) {
         zprava.className = "hlaska chyba";
-        zprava.textContent = data.chyba
-          || "Odkaz se nepodařilo odeslat — zkontrolujte e-mail a zkuste to znovu.";
+        zprava.textContent = chybaServeru(data, "uvod.chyba_odeslani");
         return;
       }
       if (data.odkaz) {
         zprava.className = "hlaska";
-        zprava.innerHTML = `<a href="${esc(data.odkaz)}">Vývojový režim — přihlásit tímto odkazem</a>`;
+        zprava.innerHTML = `<a href="${esc(data.odkaz)}">${esc(SimteGen.t("uvod.vyvojovy"))}</a>`;
         return;
       }
       zprava.className = "hlaska uspech";
-      zprava.textContent = "Přihlašovací odkaz najdete v e-mailu.";
+      zprava.textContent = SimteGen.t("uvod.odeslano");
     }
 
     // ── Obrazovka: zakázky ─────────────────────────────────────────────
     async function vykresliZakazky() {
       const cil = $("o-zakazky");
       if (nutnePrihlaseni(cil)) return;
-      nastavListu([{ popisek: "Nová zakázka", akce: panelNovaZakazka }]);
+      nastavListu([{ popisek: SimteGen.t("zakazky.nova"), akce: panelNovaZakazka }]);
+      const nadpis = sekce(SimteGen.t("zakazky.nadpis"));
       if (stav.zakazky === null) {
-        cil.innerHTML = `${sekce("01", "Zakázky")}<div class="seznam">
+        cil.innerHTML = `${nadpis}<div class="seznam">
           <div class="kostra kostra-radek"></div><div class="kostra kostra-radek"></div>
           <div class="kostra kostra-radek"></div></div>`;
         const { ok, data } = await api("/api/zakazky").catch(() => ({ ok: false, data: {} }));
@@ -1000,28 +1086,34 @@
       }
 
       if (stav.zakazkyChyba) {
-        cil.innerHTML = `${sekce("01", "Zakázky")}
-          <div class="hlaska chyba">Zakázky se nepodařilo načíst.</div>`;
+        cil.innerHTML = `${nadpis}
+          <div class="hlaska chyba">${esc(SimteGen.t("zakazky.chyba"))}</div>`;
         const znovu = document.createElement("button");
         znovu.type = "button";
         znovu.className = "tlacitko vedlejsi";
-        znovu.textContent = "Zkusit znovu";
+        znovu.textContent = SimteGen.t("obecne.znovu");
         znovu.addEventListener("click", () => { stav.zakazky = null; vykresliZakazky(); });
         cil.appendChild(znovu);
         return;
       }
 
       if (!stav.zakazky.length) {
-        cil.innerHTML = `${sekce("01", "Zakázky")}
+        // Ukázková data nahraje a jedním klepnutím zase odstraní simtegen.js;
+        // tlačítko ukáže jen účtu, kterému to jde.
+        cil.innerHTML = `${nadpis}
           <div class="prazdno">${ikona("metr")}
-          <p>Zatím tu není žádná zakázka. Začněte změřením stěny u zákazníka —
-          rozměry skříněk jsou předvyplněné.</p></div>`;
+          <p>${esc(SimteGen.t("zakazky.prazdne"))}</p></div>`;
         const zacit = document.createElement("button");
         zacit.type = "button";
         zacit.className = "tlacitko";
-        zacit.textContent = "Nová zakázka";
+        zacit.textContent = SimteGen.t("zakazky.nova");
         zacit.addEventListener("click", panelNovaZakazka);
-        cil.querySelector(".prazdno").appendChild(zacit);
+        const ukazka = document.createElement("button");
+        ukazka.type = "button";
+        ukazka.className = "tlacitko vedlejsi";
+        ukazka.setAttribute("data-ukazkova-data", "");
+        ukazka.textContent = SimteGen.t("zakazky.ukazkova_data");
+        cil.querySelector(".prazdno").append(zacit, ukazka);
         return;
       }
 
@@ -1030,65 +1122,85 @@
       const dilu = vse.reduce((s, z) => s + (z.pocet_dilu || 0), 0);
       cil.innerHTML = `
         <div class="karta vykres">
-          <p class="stitek">Zakázek v účtu</p>
+          <p class="stitek">${esc(SimteGen.t("zakazky.v_uctu"))}</p>
           <div class="cislo-radek"><span class="cislo-obri">${vse.length}</span>
-            <p>${dilu ? dilu + " dílů celkem<br>v posledních kusovnících" : "zatím bez kusovníku"}</p></div>
+            <p>${dilu
+              ? `${esc(SimteGen.t("zakazky.dilu_celkem", { pocet: SimteGen.pocet(dilu, "pocet.dil") }))}<br>
+                ${esc(SimteGen.t("zakazky.v_kusovnicich"))}`
+              : esc(SimteGen.t("zakazky.bez_kusovniku"))}</p></div>
         </div>
-        ${sekce("01", "Zakázky", vse.length > 5
-          ? { klic: "vse", popisek: stav.vseZakazky ? "Jen poslední" : "Vše" } : null)}
+        ${sekce(SimteGen.t("zakazky.nadpis"), vse.length > 5
+          ? { klic: "vse", popisek: SimteGen.t(stav.vseZakazky ? "zakazky.jen_posledni" : "zakazky.vse") }
+          : null)}
         <ul class="seznam" id="seznam-zakazek"></ul>`;
       const seznam = $("seznam-zakazek");
       videt.forEach((z, i) => {
         seznam.appendChild(radekTlacitko(
           `<span class="poradi">${String(i + 1).padStart(2, "0")}</span>
            <span class="hlavni"><strong>${esc(z.nazev)}</strong>
-           <span>${esc(z.oznaceni_zakaznika || "bez označení")} · ${datum(z.zmeneno)}</span></span>
-           <span class="vpravo">${z.pocet_dilu ? z.pocet_dilu + " dílů" : "—"}</span>`,
+           <span>${esc(z.oznaceni_zakaznika || SimteGen.t("zakazky.bez_oznaceni"))} · ${esc(datum(z.zmeneno))}</span></span>
+           <span class="vpravo">${z.pocet_dilu ? esc(SimteGen.pocet(z.pocet_dilu, "pocet.dil")) : "—"}</span>`,
           () => jdi("zakazka", { id: z.id }), { zakazka: z.id }));
       });
       napojSekce(cil, { vse: () => { stav.vseZakazky = !stav.vseZakazky; vykresliZakazky(); } });
     }
 
     function panelNovaZakazka() {
-      otevriPanel("Nová zakázka", `
+      otevriPanel(SimteGen.t("zakazky.nova"), `
         <div class="pole">
-          <label for="nz-nazev">Název zakázky</label>
-          <input id="nz-nazev" type="text" placeholder="Kuchyň Novákovi" enterkeyhint="done">
-          <span class="napoveda">Podle čeho ji poznáte v seznamu.</span>
+          <label for="nz-nazev">${esc(SimteGen.t("zakazka.nazev"))}</label>
+          <input id="nz-nazev" type="text" placeholder="${esc(SimteGen.t("zakazka.nazev_vzor"))}"
+            enterkeyhint="done">
+          <span class="napoveda">${esc(SimteGen.t("zakazka.nazev_napoveda"))}</span>
         </div>
         <div class="pole">
-          <label for="nz-zakaznik">Označení zákazníka (nepovinné)</label>
-          <input id="nz-zakaznik" type="text" placeholder="Novák, Brno">
-          <span class="napoveda">Pište jen to, co opravdu potřebujete — jsou to údaje
-          vašeho zákazníka.</span>
+          <label for="nz-zakaznik">${esc(SimteGen.t("zakazka.zakaznik_nepovinne"))}</label>
+          <input id="nz-zakaznik" type="text" placeholder="${esc(SimteGen.t("zakazka.zakaznik_vzor"))}">
+          <span class="napoveda">${esc(SimteGen.t("zakazka.zakaznik_napoveda"))}</span>
         </div>
         <div id="nz-zprava" aria-live="polite"></div>
         <div class="panel-akce">
-          <button type="button" class="tlacitko" id="nz-ulozit">Založit zakázku</button>
+          <button type="button" class="tlacitko" id="nz-ulozit">${esc(SimteGen.t("zakazka.zalozit"))}</button>
         </div>`,
         (panel) => {
           panel.querySelector("#nz-ulozit").addEventListener("click", async () => {
             const zprava = panel.querySelector("#nz-zprava");
             zprava.className = "hlaska";
-            zprava.textContent = "Zakládám…";
+            zprava.textContent = SimteGen.t("zakazka.zakladam");
             const { ok, data } = await api("/api/zakazky", "POST", {
               nazev: panel.querySelector("#nz-nazev").value,
               oznaceni_zakaznika: panel.querySelector("#nz-zakaznik").value,
             }).catch(() => ({ ok: false, data: {} }));
             if (!ok) {
               zprava.className = "hlaska chyba";
-              zprava.textContent = data.chyba || "Zakázku se nepodařilo založit.";
+              zprava.textContent = chybaServeru(data, "zakazka.chyba_zalozeni");
               return;
             }
             zavriPanel();
             stav.zakazky = null;
-            toast("Zakázka založena.");
+            toast(SimteGen.t("zakazka.zalozena"));
             jdi("zakazka", { id: data.id });
           });
         });
     }
 
     // ── Obrazovka: zakázka ─────────────────────────────────────────────
+    /** Načte zakázku do stav.dokument; přednost má novější neuložené měření z telefonu. */
+    async function nactiDokument(id) {
+      const { ok, data } = await api(`/api/zakazky/${id}`).catch(() => ({ ok: false, data: {} }));
+      if (!ok) return { ok, data };
+      stav.dokument = data;
+      stav.kusovnik = null;
+      stav.ukladani = "cisto";
+      const koncept = nactiKoncept(id);
+      if (koncept && koncept.cas > (data.zakazka.zmeneno || 0)) {
+        stav.dokument = koncept.dokument;
+        toast(SimteGen.t("zakazka.koncept_obnoven"));
+        zmeneno();
+      }
+      return { ok, data };
+    }
+
     async function vykresliZakazku(parametry) {
       const cil = $("o-zakazka");
       if (nutnePrihlaseni(cil)) return;
@@ -1097,21 +1209,12 @@
         cil.innerHTML = `<div class="kostra kostra-karta"></div>
           <div class="kostra kostra-radek"></div><div class="kostra kostra-radek"></div>`;
         nastavListu([]);
-        const { ok, data } = await api(`/api/zakazky/${id}`).catch(() => ({ ok: false, data: {} }));
+        const { ok, data } = await nactiDokument(id);
         if (!ok) {
-          cil.innerHTML = `<div class="hlaska chyba">${esc(data.chyba
-            || "Zakázku se nepodařilo načíst.")}</div>`;
-          nastavListu([{ popisek: "Zpět na zakázky", vedlejsi: true, akce: () => jdi("zakazky") }]);
+          cil.innerHTML = `<div class="hlaska chyba">${esc(chybaServeru(data, "zakazka.chyba_nacteni"))}</div>`;
+          nastavListu([{ popisek: SimteGen.t("zakazka.zpet_na_zakazky"), vedlejsi: true,
+            akce: () => jdi("zakazky") }]);
           return;
-        }
-        stav.dokument = data;
-        stav.kusovnik = null;
-        stav.ukladani = "cisto";
-        const koncept = nactiKoncept(id);
-        if (koncept && koncept.cas > (data.zakazka.zmeneno || 0)) {
-          stav.dokument = koncept.dokument;
-          toast("Obnovili jsme neuložené měření z telefonu.");
-          zmeneno();
         }
         if (aktualni.nazev !== "zakazka") return;
       }
@@ -1125,30 +1228,31 @@
 
       cil.innerHTML = `
         <div class="karta vykres">
-          <p class="stitek">${platny ? "Dílů v kusovníku" : "Skříněk v zakázce"}</p>
+          <p class="stitek">${esc(SimteGen.t(platny ? "zakazka.dilu_v_kusovniku" : "zakazka.skrinek"))}</p>
           <div class="cislo-radek">
             <span class="cislo-obri">${platny ? posledni.pocet_dilu : skrinek}</span>
-            <p>${esc(dokument.zakazka.oznaceni_zakaznika || "bez označení zákazníka")}<br>
-            ${platny ? "odhad " + posledni.odhad_desek + " desek · " + datum(posledni.vytvoreno)
-              : (dokument.steny || []).length + "× stěna"}</p>
+            <p>${esc(dokument.zakazka.oznaceni_zakaznika || SimteGen.t("zakazka.bez_oznaceni"))}<br>
+            ${esc(platny
+              ? SimteGen.t("zakazka.odhad_desek", {
+                pocet: SimteGen.pocet(posledni.odhad_desek, "pocet.deska"), datum: datum(posledni.vytvoreno) })
+              : SimteGen.pocet((dokument.steny || []).length, "pocet.stena"))}</p>
           </div>
-          ${posledni && !platny ? `<p class="hlaska varovani">Zakázka se od posledního
-            kusovníku změnila — přepočítejte ho.</p>` : ""}
-          <p data-ulozeni class="rozmer">Uloženo</p>
+          ${posledni && !platny ? `<p class="hlaska varovani">${esc(SimteGen.t("zakazka.zmenena"))}</p>` : ""}
+          <p data-ulozeni class="rozmer">${esc(SimteGen.t("ulozeni.ulozeno"))}</p>
         </div>
-        ${sekce("01", "Stěny", { klic: "stena", popisek: "Přidat" })}
+        ${sekce(SimteGen.t("zakazka.steny"), { klic: "stena", popisek: SimteGen.t("obecne.pridat") })}
         <div id="seznam-sten"></div>
-        ${sekce("02", "Zakázka")}
+        ${sekce(SimteGen.t("obrazovka.zakazka"))}
         <ul class="seznam" id="akce-zakazky"></ul>`;
 
       const seznamSten = $("seznam-sten");
       if (!(dokument.steny || []).length) {
         seznamSten.innerHTML = `<div class="prazdno">${ikona("metr")}
-          <p>Zakázka je prázdná — přidejte první stěnu.</p></div>`;
+          <p>${esc(SimteGen.t("zakazka.prazdna"))}</p></div>`;
         const start = document.createElement("button");
         start.type = "button";
         start.className = "tlacitko vedlejsi";
-        start.textContent = "Přidat stěnu";
+        start.textContent = SimteGen.t("zakazka.pridat_stenu");
         start.addEventListener("click", pridejStenu);
         seznamSten.querySelector(".prazdno").appendChild(start);
       } else {
@@ -1160,7 +1264,7 @@
             `<span class="poradi">${String(index + 1).padStart(2, "0")}</span>
              <span class="hlavni"><strong>${esc(stena.nazev)}</strong>
              <span>${stena.delka_mm} × ${stena.vyska_mm} mm ·
-             ${(stena.skrinky || []).length}× skříňka</span></span>
+             ${esc(SimteGen.pocet((stena.skrinky || []).length, "pocet.skrinka"))}</span></span>
              <span class="vpravo">${hlasky.length ? hlasky.length + " ⚠" : "›"}</span>`,
             () => jdi("stena", { index }), { stena: index }));
         });
@@ -1168,16 +1272,16 @@
       }
 
       const akce = $("akce-zakazky");
-      pridejAkci(akce, "Náhled a kontrola", "pohled, půdorys a varování", () => jdi("nahled"),
+      pridejAkci(akce, SimteGen.t("akce.nahled"), SimteGen.t("akce.nahled_popis"), () => jdi("nahled"),
         { akce: "nahled" });
-      pridejAkci(akce, "Kopírovat jako šablonu", "nová zakázka se stejnými stěnami", kopirujZakazku);
-      pridejAkci(akce, "Upravit název a poznámku", "", panelUpravZakazku);
-      pridejAkci(akce, "Smazat zakázku", "nevratné", smazZakazku);
+      pridejAkci(akce, SimteGen.t("akce.kopie"), SimteGen.t("akce.kopie_popis"), kopirujZakazku);
+      pridejAkci(akce, SimteGen.t("akce.upravit"), "", panelUpravZakazku);
+      pridejAkci(akce, SimteGen.t("akce.smazat_zakazku"), SimteGen.t("akce.nevratne"), smazZakazku);
 
       napojSekce(cil, { stena: pridejStenu });
       prekresliStavUlozeni();
       nastavListu([
-        { popisek: "Vygenerovat kusovník", akce: vygenerujKusovnik, zakazane: skrinek === 0,
+        { popisek: SimteGen.t("kusovnik.vygenerovat"), akce: vygenerujKusovnik, zakazane: skrinek === 0,
           klic: "kusovnik" },
       ]);
     }
@@ -1192,7 +1296,7 @@
     function pridejStenu() {
       const poradi = (stav.dokument.steny || []).length;
       stav.dokument.steny.push({
-        nazev: `Stěna ${String.fromCharCode(65 + poradi)}`,
+        nazev: SimteGen.t("stena.nova", { pismeno: String.fromCharCode(65 + poradi) }),
         delka_mm: 3600, vyska_mm: 2600, roh_vlevo: 0, roh_vpravo: 0,
         otvory: [], skrinky: [],
       });
@@ -1202,15 +1306,15 @@
 
     function panelUpravZakazku() {
       const z = stav.dokument.zakazka;
-      otevriPanel("Zakázka", `
-        <div class="pole"><label for="uz-nazev">Název</label>
+      otevriPanel(SimteGen.t("obrazovka.zakazka"), `
+        <div class="pole"><label for="uz-nazev">${esc(SimteGen.t("obecne.nazev"))}</label>
           <input id="uz-nazev" type="text" value="${esc(z.nazev)}"></div>
-        <div class="pole"><label for="uz-zakaznik">Označení zákazníka</label>
+        <div class="pole"><label for="uz-zakaznik">${esc(SimteGen.t("zakazka.zakaznik"))}</label>
           <input id="uz-zakaznik" type="text" value="${esc(z.oznaceni_zakaznika || "")}"></div>
-        <div class="pole"><label for="uz-poznamka">Poznámka</label>
+        <div class="pole"><label for="uz-poznamka">${esc(SimteGen.t("zakazka.poznamka"))}</label>
           <textarea id="uz-poznamka" rows="3" maxlength="1000">${esc(z.poznamka || "")}</textarea></div>
         <div class="panel-akce">
-          <button type="button" class="tlacitko" id="uz-ulozit">Uložit</button>
+          <button type="button" class="tlacitko" id="uz-ulozit">${esc(SimteGen.t("zakazka.ulozit"))}</button>
         </div>`,
         (panel) => {
           panel.querySelector("#uz-ulozit").addEventListener("click", () => {
@@ -1221,36 +1325,36 @@
             zmeneno();
             stav.zakazky = null;
             vykresliZakazku({ id: z.id });
-            toast("Uloženo.");
+            toast(SimteGen.t("obecne.ulozeno"));
           });
         });
     }
 
     async function kopirujZakazku() {
       const id = stav.dokument.zakazka.id;
-      toast("Kopíruji…");
+      toast(SimteGen.t("zakazka.kopiruji"));
       const { ok, data } = await api(`/api/zakazky/${id}/kopie`, "POST", {})
         .catch(() => ({ ok: false, data: {} }));
-      if (!ok) { toast(data.chyba || "Kopii se nepodařilo vytvořit."); return; }
+      if (!ok) { toast(chybaServeru(data, "zakazka.chyba_kopie")); return; }
       stav.zakazky = null;
       stav.dokument = null;
-      toast("Kopie je hotová.");
+      toast(SimteGen.t("zakazka.kopie_hotova"));
       jdi("zakazka", { id: data.id });
     }
 
     async function smazZakazku() {
       const z = stav.dokument.zakazka;
       // Server maže zakázku natvrdo, proto otázka místo vrácení.
-      if (!await SimteGen.potvrd(`Smazat zakázku „${z.nazev}“?`, {
-        popis: "Smaže se i se stěnami a kusovníky. Krok je nevratný.",
-        ano: "Smazat zakázku", nebezpecne: true })) return;
+      if (!await SimteGen.potvrd(SimteGen.t("zakazka.smazat_otazka", { nazev: z.nazev }), {
+        popis: SimteGen.t("zakazka.smazat_popis"),
+        ano: SimteGen.t("akce.smazat_zakazku"), nebezpecne: true })) return;
       const { ok, data } = await api(`/api/zakazky/${z.id}`, "DELETE")
         .catch(() => ({ ok: false, data: {} }));
-      if (!ok) { toast(data.chyba || "Smazání se nepovedlo."); return; }
+      if (!ok) { toast(chybaServeru(data, "obecne.chyba_smazani")); return; }
       zahodKoncept();
       stav.dokument = null;
       stav.zakazky = null;
-      toast("Zakázka smazána.");
+      toast(SimteGen.t("zakazka.smazana"));
       jdi("zakazky", {}, true);
     }
 
@@ -1272,36 +1376,37 @@
         <div class="karta vykres">
           ${nakresliPohled(stena, stav.standard, kolizni, { uprava })}
           ${legenda()}
-          ${uprava ? `<p class="rozmer" id="st-odecet" aria-live="polite">Táhněte skříňku nebo okno ·
-            úchytem vpravo změníte šířku · klepnutím otevřete rozměry</p>` : ""}
+          ${uprava ? `<p class="rozmer" id="st-odecet" aria-live="polite">${esc(SimteGen.t("stena.navod_tahu"))}</p>` : ""}
           <div class="vykres-akce">
             <button type="button" class="tlacitko vedlejsi" id="st-uprava"
-              aria-pressed="${uprava ? "true" : "false"}">${uprava ? "Hotovo" : "Posouvat ve výkresu"}</button>
+              aria-pressed="${uprava ? "true" : "false"}">${esc(SimteGen.t(uprava
+                ? "stena.posouvani_hotovo" : "stena.posouvat"))}</button>
             ${uprava && lzeVratit
-              ? `<button type="button" class="tlacitko vedlejsi" id="st-vratit">Vrátit posun</button>` : ""}
+              ? `<button type="button" class="tlacitko vedlejsi" id="st-vratit">${esc(SimteGen.t("stena.vratit_posun"))}</button>`
+              : ""}
           </div>
         </div>
         ${hlasky.length ? `<div class="hlaska varovani">${hlasky.map(esc).join("<br>")}</div>` : ""}
-        ${sekce("01", "Rozměry stěny")}
+        ${sekce(SimteGen.t("stena.rozmery"))}
         <div class="dvojice-poli">
-          <div class="pole"><label for="st-delka">Délka (mm)</label>
+          <div class="pole"><label for="st-delka">${esc(SimteGen.t("stena.delka"))}</label>
             <input id="st-delka" type="number" inputmode="numeric" min="200" max="20000"
                    value="${cislo(stena.delka_mm, 3600)}"></div>
-          <div class="pole"><label for="st-vyska">Výška (mm)</label>
+          <div class="pole"><label for="st-vyska">${esc(SimteGen.t("stena.vyska"))}</label>
             <input id="st-vyska" type="number" inputmode="numeric" min="500" max="5000"
                    value="${cislo(stena.vyska_mm, 2600)}"></div>
         </div>
-        <div class="pole"><label for="st-nazev">Název stěny</label>
+        <div class="pole"><label for="st-nazev">${esc(SimteGen.t("stena.nazev"))}</label>
           <input id="st-nazev" type="text" value="${esc(stena.nazev)}"></div>
         <label class="volba"><input type="checkbox" id="st-roh-vlevo"
-          ${stena.roh_vlevo ? "checked" : ""}> Roh vlevo (sousední stěna ubírá hloubku korpusu)</label>
+          ${stena.roh_vlevo ? "checked" : ""}> ${esc(SimteGen.t("stena.roh_vlevo"))}</label>
         <label class="volba"><input type="checkbox" id="st-roh-vpravo"
-          ${stena.roh_vpravo ? "checked" : ""}> Roh vpravo</label>
-        ${sekce("02", "Okna a dveře", { klic: "otvor", popisek: "Přidat" })}
+          ${stena.roh_vpravo ? "checked" : ""}> ${esc(SimteGen.t("stena.roh_vpravo"))}</label>
+        ${sekce(SimteGen.t("stena.otvory"), { klic: "otvor", popisek: SimteGen.t("obecne.pridat") })}
         <div id="seznam-otvoru"></div>
-        ${sekce("03", "Skříňky")}
+        ${sekce(SimteGen.t("stena.skrinky"))}
         <div id="seznam-skrinek"></div>
-        <p data-ulozeni class="rozmer">Uloženo</p>
+        <p data-ulozeni class="rozmer">${esc(SimteGen.t("ulozeni.ulozeno"))}</p>
         <ul class="seznam" id="akce-steny"></ul>`;
 
       const napoj = (id, klic, jeCislo) => {
@@ -1321,16 +1426,17 @@
 
       const otvory = $("seznam-otvoru");
       if (!(stena.otvory || []).length) {
-        otvory.innerHTML = `<p class="popisek">Žádné okno ani dveře. Přidejte je, ať vidíte,
-          kam skříňka nesmí.</p>`;
+        otvory.innerHTML = `<p class="popisek">${esc(SimteGen.t("stena.bez_otvoru"))}</p>`;
       } else {
         const seznam = document.createElement("ul");
         seznam.className = "seznam";
         stena.otvory.forEach((o, i) => {
+          const dvere = o.typ === "dvere";
           seznam.appendChild(radekTlacitko(
             `<span class="hlavni">
-             <strong>${o.typ === "dvere" ? "Dveře" : "Okno"} ${o.sirka_mm} × ${o.vyska_mm} mm</strong>
-             <span>od ${o.odsazeni_mm} mm${o.typ === "dvere" ? "" : " · parapet " + o.parapet_mm + " mm"}</span>
+             <strong>${esc(SimteGen.t(dvere ? "otvor.dvere" : "otvor.okno"))} ${o.sirka_mm} × ${o.vyska_mm} mm</strong>
+             <span>${esc(SimteGen.t(dvere ? "otvor.poloha_dvere" : "otvor.poloha_okno",
+               { od: o.odsazeni_mm, parapet: o.parapet_mm }))}</span>
              </span><span class="vpravo">›</span>`,
             () => panelOtvor(stena, i, index)));
         });
@@ -1340,33 +1446,38 @@
       const skrinky = $("seznam-skrinek");
       if (!(stena.skrinky || []).length) {
         skrinky.innerHTML = `<div class="prazdno">${ikona("skrinka")}
-          <p>Zatím žádná skříňka. Přidejte první — rozměry jsou předvyplněné.</p></div>`;
+          <p>${esc(SimteGen.t("stena.bez_skrinek"))}</p></div>`;
       } else {
         const seznam = document.createElement("ul");
         seznam.className = "seznam";
         stena.skrinky.forEach((sk, i) => {
+          const casti = [
+            SimteGen.t("skrinka.od", { od: cislo(sk.odsazeni_mm, 0) }),
+            SimteGen.pocet(cislo(sk.pocet_polic, 0), "pocet.police"),
+            SimteGen.pocet(cislo(sk.pocet_dvirek, 0), "pocet.dvirka"),
+          ];
+          if (sk.pocet_zasuvek) casti.push(SimteGen.pocet(cislo(sk.pocet_zasuvek, 0), "pocet.zasuvka"));
           seznam.appendChild(radekTlacitko(
             `<span class="poradi">${String(i + 1).padStart(2, "0")}</span>
              ${ikona("skrinka")}<span class="hlavni">
-             <strong>${esc(TYPY_SKRINEK[sk.typ] || "Skříňka")}
+             <strong>${esc(typSkrinky(sk.typ))}
                ${sk.sirka_mm} × ${sk.vyska_mm} × ${sk.hloubka_mm}</strong>
-             <span>od ${cislo(sk.odsazeni_mm, 0)} mm · ${sk.pocet_polic}× police ·
-               ${sk.pocet_dvirek}× dvířka${sk.pocet_zasuvek ? " · " + sk.pocet_zasuvek + "× zásuvka" : ""}</span>
+             <span>${esc(casti.join(" · "))}</span>
              </span><span class="vpravo">${kolizni.has(i) ? "⚠" : "›"}</span>`,
             () => panelSkrinka(stena, i, index)));
         });
         skrinky.appendChild(seznam);
       }
 
-      pridejAkci($("akce-steny"), "Náhled a kontrola", "", () => jdi("nahled"));
-      pridejAkci($("akce-steny"), "Smazat stěnu", "i se skříňkami na ní", () => {
+      pridejAkci($("akce-steny"), SimteGen.t("akce.nahled"), "", () => jdi("nahled"));
+      pridejAkci($("akce-steny"), SimteGen.t("stena.smazat"), SimteGen.t("stena.smazat_popis"), () => {
         const zakazkaId = stav.dokument.zakazka.id;
         const [vyjmuta] = stav.dokument.steny.splice(index, 1);
         zmeneno();
-        SimteGen.vratitelne("Stěna smazána.", () => {
+        SimteGen.vratitelne(SimteGen.t("stena.smazana"), () => {
           // Dokument se po uložení na server vyměňuje — vrací se do aktuálního.
           if (!stav.dokument || stav.dokument.zakazka.id !== zakazkaId) {
-            toast("Stěnu už vrátit nejde — zakázka je zavřená.");
+            toast(SimteGen.t("stena.nejde_vratit"));
             return;
           }
           const kam = Math.min(index, stav.dokument.steny.length);
@@ -1395,7 +1506,7 @@
           if (!prvek || ["odsazeni_mm", "sirka_mm", "parapet_mm"]
             .some((klic) => cislo(prvek[klic], 0) !== cislo(p.po[klic], 0))) {
             vykresliStenu({ index });
-            toast("Posun už nejde vrátit — prvek se mezitím změnil.");
+            toast(SimteGen.t("stena.posun_nejde_vratit"));
             return;
           }
           prvek.odsazeni_mm = p.puvodni.odsazeni_mm;
@@ -1403,14 +1514,14 @@
           prvek.parapet_mm = p.puvodni.parapet_mm;
           zmeneno();
           vykresliStenu({ index });
-          toast("Posun vrácen.");
+          toast(SimteGen.t("stena.posun_vracen"));
         });
       }
       if (uprava) napojTah(cil.querySelector(".vykres-plocha"), stena, index);
 
       napojSekce(cil, { otvor: () => panelOtvor(stena, -1, index) });
       prekresliStavUlozeni();
-      nastavListu([{ popisek: "Přidat skříňku", akce: () => panelSkrinka(stena, -1, index) }]);
+      nastavListu([{ popisek: SimteGen.t("stena.pridat_skrinku"), akce: () => panelSkrinka(stena, -1, index) }]);
     }
 
     // ── Posouvání ve výkresu ───────────────────────────────────────────
@@ -1478,10 +1589,11 @@
       const popisPrvku = (t) => {
         const p = t.prvek;
         const nazev = t.druh === "skrinka"
-          ? `Skříňka ${String(t.i + 1).padStart(2, "0")}`
-          : (p.typ === "dvere" ? "Dveře" : "Okno");
-        const casti = [nazev, `od ${p.odsazeni_mm} mm`, `šířka ${p.sirka_mm} mm`];
-        if (t.druh === "otvor" && p.typ !== "dvere") casti.push(`parapet ${p.parapet_mm} mm`);
+          ? SimteGen.t("skrinka.cislo", { cislo: String(t.i + 1).padStart(2, "0") })
+          : SimteGen.t(p.typ === "dvere" ? "otvor.dvere" : "otvor.okno");
+        const casti = [nazev, SimteGen.t("skrinka.od", { od: p.odsazeni_mm }),
+          SimteGen.t("tah.sirka", { sirka: p.sirka_mm })];
+        if (t.druh === "otvor" && p.typ !== "dvere") casti.push(SimteGen.t("tah.parapet", { parapet: p.parapet_mm }));
         return casti.join(" · ");
       };
 
@@ -1591,26 +1703,26 @@
       const o = novy
         ? { typ: "okno", odsazeni_mm: 1200, sirka_mm: 1200, vyska_mm: 1400, parapet_mm: 900 }
         : { ...stena.otvory[poradi] };
-      otevriPanel(novy ? "Nové okno nebo dveře" : "Okno nebo dveře", `
-        <div class="pole"><label for="ot-typ">Typ</label>
+      otevriPanel(SimteGen.t(novy ? "otvor.novy" : "otvor.nadpis"), `
+        <div class="pole"><label for="ot-typ">${esc(SimteGen.t("obecne.typ"))}</label>
           <select id="ot-typ">
-            <option value="okno"${o.typ === "okno" ? " selected" : ""}>Okno</option>
-            <option value="dvere"${o.typ === "dvere" ? " selected" : ""}>Dveře</option>
+            <option value="okno"${o.typ === "okno" ? " selected" : ""}>${esc(SimteGen.t("otvor.okno"))}</option>
+            <option value="dvere"${o.typ === "dvere" ? " selected" : ""}>${esc(SimteGen.t("otvor.dvere"))}</option>
           </select></div>
         <div class="trojice">
-          <div class="pole"><label for="ot-odsazeni">Od kraje</label>
+          <div class="pole"><label for="ot-odsazeni">${esc(SimteGen.t("otvor.od_kraje"))}</label>
             <input id="ot-odsazeni" type="number" inputmode="numeric" value="${o.odsazeni_mm}"></div>
-          <div class="pole"><label for="ot-sirka">Šířka</label>
+          <div class="pole"><label for="ot-sirka">${esc(SimteGen.t("obecne.sirka"))}</label>
             <input id="ot-sirka" type="number" inputmode="numeric" value="${o.sirka_mm}"></div>
-          <div class="pole"><label for="ot-vyska">Výška</label>
+          <div class="pole"><label for="ot-vyska">${esc(SimteGen.t("obecne.vyska"))}</label>
             <input id="ot-vyska" type="number" inputmode="numeric" value="${o.vyska_mm}"></div>
         </div>
-        <div class="pole"><label for="ot-parapet">Parapet nad podlahou (mm)</label>
+        <div class="pole"><label for="ot-parapet">${esc(SimteGen.t("otvor.parapet"))}</label>
           <input id="ot-parapet" type="number" inputmode="numeric" value="${o.parapet_mm}">
-          <span class="napoveda">U dveří se parapet nepoužije.</span></div>
+          <span class="napoveda">${esc(SimteGen.t("otvor.parapet_napoveda"))}</span></div>
         <div class="panel-akce">
-          <button type="button" class="tlacitko" id="ot-ulozit">Uložit</button>
-          ${novy ? "" : `<button type="button" class="tlacitko varovne" id="ot-smazat">Smazat</button>`}
+          <button type="button" class="tlacitko" id="ot-ulozit">${esc(SimteGen.t("otvor.ulozit"))}</button>
+          ${novy ? "" : `<button type="button" class="tlacitko varovne" id="ot-smazat">${esc(SimteGen.t("otvor.smazat"))}</button>`}
         </div>`,
         (panel) => {
           panel.querySelector("#ot-ulozit").addEventListener("click", () => {
@@ -1626,7 +1738,7 @@
             zavriPanel();
             zmeneno();
             vykresliStenu({ index: stenaIndex });
-            toast("Uloženo.");
+            toast(SimteGen.t("obecne.ulozeno"));
           });
           const smazat = panel.querySelector("#ot-smazat");
           if (smazat) {
@@ -1635,7 +1747,7 @@
               zavriPanel();
               zmeneno();
               vykresliStenu({ index: stenaIndex });
-              toast("Smazáno.");
+              toast(SimteGen.t("otvor.smazan"));
             });
           }
         });
@@ -1655,59 +1767,58 @@
           }
         : { ...stena.skrinky[poradi] };
 
-      const volbyMaterialu = [`<option value="">Výchozí (LTD ${
-        stav.standard ? stav.standard.tloustka_mm : 18} mm)</option>`]
+      const volbyMaterialu = [`<option value="">${esc(SimteGen.t("skrinka.material_vychozi", {
+        tloustka: stav.standard ? stav.standard.tloustka_mm : 18 }))}</option>`]
         .concat(stav.materialy.map((m) =>
           `<option value="${m.id}"${Number(sk.material_id) === m.id ? " selected" : ""}>`
           + `${esc(m.nazev)}</option>`)).join("");
 
-      otevriPanel(novy ? "Nová skříňka" : "Skříňka", `
+      otevriPanel(SimteGen.t(novy ? "skrinka.nova" : "skrinka.nazev"), `
         <div class="trojice">
-          <div class="pole"><label for="sk-sirka">Šířka</label>
+          <div class="pole"><label for="sk-sirka">${esc(SimteGen.t("obecne.sirka"))}</label>
             <input id="sk-sirka" type="number" inputmode="numeric" min="100" max="1400"
                    value="${cislo(sk.sirka_mm, 600)}"></div>
-          <div class="pole"><label for="sk-vyska">Výška</label>
+          <div class="pole"><label for="sk-vyska">${esc(SimteGen.t("obecne.vyska"))}</label>
             <input id="sk-vyska" type="number" inputmode="numeric" min="100" max="2600"
                    value="${cislo(sk.vyska_mm, 720)}"></div>
-          <div class="pole"><label for="sk-hloubka">Hloubka</label>
+          <div class="pole"><label for="sk-hloubka">${esc(SimteGen.t("obecne.hloubka"))}</label>
             <input id="sk-hloubka" type="number" inputmode="numeric" min="100" max="900"
                    value="${cislo(sk.hloubka_mm, 510)}"></div>
         </div>
-        <p class="popisek">Rozměry korpusu v mm, hloubka bez dvířek.</p>
-        <div class="pole"><label for="sk-typ">Typ</label>
+        <p class="popisek">${esc(SimteGen.t("skrinka.rozmery_popis"))}</p>
+        <div class="pole"><label for="sk-typ">${esc(SimteGen.t("obecne.typ"))}</label>
           <select id="sk-typ">${Object.keys(TYPY_SKRINEK).map((t) =>
-            `<option value="${t}"${sk.typ === t ? " selected" : ""}>${TYPY_SKRINEK[t]}</option>`).join("")}
+            `<option value="${t}"${sk.typ === t ? " selected" : ""}>${esc(typSkrinky(t))}</option>`).join("")}
           </select></div>
-        <div class="pole"><label for="sk-odsazeni">Odsazení od levého kraje stěny (mm)</label>
+        <div class="pole"><label for="sk-odsazeni">${esc(SimteGen.t("skrinka.odsazeni"))}</label>
           <input id="sk-odsazeni" type="number" inputmode="numeric" value="${cislo(sk.odsazeni_mm, 0)}"></div>
         <div class="trojice">
-          <div class="pole"><label for="sk-police">Police</label>
+          <div class="pole"><label for="sk-police">${esc(SimteGen.t("skrinka.police"))}</label>
             <input id="sk-police" type="number" inputmode="numeric" min="0" max="12"
                    value="${cislo(sk.pocet_polic, 0)}"></div>
-          <div class="pole"><label for="sk-dvirka">Dvířka</label>
+          <div class="pole"><label for="sk-dvirka">${esc(SimteGen.t("skrinka.dvirka"))}</label>
             <input id="sk-dvirka" type="number" inputmode="numeric" min="0" max="4"
                    value="${cislo(sk.pocet_dvirek, 0)}"></div>
-          <div class="pole"><label for="sk-zasuvky">Zásuvky</label>
+          <div class="pole"><label for="sk-zasuvky">${esc(SimteGen.t("skrinka.zasuvky"))}</label>
             <input id="sk-zasuvky" type="number" inputmode="numeric" min="0" max="8"
                    value="${cislo(sk.pocet_zasuvek, 0)}"></div>
         </div>
-        <div class="pole"><label for="sk-celo">Výška čela zásuvky (mm)</label>
+        <div class="pole"><label for="sk-celo">${esc(SimteGen.t("skrinka.celo"))}</label>
           <input id="sk-celo" type="number" inputmode="numeric" min="50" max="600"
                  value="${cislo(sk.zasuvka_vyska_mm, 140)}">
-          <span class="napoveda">Použije se, když má skříňka zásuvky i dvířka —
-          zásuvky sedí nahoře, dvířka doberou zbytek.</span></div>
-        <div class="pole"><label for="sk-material">Materiál</label>
+          <span class="napoveda">${esc(SimteGen.t("skrinka.celo_napoveda"))}</span></div>
+        <div class="pole"><label for="sk-material">${esc(SimteGen.t("skrinka.material"))}</label>
           <select id="sk-material">${volbyMaterialu}</select></div>
-        <div class="pole"><label for="sk-zada">Záda</label>
+        <div class="pole"><label for="sk-zada">${esc(SimteGen.t("zada.nazev"))}</label>
           <select id="sk-zada">
-            <option value=""${!sk.zada_typ_prepis ? " selected" : ""}>Podle standardu</option>
-            <option value="drazka"${sk.zada_typ_prepis === "drazka" ? " selected" : ""}>Do drážky</option>
-            <option value="nasazena"${sk.zada_typ_prepis === "nasazena" ? " selected" : ""}>Nasazená</option>
+            <option value=""${!sk.zada_typ_prepis ? " selected" : ""}>${esc(SimteGen.t("zada.podle_standardu"))}</option>
+            <option value="drazka"${sk.zada_typ_prepis === "drazka" ? " selected" : ""}>${esc(SimteGen.t("zada.drazka"))}</option>
+            <option value="nasazena"${sk.zada_typ_prepis === "nasazena" ? " selected" : ""}>${esc(SimteGen.t("zada.nasazena"))}</option>
           </select></div>
         <div id="sk-chyba" aria-live="polite"></div>
         <div class="panel-akce">
-          <button type="button" class="tlacitko" id="sk-ulozit">Uložit skříňku</button>
-          ${novy ? "" : `<button type="button" class="tlacitko varovne" id="sk-smazat">Smazat skříňku</button>`}
+          <button type="button" class="tlacitko" id="sk-ulozit">${esc(SimteGen.t("skrinka.ulozit"))}</button>
+          ${novy ? "" : `<button type="button" class="tlacitko varovne" id="sk-smazat">${esc(SimteGen.t("skrinka.smazat"))}</button>`}
         </div>`,
         (panel) => {
           panel.querySelector("#sk-typ").addEventListener("change", (u) => {
@@ -1726,15 +1837,15 @@
             const vyska = cislo(panel.querySelector("#sk-vyska").value, 0);
             const hloubka = cislo(panel.querySelector("#sk-hloubka").value, 0);
             const meze = [
-              [sirka, 100, 1400, "Šířka", "sk-sirka"],
-              [vyska, 100, 2600, "Výška", "sk-vyska"],
-              [hloubka, 100, 900, "Hloubka", "sk-hloubka"],
+              [sirka, 100, 1400, "obecne.sirka", "sk-sirka"],
+              [vyska, 100, 2600, "obecne.vyska", "sk-vyska"],
+              [hloubka, 100, 900, "obecne.hloubka", "sk-hloubka"],
             ];
             panel.querySelectorAll(".pole").forEach((p) => p.classList.remove("chybne"));
             for (const [hodnota, min, max, nazev, idPole] of meze) {
               if (hodnota < min || hodnota > max) {
                 chyba.className = "hlaska chyba";
-                chyba.textContent = `${nazev} musí být ${min}–${max} mm.`;
+                chyba.textContent = SimteGen.t("skrinka.mez", { nazev: SimteGen.t(nazev), min, max });
                 panel.querySelector("#" + idPole).closest(".pole").classList.add("chybne");
                 return;
               }
@@ -1757,7 +1868,7 @@
             zavriPanel();
             zmeneno();
             vykresliStenu({ index: stenaIndex });
-            toast("Skříňka uložena.");
+            toast(SimteGen.t("skrinka.ulozena"));
           });
 
           const smazat = panel.querySelector("#sk-smazat");
@@ -1767,7 +1878,7 @@
               zavriPanel();
               zmeneno();
               vykresliStenu({ index: stenaIndex });
-              toast("Skříňka smazána.");
+              toast(SimteGen.t("skrinka.smazana"));
             });
           }
         });
@@ -1780,8 +1891,8 @@
       const steny = stav.dokument.steny || [];
       if (!steny.length) {
         cil.innerHTML = `<div class="prazdno">${ikona("oko")}
-          <p>Přidejte stěnu, ať je co ukázat.</p></div>`;
-        nastavListu([{ popisek: "Zpět na zakázku", vedlejsi: true,
+          <p>${esc(SimteGen.t("nahled.prazdny"))}</p></div>`;
+        nastavListu([{ popisek: SimteGen.t("obecne.zpet_na_zakazku"), vedlejsi: true,
           akce: () => jdi("zakazka", { id: stav.dokument.zakazka.id }, true) }]);
         return;
       }
@@ -1791,7 +1902,7 @@
       const pudorys = stav.nahledRezim === "pudorys";
       if (pudorys) {
         kresba = `<div class="karta vykres">${nakresliPudorys(steny)}
-          <p class="vykres-popis">Šrafovaně zeď · čárkovaně horní řada · silnou čarou čelo</p></div>`;
+          <p class="vykres-popis">${esc(SimteGen.t("nahled.pudorys_legenda"))}</p></div>`;
         for (const stena of steny) {
           for (const h of kontrolaSteny(stena).hlasky) vsechnyHlasky.push(h);
         }
@@ -1806,15 +1917,18 @@
         kresba = kusy.join("");
       }
 
+      // Přepínač jazyka je i tady: truhlář tu kuchyň ukazuje zákazníkovi,
+      // a ten nemusí číst česky. Po přepnutí se otevře tentýž náhled.
       cil.innerHTML = `
-        ${sekce("01", pudorys ? "Půdorys" : "Pohled na stěny",
-          { klic: "prepni", popisek: pudorys ? "Pohled" : "Půdorys" })}
+        ${sekce(SimteGen.t(pudorys ? "nahled.pudorys" : "nahled.pohled"),
+          { klic: "prepni", popisek: SimteGen.t(pudorys ? "nahled.na_pohled" : "nahled.na_pudorys") })}
         ${kresba}
         ${legenda()}
-        ${sekce("02", "Kontrola")}
+        <div data-prepinac-jazyka></div>
+        ${sekce(SimteGen.t("nahled.kontrola"))}
         ${vsechnyHlasky.length
           ? `<div class="hlaska varovani">${vsechnyHlasky.map(esc).join("<br>")}</div>`
-          : `<div class="hlaska uspech">Nic se nepřekrývá a nic nezasahuje do oken.</div>`}`;
+          : `<div class="hlaska uspech">${esc(SimteGen.t("nahled.v_poradku"))}</div>`}`;
 
       napojSekce(cil, {
         prepni: () => {
@@ -1822,7 +1936,7 @@
           vykresliNahled();
         },
       });
-      nastavListu([{ popisek: "Vygenerovat kusovník", akce: vygenerujKusovnik }]);
+      nastavListu([{ popisek: SimteGen.t("kusovnik.vygenerovat"), akce: vygenerujKusovnik }]);
     }
 
     // ── Obrazovka: kusovník ────────────────────────────────────────────
@@ -1847,14 +1961,14 @@
         const { ok, data } = await api("/api/kusovnik", "POST",
           { zakazka_id: stav.dokument.zakazka.id }).catch(() => ({ ok: false, data: {} }));
         if (!ok) {
+          // Server hlásí česky, že chybí skříňka — to je prázdný stav, ne chyba.
           if (data.chyba && data.chyba.indexOf("skříňku") > -1) {
             cil.innerHTML = `<div class="prazdno">${ikona("kusovnik")}
-              <p>Nejdřív přidejte aspoň jednu skříňku.</p></div>`;
+              <p>${esc(SimteGen.t("kusovnik.prazdny"))}</p></div>`;
           } else {
-            cil.innerHTML = `<div class="hlaska chyba">${esc(data.chyba
-              || "Kusovník se nepodařilo spočítat.")}</div>`;
+            cil.innerHTML = `<div class="hlaska chyba">${esc(chybaServeru(data, "kusovnik.chyba"))}</div>`;
           }
-          nastavListu([{ popisek: "Zpět na zakázku", vedlejsi: true,
+          nastavListu([{ popisek: SimteGen.t("obecne.zpet_na_zakazku"), vedlejsi: true,
             akce: () => jdi("zakazka", { id: stav.dokument.zakazka.id }, true) }]);
           return;
         }
@@ -1863,78 +1977,85 @@
           id: data.id, pocet_dilu: data.souhrn.pocet_dilu,
           odhad_desek: data.souhrn.odhad_desek, vytvoreno: data.vytvoreno,
         };
-        toast("Kusovník uložen do zakázky.");
+        toast(SimteGen.t("kusovnik.ulozen"));
         if (aktualni.nazev !== "kusovnik") return;
         // Ať se při návratu tlačítkem zpět/vpřed nepočítá (a neukládá) znovu.
         aktualni.parametry = {};
-        history.replaceState({ obrazovka: "kusovnik", parametry: {} }, "", "#kusovnik");
+        history.replaceState({ obrazovka: "kusovnik", parametry: {} }, "", adresaObrazovky("kusovnik", {}));
       }
 
+      // Díly, olepení a materiál „Záda“ jsou v uloženém kusovníku česky;
+      // anglická obrazovka je přeloží stejně jako anglické CSV (texty-oboru.js).
       const k = stav.kusovnik;
-      const plocha = (k.souhrn.plocha_cm2 / 10000).toFixed(2).replace(".", ",");
+      const plocha = SimteGen.cislo(k.souhrn.plocha_cm2 / 10000, 2);
       const podleMaterialu = new Map();
       for (const p of k.polozky) {
-        const klic = `${p.material} · ${p.tloustka_mm} mm`;
+        const klic = `${nazevMaterialu(p.material)} · ${p.tloustka_mm} mm`;
         if (!podleMaterialu.has(klic)) podleMaterialu.set(klic, []);
         podleMaterialu.get(klic).push(p);
       }
 
-      const skupiny = [...podleMaterialu.entries()].map(([nazev, polozky], i) => `
-        ${sekce(String(i + 2).padStart(2, "0"), nazev)}
+      const skupiny = [...podleMaterialu.entries()].map(([nazev, polozky]) => `
+        ${sekce(nazev)}
         <ul class="seznam jen-telefon">${polozky.map((p) => `
           <li class="radek"><span class="hlavni">
-            <strong>${esc(p.nazev)} ${p.a_mm} × ${p.b_mm}</strong>
-            <span>${esc(p.hrany_popis)}${p.vlakno ? " · vlákno po délce" : ""}</span>
+            <strong>${esc(nazevDilu(p.nazev, p.klic))} ${p.a_mm} × ${p.b_mm}</strong>
+            <span>${esc(popisHran(p.hrany_popis))}${p.vlakno ? esc(SimteGen.t("kusovnik.vlakno_po_delce")) : ""}</span>
           </span><span class="vpravo">${p.ks}×</span></li>`).join("")}</ul>
         <div class="tabulka-obal jen-siroke"><table class="tabulka">
-          <thead><tr><th>Díl</th><th>Rozměr</th><th>Řez pro pilu</th><th>Olepení</th><th>Ks</th></tr></thead>
+          <thead><tr><th>${esc(SimteGen.t("kusovnik.sloupec_dil"))}</th>
+            <th>${esc(SimteGen.t("kusovnik.sloupec_rozmer"))}</th>
+            <th>${esc(SimteGen.t("kusovnik.sloupec_rez"))}</th>
+            <th>${esc(SimteGen.t("kusovnik.sloupec_olepeni"))}</th>
+            <th>${esc(SimteGen.t("kusovnik.sloupec_ks"))}</th></tr></thead>
           <tbody>${polozky.map((p) => `<tr>
-            <td>${esc(p.nazev)}</td>
+            <td>${esc(nazevDilu(p.nazev, p.klic))}</td>
             <td class="rozmer-bunka">${p.a_mm} × ${p.b_mm}</td>
-            <td class="rozmer-bunka">${p.delka_mm} × ${p.sirka_mm}${p.vlakno ? " · vlákno" : ""}</td>
-            <td><span class="kod">${esc(p.hrany_popis)}</span></td>
+            <td class="rozmer-bunka">${p.delka_mm} × ${p.sirka_mm}${p.vlakno ? esc(SimteGen.t("kusovnik.vlakno")) : ""}</td>
+            <td><span class="kod">${esc(popisHran(p.hrany_popis))}</span></td>
             <td>${p.ks}</td></tr>`).join("")}</tbody>
         </table></div>`).join("");
 
       cil.innerHTML = `
         <div class="karta vykres">
-          <p class="stitek">Dílů v kusovníku</p>
+          <p class="stitek">${esc(SimteGen.t("zakazka.dilu_v_kusovniku"))}</p>
           <div class="cislo-radek"><span class="cislo-obri">${k.souhrn.pocet_dilu}</span>
-            <p>odhad ${k.souhrn.odhad_desek} desek<br>${plocha} m² plochy</p></div>
-          <p class="vykres-popis">${esc(k.zakazka.nazev)} · ${datum(k.vytvoreno)}</p>
+            <p>${esc(SimteGen.t("kusovnik.odhad", { pocet: SimteGen.pocet(k.souhrn.odhad_desek, "pocet.deska") }))}<br>
+            ${esc(SimteGen.t("kusovnik.plocha", { plocha }))}</p></div>
+          <p class="vykres-popis">${esc(k.zakazka.nazev)} · ${esc(datum(k.vytvoreno))}</p>
         </div>
-        ${sekce("01", "Jak číst rozměry")}
-        <p class="popisek">${k.standard.rozmer_s_olepenim
-          ? "Uvedené rozměry jsou hotové díly po olepení."
-          : "Uvedené rozměry jsou řez bez olepení."}
-          U dílu je šířka × výška, jak leží ve skříňce; v CSV je délka po vlákně.</p>
-        <p class="hlaska varovani">Rozměry před odesláním do nářezového centra zkontrolujte.</p>
+        ${sekce(SimteGen.t("kusovnik.jak_cist"))}
+        <p class="popisek">${esc(SimteGen.t(k.standard.rozmer_s_olepenim
+          ? "kusovnik.rozmery_po_olepeni" : "kusovnik.rozmery_rez"))}
+          ${esc(SimteGen.t("kusovnik.sirka_vyska"))}</p>
+        <p class="hlaska varovani">${esc(SimteGen.t("kusovnik.zkontrolujte"))}</p>
         ${(k.varovani || []).length
-          ? `<div class="hlaska varovani">${k.varovani.map(esc).join("<br>")}</div>` : ""}
+          ? `<div class="hlaska varovani">${k.varovani.map((v) => esc(textHlasky(v))).join("<br>")}</div>` : ""}
         ${skupiny}
-        <p class="popisek">Odhad desek je orientační — nářezové centrum si nářez
-        optimalizuje samo a většinou vyjde líp.</p>`;
+        <p class="popisek">${esc(SimteGen.t("kusovnik.odhad_orientacni"))}</p>`;
 
       nastavListu([
-        { popisek: "Stáhnout CSV", akce: () => stahniCsv(k.id) },
-        { popisek: "Hotovo", vedlejsi: true, akce: oznacHotovou },
+        { popisek: SimteGen.t("kusovnik.stahnout"), akce: () => stahniCsv(k.id) },
+        { popisek: SimteGen.t("kusovnik.hotovo"), vedlejsi: true, akce: oznacHotovou },
       ]);
     }
 
+    // Anglická obrazovka stáhne anglické CSV (stejné sloupce, rozměry a pořadí).
     async function stahniCsv(id) {
-      toast("Připravuji soubor…");
-      const odpoved = await fetch(`/api/kusovnik/${id}/csv`).catch(() => null);
-      if (!odpoved || !odpoved.ok) { toast("Soubor se nepodařilo stáhnout."); return; }
+      toast(SimteGen.t("kusovnik.pripravuji"));
+      const en = anglicky();
+      const odpoved = await fetch(`/api/kusovnik/${id}/csv${en ? "?jazyk=en" : ""}`).catch(() => null);
+      if (!odpoved || !odpoved.ok) { toast(SimteGen.t("kusovnik.chyba_stazeni")); return; }
       const blob = await odpoved.blob();
       const adresa = URL.createObjectURL(blob);
       const odkaz = document.createElement("a");
       odkaz.href = adresa;
-      odkaz.download = `kusovnik-${id}.csv`;
+      odkaz.download = `${en ? "cutting-list" : "kusovnik"}-${id}.csv`;
       document.body.appendChild(odkaz);
       odkaz.click();
       odkaz.remove();
       setTimeout(() => URL.revokeObjectURL(adresa), 10000);
-      toast("Soubor je stažený.");
+      toast(SimteGen.t("kusovnik.stazeno"));
     }
 
     async function oznacHotovou() {
@@ -1942,7 +2063,7 @@
       stav.dokument.zakazka.stav = "hotova";
       await ulozNaServer();
       stav.zakazky = null;
-      toast("Zakázka je označená jako hotová.");
+      toast(SimteGen.t("kusovnik.zakazka_hotova"));
       jdi("zakazka", { id: stav.dokument.zakazka.id }, true);
     }
 
@@ -1958,29 +2079,29 @@
       return ok;
     }
 
+    // [skupina, klíč nadpisu, [[pole, klíč popisku, klíč nápovědy nebo ""]]]
+    // — texty jsou ve web/texty.js.
     const POLE_STANDARDU = [
-      ["01", "Korpus", [
-        ["tloustka_mm", "Tloušťka desky (mm)", "Z ní se počítá světlost korpusu."],
-        ["zada_tloustka_mm", "Tloušťka zad (mm)", "Typicky 3 mm HDF."],
-        ["drazka_hloubka_mm", "Hloubka drážky na záda (mm)", "Platí, když jsou záda v drážce."],
-        ["drazka_odsazeni_mm", "Odsazení drážky od zadní hrany (mm)", ""],
-        ["odskok_police_mm", "Odskok police od hloubky (mm)", "O kolik je police mělčí než korpus."],
-        ["traverza_sirka_mm", "Šířka traverzy (mm)", "Když má spodní skříňka místo víka traverzy."],
+      ["01", "standard.korpus", [
+        ["tloustka_mm", "standard.tloustka", "standard.tloustka_napoveda"],
+        ["zada_tloustka_mm", "standard.zada_tloustka", "standard.zada_tloustka_napoveda"],
+        ["drazka_hloubka_mm", "standard.drazka_hloubka", "standard.drazka_hloubka_napoveda"],
+        ["drazka_odsazeni_mm", "standard.drazka_odsazeni", ""],
+        ["odskok_police_mm", "standard.odskok_police", "standard.odskok_police_napoveda"],
+        ["traverza_sirka_mm", "standard.traverza_sirka", "standard.traverza_sirka_napoveda"],
       ]],
-      ["02", "Čela a hrany", [
-        ["spara_okraj_desetiny", "Spára po obvodu čel (desetiny mm)", "15 = 1,5 mm."],
-        ["spara_mezi_desetiny", "Spára mezi čely (desetiny mm)", "30 = 3 mm."],
-        ["hrana_pohledova_desetiny", "Pohledová hrana (desetiny mm)",
-          "Dvířka, čela zásuvek a přední hrana boku. 20 = 2 mm ABS."],
-        ["hrana_ostatni_desetiny", "Ostatní hrana (desetiny mm)",
-          "Přední hrana dna, víka a polic. 8 = 0,8 mm ABS."],
+      ["02", "standard.cela", [
+        ["spara_okraj_desetiny", "standard.spara_okraj", "standard.spara_okraj_napoveda"],
+        ["spara_mezi_desetiny", "standard.spara_mezi", "standard.spara_mezi_napoveda"],
+        ["hrana_pohledova_desetiny", "standard.hrana_pohledova", "standard.hrana_pohledova_napoveda"],
+        ["hrana_ostatni_desetiny", "standard.hrana_ostatni", "standard.hrana_ostatni_napoveda"],
       ]],
-      ["03", "Deska, prořez a kresba", [
-        ["prorez_mm", "Prořez pily (mm)", "Vstupuje jen do odhadu počtu desek."],
-        ["deska_x_mm", "Formát desky — délka (mm)", ""],
-        ["deska_y_mm", "Formát desky — šířka (mm)", ""],
-        ["sokl_mm", "Výška soklu (mm)", "Kvůli výkresu a kontrole kolizí."],
-        ["vyska_horni_mm", "Spodní hrana horních skříněk (mm)", "Kvůli výkresu a kontrole kolizí."],
+      ["03", "standard.deska", [
+        ["prorez_mm", "standard.prorez", "standard.prorez_napoveda"],
+        ["deska_x_mm", "standard.deska_x", ""],
+        ["deska_y_mm", "standard.deska_y", ""],
+        ["sokl_mm", "standard.sokl", "standard.kvuli_vykresu"],
+        ["vyska_horni_mm", "standard.vyska_horni", "standard.kvuli_vykresu"],
       ]],
     ];
     const VSECHNA_POLE = POLE_STANDARDU.flatMap(([, , pole]) => pole);
@@ -1994,8 +2115,8 @@
         nastavListu([]);
         const ok = await nactiStandard();
         if (!ok) {
-          cil.innerHTML = `<div class="hlaska chyba">Standard se nepodařilo načíst.</div>`;
-          nastavListu([{ popisek: "Zkusit znovu", vedlejsi: true, akce: vykresliStandard }]);
+          cil.innerHTML = `<div class="hlaska chyba">${esc(SimteGen.t("standard.chyba_nacteni"))}</div>`;
+          nastavListu([{ popisek: SimteGen.t("obecne.znovu"), vedlejsi: true, akce: vykresliStandard }]);
           return;
         }
         if (aktualni.nazev !== "standard") return;
@@ -2004,30 +2125,29 @@
 
       cil.innerHTML = `
         <div class="karta vykres">
-          <p class="stitek">Tloušťka desky</p>
+          <p class="stitek">${esc(SimteGen.t("standard.tloustka_stitek"))}</p>
           <div class="cislo-radek"><span class="cislo-obri">${s.tloustka_mm}</span>
-            <p>mm · ${esc(s.nazev)}<br>podle toho se počítá každý kusovník</p></div>
+            <p>mm · ${esc(s.nazev)}<br>${esc(SimteGen.t("standard.podle_toho"))}</p></div>
         </div>
-        ${sekce("00", "Ukázka: skříňka 600 × 720 × 510")}
+        ${sekce(SimteGen.t("standard.ukazka"))}
         <ul class="seznam" id="ukazka"></ul>
-        <p class="popisek">Rozměry se přepočítají, jakmile parametr změníte.</p>
-        <div class="pole"><label for="std-nazev">Název standardu</label>
+        <p class="popisek">${esc(SimteGen.t("standard.prepocet"))}</p>
+        <div class="pole"><label for="std-nazev">${esc(SimteGen.t("standard.nazev"))}</label>
           <input id="std-nazev" type="text" value="${esc(s.nazev)}"></div>
-        <div class="pole"><label for="std-zada-typ">Záda</label>
+        <div class="pole"><label for="std-zada-typ">${esc(SimteGen.t("zada.nazev"))}</label>
           <select id="std-zada-typ">
-            <option value="drazka"${s.zada_typ === "drazka" ? " selected" : ""}>Do drážky</option>
-            <option value="nasazena"${s.zada_typ === "nasazena" ? " selected" : ""}>Nasazená</option>
+            <option value="drazka"${s.zada_typ === "drazka" ? " selected" : ""}>${esc(SimteGen.t("zada.drazka"))}</option>
+            <option value="nasazena"${s.zada_typ === "nasazena" ? " selected" : ""}>${esc(SimteGen.t("zada.nasazena"))}</option>
           </select></div>
         <label class="volba"><input type="checkbox" id="std-traverzy"
-          ${s.traverzy_spodni ? "checked" : ""}> Spodní skříňky mají místo víka traverzy</label>
+          ${s.traverzy_spodni ? "checked" : ""}> ${esc(SimteGen.t("standard.traverzy"))}</label>
         <label class="volba"><input type="checkbox" id="std-olepeni"
-          ${s.rozmer_s_olepenim ? "checked" : ""}> Uvedený rozměr je hotový díl po olepení</label>
-        <p class="popisek">Nezaškrtnuto = kusovník udává rozměr řezu a hranu si nářezové
-        centrum přidá samo. Zaškrtnuto = řez je o tloušťku hrany zmenšený.</p>
-        ${POLE_STANDARDU.map(([c, nazev]) => `${sekce(c, nazev)}
+          ${s.rozmer_s_olepenim ? "checked" : ""}> ${esc(SimteGen.t("standard.olepeni"))}</label>
+        <p class="popisek">${esc(SimteGen.t("standard.olepeni_napoveda"))}</p>
+        ${POLE_STANDARDU.map(([c, nazev]) => `${sekce(SimteGen.t(nazev))}
           <div class="dvojice-poli" data-skupina="${c}"></div>`).join("")}
         <div id="std-zprava" aria-live="polite"></div>
-        ${sekce("04", "Materiály", { klic: "material", popisek: "Přidat" })}
+        ${sekce(SimteGen.t("standard.materialy"), { klic: "material", popisek: SimteGen.t("obecne.pridat") })}
         <div id="std-materialy"></div>`;
 
       for (const [c, , pole] of POLE_STANDARDU) {
@@ -2035,9 +2155,9 @@
         for (const [klic, popisek, napoveda] of pole) {
           const obal = document.createElement("div");
           obal.className = "pole";
-          obal.innerHTML = `<label for="std-${klic}">${esc(popisek)}</label>
+          obal.innerHTML = `<label for="std-${klic}">${esc(SimteGen.t(popisek))}</label>
             <input id="std-${klic}" type="number" inputmode="numeric" value="${cislo(s[klic], 0)}">
-            ${napoveda ? `<span class="napoveda">${esc(napoveda)}</span>` : ""}`;
+            ${napoveda ? `<span class="napoveda">${esc(SimteGen.t(napoveda))}</span>` : ""}`;
           misto.appendChild(obal);
         }
       }
@@ -2050,7 +2170,7 @@
 
       vykresliMaterialy();
       napojSekce(cil, { material: panelMaterial });
-      nastavListu([{ popisek: "Uložit standard", akce: ulozStandard }]);
+      nastavListu([{ popisek: SimteGen.t("standard.ulozit"), akce: ulozStandard }]);
     }
 
     function formularStandardu() {
@@ -2080,27 +2200,27 @@
       if (!seznam) return;
       seznam.innerHTML = stav.ukazka.map((d) => `
         <li class="radek"><span class="poradi">${esc(d.ks)}×</span>
-          <span class="hlavni"><strong>${esc(d.nazev)}</strong>
-          <span>${esc(d.hrany)}</span></span>
+          <span class="hlavni"><strong>${esc(nazevDilu(d.nazev))}</strong>
+          <span>${esc(popisHran(d.hrany))}</span></span>
           <span class="vpravo">${esc(d.rozmer)}</span></li>`).join("");
     }
 
     async function ulozStandard() {
       const zprava = $("std-zprava");
       zprava.className = "hlaska";
-      zprava.textContent = "Ukládám…";
+      zprava.textContent = SimteGen.t("ulozeni.ukladam");
       const { ok, data } = await api("/api/standard", "PUT", formularStandardu())
         .catch(() => ({ ok: false, data: {} }));
       if (!ok) {
         zprava.className = "hlaska chyba";
-        zprava.textContent = data.chyba || "Standard se nepodařilo uložit.";
+        zprava.textContent = chybaServeru(data, "standard.chyba_ulozeni");
         return;
       }
       stav.standard = data.standard;
       stav.ukazka = data.ukazka || [];
       zprava.className = "hlaska uspech";
-      zprava.textContent = "Standard uložen.";
-      toast("Standard uložen.");
+      zprava.textContent = SimteGen.t("standard.ulozen");
+      toast(SimteGen.t("standard.ulozen"));
       vykresliUkazku();
     }
 
@@ -2108,48 +2228,48 @@
       const misto = $("std-materialy");
       if (!misto) return;
       if (!stav.materialy.length) {
-        misto.innerHTML = `<p class="popisek">Zatím žádný vlastní materiál — díly se počítají
-          na výchozí LTD ${stav.standard.tloustka_mm} mm.</p>`;
+        misto.innerHTML = `<p class="popisek">${esc(SimteGen.t("material.zadny",
+          { tloustka: stav.standard.tloustka_mm }))}</p>`;
         return;
       }
       misto.innerHTML = `<ul class="seznam">${stav.materialy.map((m) => `
         <li class="radek"><span class="hlavni"><strong>${esc(m.nazev)}</strong>
           <span>${m.tloustka_mm} mm${m.dekor_kod ? " · " + esc(m.dekor_kod) : ""}${
-            m.vlakno ? " · má vlákno" : ""}</span></span>
-        <button type="button" class="tlacitko vedlejsi" data-smazat="${m.id}">Smazat</button>
+            m.vlakno ? esc(SimteGen.t("material.ma_vlakno")) : ""}</span></span>
+        <button type="button" class="tlacitko vedlejsi" data-smazat="${m.id}">${esc(SimteGen.t("material.smazat"))}</button>
         </li>`).join("")}</ul>`;
       misto.querySelectorAll("[data-smazat]").forEach((b) =>
         b.addEventListener("click", async () => {
           const { ok } = await api(`/api/materialy?id=${b.dataset.smazat}`, "DELETE")
             .catch(() => ({ ok: false }));
-          if (!ok) { toast("Materiál se nepodařilo smazat."); return; }
+          if (!ok) { toast(SimteGen.t("material.chyba_smazani")); return; }
           stav.materialy = stav.materialy.filter((m) => String(m.id) !== b.dataset.smazat);
           vykresliMaterialy();
-          toast("Materiál smazán.");
+          toast(SimteGen.t("material.smazan"));
         }));
     }
 
     function panelMaterial() {
-      otevriPanel("Nový materiál", `
-        <div class="pole"><label for="mt-nazev">Název</label>
-          <input id="mt-nazev" type="text" placeholder="LTD 18 mm dub Sonoma"></div>
+      otevriPanel(SimteGen.t("material.novy"), `
+        <div class="pole"><label for="mt-nazev">${esc(SimteGen.t("obecne.nazev"))}</label>
+          <input id="mt-nazev" type="text" placeholder="${esc(SimteGen.t("material.nazev_vzor"))}"></div>
         <div class="dvojice-poli">
-          <div class="pole"><label for="mt-kod">Kód dekoru</label>
+          <div class="pole"><label for="mt-kod">${esc(SimteGen.t("material.kod"))}</label>
             <input id="mt-kod" type="text" placeholder="H1145"></div>
-          <div class="pole"><label for="mt-tloustka">Tloušťka (mm)</label>
+          <div class="pole"><label for="mt-tloustka">${esc(SimteGen.t("material.tloustka"))}</label>
             <input id="mt-tloustka" type="number" inputmode="numeric" value="18"></div>
         </div>
         <label class="volba"><input type="checkbox" id="mt-vlakno">
-          Dekor má směr vlákna — díly se neotáčí a v kusovníku je délka po vlákně</label>
+          ${esc(SimteGen.t("material.vlakno"))}</label>
         <div id="mt-zprava" aria-live="polite"></div>
         <div class="panel-akce">
-          <button type="button" class="tlacitko" id="mt-ulozit">Přidat materiál</button>
+          <button type="button" class="tlacitko" id="mt-ulozit">${esc(SimteGen.t("material.pridat"))}</button>
         </div>`,
         (panel) => {
           panel.querySelector("#mt-ulozit").addEventListener("click", async () => {
             const zprava = panel.querySelector("#mt-zprava");
             zprava.className = "hlaska";
-            zprava.textContent = "Ukládám…";
+            zprava.textContent = SimteGen.t("ulozeni.ukladam");
             const { ok, data } = await api("/api/materialy", "POST", {
               nazev: panel.querySelector("#mt-nazev").value,
               dekor_kod: panel.querySelector("#mt-kod").value,
@@ -2158,50 +2278,51 @@
             }).catch(() => ({ ok: false, data: {} }));
             if (!ok) {
               zprava.className = "hlaska chyba";
-              zprava.textContent = data.chyba || "Materiál se nepodařilo přidat.";
+              zprava.textContent = chybaServeru(data, "material.chyba_pridani");
               return;
             }
             zavriPanel();
             const m = await api("/api/materialy").catch(() => ({ ok: false, data: {} }));
             if (m.ok) stav.materialy = m.data.materialy || [];
             vykresliMaterialy();
-            toast("Materiál přidán.");
+            toast(SimteGen.t("material.pridan"));
           });
         });
     }
 
     // ── Obrazovka: účet ────────────────────────────────────────────────
-    const STAVY_HLASENI = { nove: "přijato", vyrizuje_se: "řešíme",
-      vyrizeno: "vyřízeno", odlozeno: "odloženo" };
+    // Stav hlášení → klíč ve web/texty.js.
+    const STAVY_HLASENI = { nove: "hlaseni.nove", vyrizuje_se: "hlaseni.resime",
+      vyrizeno: "hlaseni.vyrizeno", odlozeno: "hlaseni.odlozeno" };
 
     // Stupnice zbývajícího období: čtyři týdny, rysky po 7 dnech (styl.css
     // kreslí rysku po čtvrtinách), delší období stupnici jen zaplní.
     const STUPNICE_DNI = 28;
-    const isoDatum = (unix) => new Date(unix * 1000).toISOString().slice(0, 10);
     const jeUkazka = (ja) => /@ukazka\.invalid$/.test((ja && ja.email) || "");
 
     function kartaStavu(ja) {
       const p = ja.predplatne;
       const dni = p ? p.dni_zbyva : 0;
       const popisStavu = !p ? ""
-        : p.stav === "aktivni" ? `předplatné do ${datum(p.plati_do)}`
-        : p.stav === "zkusebni" ? `zkušební doba do ${datum(p.plati_do)}`
-        : "předplatné vypršelo";
+        : p.stav === "aktivni" ? SimteGen.t("ucet.predplatne_do", { datum: datum(p.plati_do) })
+        : p.stav === "zkusebni" ? SimteGen.t("ucet.zkusebni_do", { datum: datum(p.plati_do) })
+        : SimteGen.t("ucet.vyprselo");
       const plneni = Math.min(100, Math.round((dni / STUPNICE_DNI) * 100));
       return `
         <div class="karta vykres">
-          <p class="stitek">Dní zbývá</p>
+          <p class="stitek">${esc(SimteGen.t("ucet.dni_zbyva"))}</p>
           <div class="cislo-radek"><span class="cislo-obri">${dni}</span>
             <p>${esc(popisStavu)}<br>${esc(ja.email || "")}</p></div>
-          <div class="stupnice" role="img" aria-label="Zbývá ${dni} dní">
+          <div class="stupnice" role="img" aria-label="${esc(SimteGen.t("ucet.zbyva",
+            { pocet: SimteGen.pocet(dni, "pocet.den") }))}">
             <div class="stupnice-rysky"></div>
             <div class="stupnice-plneni" style="--hodnota: ${plneni}%"></div>
-            <div class="stupnice-popisky"><span>dnes</span><span>+7</span><span>+14</span>
-              <span>+21</span><span>+28 dní</span></div>
+            <div class="stupnice-popisky"><span>${esc(SimteGen.t("ucet.dnes"))}</span><span>+7</span>
+              <span>+14</span><span>+21</span><span>${esc(SimteGen.t("ucet.plus28"))}</span></div>
           </div>
-          ${p && p.plati_do ? `<p class="rozmer">konec období ${isoDatum(p.plati_do)}</p>` : ""}
-          ${p && p.stav === "vyprselo" ? `<p class="hlaska chyba">Zakázky máte uložené —
-            po obnovení předplatného se k nim zase dostanete.</p>` : ""}
+          ${p && p.plati_do ? `<p class="rozmer">${esc(SimteGen.t("ucet.konec_obdobi",
+            { datum: SimteGen.datum(p.plati_do, { rok: true }) }))}</p>` : ""}
+          ${p && p.stav === "vyprselo" ? `<p class="hlaska chyba">${esc(SimteGen.t("ucet.vyprselo_popis"))}</p>` : ""}
         </div>`;
     }
 
@@ -2218,12 +2339,11 @@
       const { ok, data } = await api("/api/ja").catch(() => ({ ok: false, data: {} }));
       if (aktualni.nazev !== "ucet") return;
       if (!ok) {
-        $("ucet-stav").innerHTML = `<div class="hlaska chyba">Stav předplatného se nepodařilo
-          načíst — zkontrolujte připojení a zkuste to znovu.</div>`;
+        $("ucet-stav").innerHTML = `<div class="hlaska chyba">${esc(SimteGen.t("ucet.chyba_stavu"))}</div>`;
         const znovu = document.createElement("button");
         znovu.type = "button";
         znovu.className = "tlacitko vedlejsi";
-        znovu.textContent = "Zkusit znovu";
+        znovu.textContent = SimteGen.t("obecne.znovu");
         znovu.addEventListener("click", vykresliUcet);
         $("ucet-stav").appendChild(znovu);
       } else {
@@ -2233,9 +2353,8 @@
       }
       const ja = stav.ja || {};
 
-      $("ucet-predplatne").innerHTML = `${sekce("01", "Předplatné")}
-        <p class="popisek">Předplatné odemyká zakázky, konstrukční standard, náhled
-        i generování kusovníků. Zaplacené období platí na všech vašich zařízeních.</p>`;
+      $("ucet-predplatne").innerHTML = `${sekce(SimteGen.t("ucet.predplatne"))}
+        <p class="popisek">${esc(SimteGen.t("ucet.predplatne_popis"))}</p>`;
 
       // Fakturační objednávka: jen v prohlížeči (v aplikaci z Google Play ji
       // schová styl.css podle play.js) a ne v ukázkovém účtu.
@@ -2244,50 +2363,53 @@
       if (jeUkazka(ja)) objednavka.innerHTML = "";
       else vykresliObjednavku(objednavka);
 
+      // Přepínač jazyka kreslí simtegen.js do [data-prepinac-jazyka]; musí
+      // být přímým potomkem, aby si ho všiml i po překreslení obrazovky.
       $("ucet-dalsi").innerHTML = `
-        ${sekce("02", "Vaše hlášení")}
+        ${sekce(SimteGen.t("ucet.jazyk"))}
+        <div data-prepinac-jazyka></div>
+        ${sekce(SimteGen.t("ucet.hlaseni"))}
         <div id="hl-seznam"></div>
-        ${sekce("03", "Vaše data")}
+        ${sekce(SimteGen.t("ucet.data"))}
         <ul class="seznam" id="ucet-akce"></ul>
-        ${PATICKA}`;
+        ${paticka(false)}`;
 
       nactiHlaseni();
 
       const akce = $("ucet-akce");
-      pridejAkci(akce, "Stáhnout moje data", "všechno, co o vás vedeme, v jednom souboru",
+      pridejAkci(akce, SimteGen.t("ucet.stahnout"), SimteGen.t("ucet.stahnout_popis"),
         () => { location.href = "/api/ucet/export"; });
-      pridejAkci(akce, "Odhlásit se", "", async () => {
+      pridejAkci(akce, SimteGen.t("ucet.odhlasit"), "", async () => {
         await api("/api/odhlaseni", "POST");
         zahodKoncept();
         location.reload();
       });
-      pridejAkci(akce, "Smazat účet a všechna data", "nevratné", smazUcet);
+      pridejAkci(akce, SimteGen.t("ucet.smazat"), SimteGen.t("akce.nevratne"), smazUcet);
 
       nastavListu([]);
     }
 
     function vykresliObjednavku(cil) {
+      // Anglická stránka má popisky přeložené, ale podmínky i faktura jsou
+      // česky — řekne to věta nad tlačítkem.
       cil.innerHTML = `
-        <p class="stitek">Objednávka s fakturou</p>
+        <p class="stitek">${esc(SimteGen.t("objednavka.nadpis"))}</p>
         ${cenikSeznam()}
-        <div class="pole"><label for="ob-mesice">Délka</label>
-          <select id="ob-mesice">
-            <option value="1">1 měsíc</option>
-            <option value="3">3 měsíce</option>
-            <option value="12">12 měsíců</option>
+        <div class="pole"><label for="ob-mesice">${esc(SimteGen.t("objednavka.delka"))}</label>
+          <select id="ob-mesice">${[1, 3, 12].map((n) =>
+            `<option value="${n}">${esc(SimteGen.pocet(n, "pocet.mesic"))}</option>`).join("")}
           </select></div>
         <p class="popisek" id="ob-vybrana"></p>
         <p class="titulek-cena" id="ob-celkem"></p>
-        <div class="pole"><label for="ob-fakturace">Fakturační údaje</label>
+        <div class="pole"><label for="ob-fakturace">${esc(SimteGen.t("objednavka.fakturace"))}</label>
           <textarea id="ob-fakturace" rows="3" maxlength="600"
-            placeholder="Název / jméno, adresa, IČO (máte-li)"></textarea></div>
+            placeholder="${esc(SimteGen.t("objednavka.fakturace_vzor"))}"></textarea></div>
         <label class="volba"><input type="checkbox" id="ob-spotrebitel">
-          Objednávám jako spotřebitel (mimo podnikání)</label>
+          ${esc(SimteGen.t("objednavka.spotrebitel"))}</label>
         <label class="volba skryte" id="ob-souhlas-radek"><input type="checkbox" id="ob-souhlas">
-          Výslovně souhlasím, aby placená služba začala před uplynutím 14denní lhůty
-          pro odstoupení, a beru na vědomí, že tím právo na odstoupení ztrácím
-          (§ 1837 písm. l) občanského zákoníku).</label>
-        <button type="button" class="tlacitko" id="ob-poslat">Objednávka zavazující k platbě</button>
+          ${esc(SimteGen.t("objednavka.souhlas"))}</label>
+        ${anglicky() ? `<p class="popisek">${esc(SimteGen.t("objednavka.jen_cesky"))}</p>` : ""}
+        <button type="button" class="tlacitko" id="ob-poslat">${esc(SimteGen.t("objednavka.poslat"))}</button>
         <div id="ob-zprava" aria-live="polite"></div>`;
       nastavObjednavku(cil);
     }
@@ -2298,9 +2420,10 @@
       const prepocti = () => {
         const mesice = Number($("ob-mesice").value);
         const v = vybrana();
-        $("ob-vybrana").textContent = `${v.nazev} — ${v.mesic} ${CENIK.mena} za firmu a měsíc`;
-        $("ob-celkem").textContent = `Celkem ${(mesice * v.mesic).toLocaleString("cs-CZ")} `
-          + `${CENIK.mena} za ${mesice} ${mesice === 1 ? "měsíc" : mesice < 5 ? "měsíce" : "měsíců"}`;
+        $("ob-vybrana").textContent = SimteGen.t("objednavka.vybrana",
+          { nazev: v.nazev, cena: SimteGen.kc(v.mesic) });
+        $("ob-celkem").textContent = SimteGen.t("objednavka.celkem",
+          { cena: SimteGen.kc(mesice * v.mesic), obdobi: SimteGen.pocet(mesice, "pocet.mesic") });
       };
       prepocti();
       $("ob-mesice").addEventListener("change", prepocti);
@@ -2310,7 +2433,7 @@
       $("ob-poslat").addEventListener("click", async () => {
         const zprava = $("ob-zprava");
         zprava.className = "hlaska";
-        zprava.textContent = "Odesílám…";
+        zprava.textContent = SimteGen.t("obecne.odesilam");
         const mesice = Number($("ob-mesice").value);
         const varianta = vybrana();
         const { ok, data } = await api("/api/objednavka", "POST", {
@@ -2323,12 +2446,12 @@
         }).catch(() => ({ ok: false, data: {} }));
         if (!ok) {
           zprava.className = "hlaska chyba";
-          zprava.textContent = data.chyba || "Objednávku se nepodařilo odeslat.";
+          zprava.textContent = chybaServeru(data, "objednavka.chyba");
           return;
         }
         zprava.className = "hlaska uspech";
-        zprava.textContent = "Děkujeme, objednávku máme. Fakturu pošleme e-mailem.";
-        toast("Objednávku máme.");
+        zprava.textContent = SimteGen.t("objednavka.prijata");
+        toast(SimteGen.t("objednavka.prijata_kratce"));
       });
     }
 
@@ -2342,23 +2465,25 @@
       if (!seznam.isConnected) return;
       const polozky = ok ? (data.hlaseni || []) : [];
       if (!polozky.length) {
-        seznam.innerHTML = `<p class="popisek">Zatím jste nic nehlásili. Tlačítkem
-          „Nahlásit chybu“ nám napíšete a odpověď uvidíte tady.</p>`;
+        seznam.innerHTML = `<p class="popisek">${esc(SimteGen.t("hlaseni.zadne"))}</p>`;
         return;
       }
+      // Text hlášení a odpověď jsou zprávy mezi zákazníkem a námi — nepřekládají se.
       seznam.innerHTML = `<ul class="seznam">${polozky.map((h) => `
         <li class="radek"><span class="hlavni"><strong>${esc(h.text)}</strong>
-          <span>${datum(h.vytvoreno)} · ${esc(STAVY_HLASENI[h.stav] || h.stav)}${
-            h.odpoved ? " · odpověď: " + esc(h.odpoved) : ""}</span></span></li>`).join("")}</ul>`;
+          <span>${esc(datum(h.vytvoreno))} · ${esc(STAVY_HLASENI[h.stav]
+            ? SimteGen.t(STAVY_HLASENI[h.stav]) : h.stav)}${
+            h.odpoved ? esc(SimteGen.t("hlaseni.odpoved", { odpoved: h.odpoved })) : ""}</span></span></li>`)
+        .join("")}</ul>`;
     }
 
     async function smazUcet() {
-      if (!await SimteGen.potvrd("Smazat účet a všechna data?", {
-        popis: "Smažou se všechny zakázky i kusovníky. Krok je nevratný.",
-        ano: "Smazat účet", nebezpecne: true })) return;
+      if (!await SimteGen.potvrd(SimteGen.t("ucet.smazat_otazka"), {
+        popis: SimteGen.t("ucet.smazat_popis"),
+        ano: SimteGen.t("ucet.smazat_ano"), nebezpecne: true })) return;
       const { ok, data } = await api("/api/ucet/smazat", "POST")
         .catch(() => ({ ok: false, data: {} }));
-      if (!ok) { toast(data.chyba || "Smazání se nepovedlo."); return; }
+      if (!ok) { toast(chybaServeru(data, "obecne.chyba_smazani")); return; }
       zahodKoncept();
       location.reload();
     }
@@ -2366,18 +2491,46 @@
     // ── Start ──────────────────────────────────────────────────────────
     sledujKlavesnici();
 
+    /**
+     * Po novém načtení stránky (přepnutí jazyka, obnovení v prohlížeči) se
+     * otevře obrazovka z adresy. Vnitřní obrazovka nese číslo zakázky
+     * (#nahled/12, #stena/12/0); pod ni se do historie vloží Zakázky
+     * a zakázka, aby tlačítko Zpět vedlo tam, kam vede jindy. Kusovník se
+     * znovu nepočítá — otevře se zakázka, odkud je na jedno klepnutí.
+     */
+    async function obnovObrazovku() {
+      const [nazev, idText, indexText] = (location.hash || "").replace("#", "").split("/");
+      if (KORENOVE[nazev]) { jdi(nazev, {}, true); return; }
+      const id = Number(idText);
+      if (VNITRNI[nazev] && Number.isInteger(id) && id > 0) {
+        const { ok } = await nactiDokument(id);
+        if (ok) {
+          history.replaceState({ obrazovka: "zakazky", parametry: {} }, "", "#zakazky");
+          if (nazev === "zakazka" || nazev === "kusovnik") { jdi("zakazka", { id }); return; }
+          history.pushState({ obrazovka: "zakazka", parametry: { id } }, "", `#zakazka/${id}`);
+          jdi(nazev, nazev === "stena" ? { index: cislo(indexText, 0) } : {});
+          return;
+        }
+      }
+      jdi("zakazky", {}, true);
+    }
+
+    // Kdo je přihlášený, ví simtegen.js: bez spojení je to „offline“, ne
+    // odhlášení — zůstane poslední obrazovka a pruh nabídne zkusit to znovu.
     async function start() {
-      const { data } = await api("/api/ja").catch(() => ({ data: {} }));
-      stav.ja = data;
-      if (!data.prihlasen) {
+      const kdo = await SimteGen.kdoJsem();
+      if (kdo.stav === "offline") {
+        SimteGen.offline(start);
+        return;
+      }
+      SimteGen.spojeno();
+      stav.ja = kdo.ja;
+      if (kdo.stav === "odhlasen") {
         jdi("uvod", {}, true);
         return;
       }
       await nactiStandard();
-      // Obnovit se dá jen kořenová obrazovka — vnitřní obrazovky potřebují
-      // zakázku, kterou z adresy vyčíst nejde.
-      const hash = (location.hash || "").replace("#", "");
-      jdi(KORENOVE[hash] ? hash : "zakazky", {}, true);
+      await obnovObrazovku();
     }
 
     start();

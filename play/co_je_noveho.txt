@@ -1,1 +1,1 @@
-Mazání v aplikaci je přehlednější: smazanou stěnu vrátíte jedním klepnutím a smazání zakázky nebo účtu potvrzujete v okně aplikace, ne prohlížeče. Nově najdete v aplikaci i nápovědu. Vaše zakázky, standard i kusovníky zůstávají beze změny.
+Aplikaci můžete nově používat v angličtině — přepnete ji na úvodní obrazovce, u účtu nebo přímo v náhledu kuchyně, když ji ukazujete zákazníkovi. Kusovník stáhnete i jako anglický soubor CSV pro nářezové centrum se stejnými rozměry. Vaše zakázky, standard i kusovníky zůstávají beze změny.

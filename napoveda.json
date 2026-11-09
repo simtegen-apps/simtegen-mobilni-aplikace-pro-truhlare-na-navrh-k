@@ -18,6 +18,10 @@
       "text": "V zakázce klepněte na Kopírovat jako šablonu. Vznikne nová zakázka se stejnými stěnami a skříňkami, kterou upravíte pro nového zákazníka."
     },
     {
+      "nadpis": "Jak přepnout aplikaci do angličtiny",
+      "text": "Jazyk přepnete tlačítky Čeština a English dole na úvodní obrazovce, na obrazovce Účet v části Jazyk aplikace nebo přímo v Náhledu, když kuchyň ukazujete zákazníkovi. Aplikace si volbu na tomto zařízení zapamatuje.\n\nV angličtině stáhnete i kusovník — soubor CSV má anglické názvy dílů a sloupců, ale stejné rozměry, počty a pořadí sloupců jako český. Vaše zakázky, názvy stěn a materiálů zůstávají tak, jak jste je zapsali. Obchodní podmínky, zásady a tahle nápověda jsou jen česky."
+    },
+    {
       "nadpis": "Jak smazat stěnu nebo zakázku",
       "text": "Na stěně klepněte na Smazat stěnu. Stěna zmizí hned i se skříňkami; když jste ji smazali omylem, klepněte v hlášení dole na Vrátit.\n\nSmazání zakázky vrátit nejde, proto se vás aplikace nejdřív zeptá. Zakázka se smaže i se stěnami a kusovníky."
     },

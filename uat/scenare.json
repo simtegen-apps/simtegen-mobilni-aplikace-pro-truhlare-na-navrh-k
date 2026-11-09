@@ -487,6 +487,72 @@
       ]
     },
     {
+      "nazev": "Kusovník v angličtině má stejné díly a rozměry a cizí účet ho nestáhne",
+      "kroky": [
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-anglicky-A kitchen", "oznaceni_zakaznika": "UAT-zakaznik-en-A" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-anglicky-A kitchen", "oznaceni_zakaznika": "UAT-zakaznik-en-A" },
+            "steny": [
+              {
+                "nazev": "UAT-stena-en-A",
+                "delka_mm": 3000,
+                "vyska_mm": 2600,
+                "otvory": [],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0 }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/kusovnik",
+          "telo": { "zakazka_id": "{zakazka}" },
+          "ocekavam": 200,
+          "uloz": { "kusovnik": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}/csv?jazyk=en",
+          "ocekavam": 200,
+          "obsahuje": ["material;part;length_mm;width_mm;qty", "Side panel;720;510;2", "Rail", "Door",
+                       "Check the dimensions before sending them to the cutting centre"],
+          "neobsahuje": ["Bok;", "Traverza", "Dvířka"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}/csv",
+          "ocekavam": 200,
+          "obsahuje": ["material;dil;delka_mm", "Bok;720;510;2", "Traverza", "Dvířka"],
+          "neobsahuje": ["Side panel"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}/csv?jazyk=de",
+          "ocekavam": 200,
+          "obsahuje": ["material;dil;delka_mm", "Bok;720;510;2"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}/csv?jazyk=en",
+          "ocekavam": 404,
+          "neobsahuje": ["UAT-anglicky-A", "UAT-stena-en-A", "Side panel"]
+        }
+      ]
+    },
+    {
       "nazev": "Účet a vlastní data zůstávají dostupné vždy",
       "kroky": [
         {

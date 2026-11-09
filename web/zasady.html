@@ -46,7 +46,7 @@
     <tbody>
       <tr><td>účet zákazníka a přihlášení</td><td>e-mailová adresa, čas založení účtu</td><td>plnění smlouvy</td><td>do smazání účtu zákazníkem</td></tr>
       <tr><td>jednorázové přihlášení e-mailovým odkazem</td><td>otisk tokenu, e-mailová adresa, expirace</td><td>plnění smlouvy</td><td>24 hodin</td></tr>
-      <tr><td>udržení přihlášení</td><td>otisk tokenu, odkaz na účet, expirace</td><td>plnění smlouvy</td><td>30 dní od posledního použití aplikace, nejdéle rok od přihlášení</td></tr>
+      <tr><td>udržení přihlášení</td><td>otisk tokenu, odkaz na účet, expirace</td><td>plnění smlouvy</td><td>30 dní od posledního použití aplikace, nejdéle 90 dní od přihlášení</td></tr>
       <tr><td>evidence zaplaceného období předplatného; upozornění e-mailem týden před koncem předplaceného období (jen při platbě fakturou, nejvýš jednou za období; žádná reklama)</td><td>odkaz na účet, datum konce předplatného, poznámka k platbě (např. číslo dokladu)</td><td>plnění smlouvy</td><td>do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu</td></tr>
       <tr><td>hlášení a dotazy zákazníka k aplikaci a naše odpovědi; o odpovědi vás upozorníme e-mailem (s textem odpovědi, nejvýš jednou za odpověď)</td><td>text hlášení, stav vyřízení, odpověď, číslo záznamu v systému podpory, čas</td><td>plnění smlouvy</td><td>do smazání účtu zákazníkem</td></tr>
       <tr><td>evidence zaplacených období předplatného (historie plateb)</td><td>odkaz na účet, počet zaplacených měsíců, poznámka k platbě, čas zápisu</td><td>plnění smlouvy</td><td>do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu</td></tr>
@@ -99,9 +99,14 @@
   ani reklamní. Pro takové cookies zákon souhlas nevyžaduje
   (§ 89 odst. 3 zákona č. 127/2005 Sb., o elektronických komunikacích):</p>
   <ul>
-    <li><code>relace</code> — udržení přihlášení (technická, HttpOnly); platnost 30 dní od posledního použití, nejdéle rok.</li>
+    <li><code>__Host-relace</code> — udržení přihlášení (technická, HttpOnly, platí jen pro tuto adresu aplikace); platnost 30 dní od posledního použití, nejdéle 90 dní.</li>
     <li><code>aplikace</code> — pozná aplikaci z Google Play, aby v ní nebyla nabídka placení mimo Google Play (technická, HttpOnly); platnost 1 rok.</li>
   </ul>
+  <p>Když si v aplikaci sami přepnete jazyk nebo měnu, prohlížeč si tuto volbu zapamatuje
+  (úložiště prohlížeče, položka <code>sg-volba</code>), aby se příště nemusela opakovat. Nic
+  jiného v ní není a nikam se neodesílá; smažete ji vymazáním dat stránky v prohlížeči.
+  Výchozí měnu volíme podle země, ze které se připojujete — tu zná náš poskytovatel
+  hostingu z připojení a nikde ji neukládáme.</p>
 
   <h2>Vaše práva</h2>
   <ul>

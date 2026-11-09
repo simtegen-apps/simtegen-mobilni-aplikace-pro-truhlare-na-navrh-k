@@ -1,5 +1,6 @@
 {
   "produkt": "Kusovník pro truhláře",
+  "popis": "Návrh kuchyní a skříněk u zákazníka v tabletu nebo telefonu a kusovník desek a polic pro nářezové centrum — pro truhláře.",
   "provozovatel": "SimteGen, s.r.o.",
   "kontakt_email": "support@simtegen.com",
   "ico": "13980351",
@@ -60,7 +61,7 @@
       ],
       "ucel": "udržení přihlášení",
       "pole": "otisk tokenu, odkaz na účet, expirace",
-      "retence": "30 dní od posledního použití aplikace, nejdéle rok od přihlášení"
+      "retence": "30 dní od posledního použití aplikace, nejdéle 90 dní od přihlášení"
     },
     {
       "entita": "predplatne",
@@ -273,13 +274,19 @@
       "ucel": "rozepsané měření zakázky se drží v telefonu, aby se u zákazníka bez signálu neztratilo; po uložení na server se maže",
       "typ": "localStorage",
       "trvani": "do uložení zakázky nebo do smazání zákazníkem v prohlížeči"
+    },
+    {
+      "nazev": "sg-volba",
+      "ucel": "zapamatuje si jazyk aplikace (čeština, nebo angličtina), který jste si sami přepnuli, aby se na tomto zařízení příště nemusel volit znovu; nic jiného v ní není a nikam se neodesílá",
+      "typ": "localStorage",
+      "trvani": "do změny volby nebo smazání dat stránky v prohlížeči"
     }
   ],
   "cookies": [
     {
-      "nazev": "relace",
-      "ucel": "udržení přihlášení (technická, HttpOnly)",
-      "trvani": "30 dní od posledního použití, nejdéle rok"
+      "nazev": "__Host-relace",
+      "ucel": "udržení přihlášení (technická, HttpOnly, platí jen pro tuto adresu aplikace)",
+      "trvani": "30 dní od posledního použití, nejdéle 90 dní"
     },
     {
       "nazev": "aplikace",
@@ -296,7 +303,7 @@
       "A2:90:CB:31:B4:E3:4F:8A:95:87:66:D2:86:FE:42:FE:36:FD:A0:09:41:7C:49:1D:1B:9F:76:19:99:DD:0E:95"
     ],
     "kategorie": "BUSINESS",
-    "dlouhy_popis": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru, kteří měří přímo u zákazníka v telefonu nebo tabletu.\n\nCo aplikace dělá:\n• Zadáte rozměry stěn, oken a dveří a na stěny postavíte skříňky — spodní, horní, vysoké i rohové.\n• Výkres stěny ukazuje skříňky, okna a dveře v měřítku.\n• Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.\n• Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.\n• Kusovník stáhnete jako soubor CSV pro nářezové centrum.\n• Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.\n\nNež se zaregistrujete, můžete si aplikaci projít tlačítkem Vyzkoušet ukázku: dostanete dočasný účet s vymyšlenou kuchyní a kusovníkem, který za 24 hodin zmizí.\n\nPřihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.\n\nJak se platí: zkušební doba 14 dní je zdarma, bez platební karty a bez závazku. Potom se aplikace platí předplatným, které si koupíte přímo v aplikaci přes Google Play. Cenu a délku období předplatného uvidíte v aplikaci před nákupem. Předplatné se obnovuje automaticky a zrušíte ho kdykoli v Google Play.\n\nRozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte.",
+    "dlouhy_popis": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru, kteří měří přímo u zákazníka v telefonu nebo tabletu.\n\nCo aplikace dělá:\n• Zadáte rozměry stěn, oken a dveří a na stěny postavíte skříňky — spodní, horní, vysoké i rohové.\n• Výkres stěny ukazuje skříňky, okna a dveře v měřítku.\n• Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.\n• Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.\n• Kusovník stáhnete jako soubor CSV pro nářezové centrum.\n• Aplikaci můžete používat česky nebo anglicky; kusovník stáhnete i jako anglické CSV se stejnými rozměry.\n• Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.\n\nNež se zaregistrujete, můžete si aplikaci projít tlačítkem Vyzkoušet ukázku: dostanete dočasný účet s vymyšlenou kuchyní a kusovníkem, který za 24 hodin zmizí.\n\nPřihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.\n\nJak se platí: zkušební doba 14 dní je zdarma, bez platební karty a bez závazku. Potom se aplikace platí předplatným, které si koupíte přímo v aplikaci přes Google Play. Cenu a délku období předplatného uvidíte v aplikaci před nákupem. Předplatné se obnovuje automaticky a zrušíte ho kdykoli v Google Play.\n\nRozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte.",
     "hlavni_veta": "Od měření u zákazníka ke kusovníku",
     "snimky": [
       {

@@ -6,7 +6,7 @@
 import { cookieHlavicka, json, tabulkySUzivatelem } from "../../../spolecne.js";
 
 export async function onRequestPost(context) {
-  const { env, data } = context;
+  const { env, data, request } = context;
   if (!data.uzivatel) return json({ chyba: "Nejste přihlášeni." }, 401);
 
   const prikazy = [];
@@ -23,5 +23,5 @@ export async function onRequestPost(context) {
   );
   await env.DB.batch(prikazy);
 
-  return json({ stav: "smazano" }, 200, { "Set-Cookie": cookieHlavicka("", 0) });
+  return json({ stav: "smazano" }, 200, { "Set-Cookie": cookieHlavicka("", 0, request, env) });
 }
