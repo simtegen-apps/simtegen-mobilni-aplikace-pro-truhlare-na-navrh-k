@@ -1,13 +1,17 @@
 {
  "meny": [
-  "CZK"
+  "CZK",
+  "EUR",
+  "USD"
  ],
  "polozky": [
   {
    "id": "doporuceni",
    "nazev": "SimteGen Kusovník – Standard",
    "ceny": {
-    "CZK": "449"
+    "CZK": "449",
+    "EUR": "18.90",
+    "USD": "20.90"
    },
    "jednotka": {
     "cs": "za firmu a měsíc",
@@ -18,7 +22,9 @@
    "id": "varianta-1",
    "nazev": "SimteGen Kusovník – Sólo",
    "ceny": {
-    "CZK": "249"
+    "CZK": "249",
+    "EUR": "9.90",
+    "USD": "11.90"
    },
    "jednotka": {
     "cs": "za firmu a měsíc",
@@ -29,7 +35,9 @@
    "id": "varianta-2",
    "nazev": "SimteGen Kusovník – Tým",
    "ceny": {
-    "CZK": "890"
+    "CZK": "890",
+    "EUR": "36.90",
+    "USD": "40.90"
    },
    "jednotka": {
     "cs": "za firmu a měsíc",
