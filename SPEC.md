@@ -90,6 +90,7 @@ Obnovená šablona (DESIGN.md, část „Text“; `vizualni_kontrola.py`: věta 
 - **Nepřidáno**, protože zákazník chtěl jen texty a rozložení: „Doporučit kolegovi“ (`data-doporucit`) a tisk (`data-tisk`). Patří do samostatné stavby.
 - **data-manifest.json** dostal jen `aplikace.en`, anglický záznam v obchodě (název, popisy, hlavní věta, slova snímků ve stejném pořadí). Bez něj `vykresli_aplikaci.py` stavbu neprojde, protože produkt mluví anglicky. Entity, retence, služby, cookies ani úložiště se nemění, takže se zásady obsahově nemění.
 - **uat/scenare.json** má nový scénář pro akceptaci této stavby: započtený úvod, stejný kusovník (8 dílů, Bok, Traverza, Dvířka) a 404 pro účet B na zakázku i kusovník účtu A.
+- **napoveda.json** má i anglickou část (`en`). Generátor šablony `vykresli_napovedu.py` pak do `web/napoveda.html` napíše `simtegen-jazyky: cs en`, ale `texty.js` nenačetl, a `kontrola_jazyku.py` šablony to odmítla. Jediná změna mimo rozsah je proto oprava generátoru: při anglické části vloží `<script src="texty.js"></script>` hned za `simtegen.js`. Jde o opravu šablony, kterou je třeba přenést i do šablony samotné, jinak ji příští obnova přepíše.
 - Soubory mimo rozsah (functions/**, web/play.js, deploy.yml, _middleware.js, overeni.js, migrace) stavba nezměnila.
 
 _Schvaluje se přes ARGA (simtegen_approve_spec) nebo na mini PC._
