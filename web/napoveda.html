@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="application-name" content="Kusovník pro truhláře">
   <title>Nápověda — Kusovník pro truhláře</title>
-  <meta name="simtegen-jazyky" content="cs en">
   <meta name="description" content="Nápověda k aplikaci Kusovník pro truhláře: Stěny a skříňky zadáte u zákazníka, aplikace spočítá kusovník desek pro nářezové centrum.">
   <link rel="stylesheet" href="styl.css">
   <link rel="stylesheet" href="produkt.css">
@@ -16,180 +15,99 @@
   <div class="appka">
     <nav class="navigace" aria-label="Hlavní menu">
       <a class="znacka" href="/" aria-label="SimteGen"><span class="znacka-ctverec"></span><span class="znacka-slovo">SimteGen</span></a>
-      <a href="/" data-t="sg.napoveda.zpet">Zpět do aplikace</a>
-      <a href="napoveda.html" aria-current="page" data-t="sg.napoveda">Nápověda</a>
+      <a href="/">Zpět do aplikace</a>
+      <a href="napoveda.html" aria-current="page">Nápověda</a>
       <span class="mezera"></span>
-      <button class="nahlasit-chybu" type="button" data-t="sg.napoveda.nahlasit">Nahlásit chybu</button>
+      <button class="nahlasit-chybu" type="button">Nahlásit chybu</button>
     </nav>
     <header class="hlavicka">
-      <h1 data-t="sg.napoveda">Nápověda</h1>
-      <button type="button" class="nahlasit-chybu jen-telefon" aria-label="Nahlásit chybu" data-t-aria-label="sg.napoveda.nahlasit">
+      <h1>Nápověda</h1>
+      <button type="button" class="nahlasit-chybu jen-telefon" aria-label="Nahlásit chybu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>
       </button>
     </header>
     <main class="obsah">
-      <div lang="cs" data-jazyk-napovedy="cs">
-        <section class="karta">
-          <p>Stěny a skříňky zadáte u zákazníka, aplikace spočítá kusovník desek pro nářezové centrum.</p>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">Jak založit zakázku</h2>
-          <div class="karta">
-            <ul>
-              <li>V Zakázkách klepněte na Nová zakázka.</li>
-              <li>Vyplňte název a klepněte na Založit zakázku.</li>
-              <li>Zakázka se ukládá průběžně, měření dokončíte i na počítači.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">Jak zadat stěnu, okna a skříňky</h2>
-          <div class="karta">
-            <ul>
-              <li>V zakázce klepněte u Stěny na Přidat.</li>
-              <li>Zadejte délku a výšku stěny.</li>
-              <li>Přidejte okna a dveře.</li>
-              <li>Klepněte na Přidat skříňku.</li>
-              <li>Překryv nebo zásah do okna aplikace ohlásí.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">Jak vygenerovat kusovník</h2>
-          <div class="karta">
-            <ul>
-              <li>V zakázce klepněte na Vygenerovat kusovník.</li>
-              <li>Klepněte na Stáhnout CSV a pošlete soubor nářezovému centru.</li>
-              <li>Rozměry před odesláním zkontrolujte.</li>
-              <li>Díly se počítají podle obrazovky Standard.</li>
-              <li>Bez volby hotového dílu po olepení je v kusovníku řez a hranu přidá nářezové centrum.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">Jak použít starší zakázku jako šablonu</h2>
-          <div class="karta">
-            <ul>
-              <li>V zakázce klepněte na Kopírovat jako šablonu.</li>
-              <li>Vznikne nová zakázka se stejnými stěnami a skříňkami.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">Jak změnit jazyk</h2>
-          <div class="karta">
-            <ul>
-              <li>Aplikace mluví jazykem telefonu, česky nebo anglicky.</li>
-              <li>Ručně jazyk změníte na obrazovce Účet v řádku Jazyk.</li>
-              <li>V angličtině stáhnete anglický kusovník se stejnými rozměry.</li>
-              <li>Podmínky a zásady jsou jen česky.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">Jak smazat stěnu nebo zakázku</h2>
-          <div class="karta">
-            <ul>
-              <li>Na stěně klepněte na Smazat stěnu.</li>
-              <li>Omyl vrátíte tlačítkem Vrátit dole.</li>
-              <li>Smazání zakázky vrátit nejde, aplikace se proto nejdřív zeptá.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">Jak stáhnout svá data nebo smazat účet</h2>
-          <div class="karta">
-            <ul>
-              <li>Na obrazovce Účet klepněte na Stáhnout moje data.</li>
-              <li>Tamtéž je Smazat účet a všechna data.</li>
-              <li>Smazání účtu je nevratné.</li>
-            </ul>
-          </div>
-        </section>
-      </div>
-      <div lang="en" data-jazyk-napovedy="en">
-        <section class="karta">
-          <p>Enter walls and cabinets at the client&#x27;s home and the app works out the board cutting list for the cutting centre.</p>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">How to create a job</h2>
-          <div class="karta">
-            <ul>
-              <li>In Jobs, tap New job.</li>
-              <li>Enter a name and tap Create job.</li>
-              <li>The job saves as you go, so you can finish measuring on a computer.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">How to enter a wall, windows and cabinets</h2>
-          <div class="karta">
-            <ul>
-              <li>In the job, tap Add next to Walls.</li>
-              <li>Enter the wall length and height.</li>
-              <li>Add windows and doors.</li>
-              <li>Tap Add cabinet.</li>
-              <li>The app warns you when cabinets overlap or run into a window.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">How to generate a cutting list</h2>
-          <div class="karta">
-            <ul>
-              <li>In the job, tap Generate cutting list.</li>
-              <li>Tap Download CSV and send the file to the cutting centre.</li>
-              <li>Check the sizes before you send them.</li>
-              <li>Parts follow your settings on the Standard screen.</li>
-              <li>Without the finished-part-after-edging option, the list gives the cut and the cutting centre adds the edge.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">How to reuse an older job as a template</h2>
-          <div class="karta">
-            <ul>
-              <li>In the job, tap Copy as a template.</li>
-              <li>You get a new job with the same walls and cabinets.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">How to change the language</h2>
-          <div class="karta">
-            <ul>
-              <li>The app follows your phone&#x27;s language, Czech or English.</li>
-              <li>To change it, use the Language row on the Account screen.</li>
-              <li>In English the cutting list downloads as an English CSV with the same sizes.</li>
-              <li>The terms and the privacy policy are in Czech only.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">How to delete a wall or a job</h2>
-          <div class="karta">
-            <ul>
-              <li>On the wall, tap Delete wall.</li>
-              <li>Deleted by mistake? Tap Undo at the bottom.</li>
-              <li>A deleted job cannot be restored, so the app asks first.</li>
-            </ul>
-          </div>
-        </section>
-        <section>
-          <h2 class="sekce-titulek">How to download your data or delete your account</h2>
-          <div class="karta">
-            <ul>
-              <li>On the Account screen, tap Download my data.</li>
-              <li>Delete account and all data is in the same place.</li>
-              <li>Deleting the account cannot be undone.</li>
-            </ul>
-          </div>
-        </section>
-      </div>
+      <section class="karta">
+        <p>Stěny a skříňky zadáte u zákazníka, aplikace spočítá kusovník desek pro nářezové centrum.</p>
+      </section>
+      <section>
+        <h2 class="sekce-titulek">Jak založit zakázku</h2>
+        <div class="karta">
+          <ul>
+            <li>V Zakázkách klepněte na Nová zakázka.</li>
+            <li>Vyplňte název a klepněte na Založit zakázku.</li>
+            <li>Zakázka se ukládá průběžně, měření dokončíte i na počítači.</li>
+          </ul>
+        </div>
+      </section>
+      <section>
+        <h2 class="sekce-titulek">Jak zadat stěnu, okna a skříňky</h2>
+        <div class="karta">
+          <ul>
+            <li>V zakázce klepněte u Stěny na Přidat.</li>
+            <li>Zadejte délku a výšku stěny.</li>
+            <li>Přidejte okna a dveře.</li>
+            <li>Klepněte na Přidat skříňku.</li>
+            <li>Překryv nebo zásah do okna aplikace ohlásí.</li>
+          </ul>
+        </div>
+      </section>
+      <section>
+        <h2 class="sekce-titulek">Jak vygenerovat kusovník</h2>
+        <div class="karta">
+          <ul>
+            <li>V zakázce klepněte na Vygenerovat kusovník.</li>
+            <li>Klepněte na Stáhnout CSV a pošlete soubor nářezovému centru.</li>
+            <li>Rozměry před odesláním zkontrolujte.</li>
+            <li>Díly se počítají podle obrazovky Standard.</li>
+            <li>Bez volby hotového dílu po olepení je v kusovníku řez a hranu přidá nářezové centrum.</li>
+          </ul>
+        </div>
+      </section>
+      <section>
+        <h2 class="sekce-titulek">Jak použít starší zakázku jako šablonu</h2>
+        <div class="karta">
+          <ul>
+            <li>V zakázce klepněte na Kopírovat jako šablonu.</li>
+            <li>Vznikne nová zakázka se stejnými stěnami a skříňkami.</li>
+          </ul>
+        </div>
+      </section>
+      <section>
+        <h2 class="sekce-titulek">Jak změnit jazyk</h2>
+        <div class="karta">
+          <ul>
+            <li>Aplikace mluví jazykem telefonu, česky nebo anglicky.</li>
+            <li>Ručně jazyk změníte na obrazovce Účet v řádku Jazyk.</li>
+            <li>V angličtině stáhnete anglický kusovník se stejnými rozměry.</li>
+            <li>Podmínky, zásady a nápověda jsou jen česky.</li>
+          </ul>
+        </div>
+      </section>
+      <section>
+        <h2 class="sekce-titulek">Jak smazat stěnu nebo zakázku</h2>
+        <div class="karta">
+          <ul>
+            <li>Na stěně klepněte na Smazat stěnu.</li>
+            <li>Omyl vrátíte tlačítkem Vrátit dole.</li>
+            <li>Smazání zakázky vrátit nejde, aplikace se proto nejdřív zeptá.</li>
+          </ul>
+        </div>
+      </section>
+      <section>
+        <h2 class="sekce-titulek">Jak stáhnout svá data nebo smazat účet</h2>
+        <div class="karta">
+          <ul>
+            <li>Na obrazovce Účet klepněte na Stáhnout moje data.</li>
+            <li>Tamtéž je Smazat účet a všechna data.</li>
+            <li>Smazání účtu je nevratné.</li>
+          </ul>
+        </div>
+      </section>
     </main>
     <footer class="paticka">
-      <a href="/" data-t="sg.napoveda.zpet">Zpět do aplikace</a>
-      <a href="zasady.html" data-t="sg.napoveda.zasady">Zásady zpracování údajů</a>
+      <a href="/">Zpět do aplikace</a>
+      <a href="zasady.html">Zásady zpracování údajů</a>
     </footer>
   </div>
 </body>
