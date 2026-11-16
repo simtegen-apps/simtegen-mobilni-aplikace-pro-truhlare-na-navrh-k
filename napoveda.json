@@ -19,7 +19,7 @@
     },
     {
       "nadpis": "Jak změnit jazyk",
-      "text": "- Aplikace mluví jazykem telefonu, česky nebo anglicky.\n- Ručně jazyk změníte na obrazovce Účet v řádku Jazyk.\n- V angličtině stáhnete anglický kusovník se stejnými rozměry.\n- Podmínky, zásady a nápověda jsou jen česky."
+      "text": "- Aplikace mluví jazykem telefonu, česky nebo anglicky.\n- Ručně jazyk změníte na obrazovce Účet v řádku Jazyk.\n- V angličtině stáhnete anglický kusovník se stejnými rozměry.\n- Podmínky a zásady jsou jen česky."
     },
     {
       "nadpis": "Jak smazat stěnu nebo zakázku",
@@ -30,5 +30,39 @@
       "text": "- Na obrazovce Účet klepněte na Stáhnout moje data.\n- Tamtéž je Smazat účet a všechna data.\n- Smazání účtu je nevratné."
     }
   ],
-  "otazky": []
+  "otazky": [],
+  "en": {
+    "uvod": "Enter walls and cabinets at the client's home and the app works out the board cutting list for the cutting centre.",
+    "temata": [
+      {
+        "nadpis": "How to create a job",
+        "text": "- In Jobs, tap New job.\n- Enter a name and tap Create job.\n- The job saves as you go, so you can finish measuring on a computer."
+      },
+      {
+        "nadpis": "How to enter a wall, windows and cabinets",
+        "text": "- In the job, tap Add next to Walls.\n- Enter the wall length and height.\n- Add windows and doors.\n- Tap Add cabinet.\n- The app warns you when cabinets overlap or run into a window."
+      },
+      {
+        "nadpis": "How to generate a cutting list",
+        "text": "- In the job, tap Generate cutting list.\n- Tap Download CSV and send the file to the cutting centre.\n- Check the sizes before you send them.\n- Parts follow your settings on the Standard screen.\n- Without the finished-part-after-edging option, the list gives the cut and the cutting centre adds the edge."
+      },
+      {
+        "nadpis": "How to reuse an older job as a template",
+        "text": "- In the job, tap Copy as a template.\n- You get a new job with the same walls and cabinets."
+      },
+      {
+        "nadpis": "How to change the language",
+        "text": "- The app follows your phone's language, Czech or English.\n- To change it, use the Language row on the Account screen.\n- In English the cutting list downloads as an English CSV with the same sizes.\n- The terms and the privacy policy are in Czech only."
+      },
+      {
+        "nadpis": "How to delete a wall or a job",
+        "text": "- On the wall, tap Delete wall.\n- Deleted by mistake? Tap Undo at the bottom.\n- A deleted job cannot be restored, so the app asks first."
+      },
+      {
+        "nadpis": "How to download your data or delete your account",
+        "text": "- On the Account screen, tap Download my data.\n- Delete account and all data is in the same place.\n- Deleting the account cannot be undone."
+      }
+    ],
+    "otazky": []
+  }
 }
