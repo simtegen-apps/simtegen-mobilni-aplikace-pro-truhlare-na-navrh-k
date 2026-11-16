@@ -77,4 +77,19 @@ Na telefonu (Android, Chrome i aplikace z Google Play), v tabletu (820 px) a na 
 - Nový truhlář bez zakázek se přihlásí — musí vidět spodní menu se třemi položkami a jednořádkový prázdný stav s tlačítky „Nová zakázka“ a „Naplnit ukázkovými daty“.
 - Účet B zavolá GET /api/zakazky/:id a GET /api/kusovnik/:id na zakázku účtu A — musí dostat 404 a v odpovědi nesmí být nic ze zakázek účtu A.
 
+## Jak se stavba odchýlila (poznámka stavitele)
+Obnovená šablona (DESIGN.md, část „Text“; `vizualni_kontrola.py`: věta nejvýš 20 slov, obrazovka nejvýš 50 slov v `p`, `small`, `.napoveda`, `.popis`) byla v repu už před stavbou. Na pár místech je přísnější než spec, a pak platí šablona:
+- **Název tarifu** je „Standard“, ne „Kusovník“. DESIGN.md chce název bez firmy a produktu a uvádí právě „Standard“. Úvod tedy ukazuje „Standard · 449 Kč za firmu a měsíc“ a objednávka s fakturou totéž.
+- **Přepínač jazyka** kreslí šablona jako řádek s výběrem („Jazyk · Čeština“), ne jako dvojici tlačítek. V patičce se nevykreslí vůbec. Tlačítko English v hlavičce ani pruh nabídky jazyka v kódu nebyly; přepínače byly jen v patičce úvodu a v Náhledu a obojí je pryč. V Účtu je jeden slot `data-prepinac-jazyka` pod daty účtu, bez nadpisu sekce.
+- **Přepínač měny** šablona už nekreslí; produkt `data-prepinac-meny` nemá.
+- **Přihlášení** posílá i `jazyk: SimteGen.jazyk()` (DESIGN.md, Jazyk účtu). Server ho zatím bere z kontextu, tělo navíc nic nerozbije.
+- **Chyby ze serveru** jdou přes `SimteGen.chyba(data, záloha)` ze šablony místo vlastní větve.
+- **Hlavní akce úvodu** je na telefonu v liště dole a na tabletu a notebooku v kartě přihlášení. Vždy je vidět jen jedna z nich.
+- **Bez přihlášení** je „Nahlásit chybu“ na tabletu a notebooku v hlavičce (menu tam není). Tlačítko v hlavičce proto nemá `jen-telefon` a skrývá ho `styl.css`, jen když je menu vidět.
+- Kvůli limitu slov se zkrátily i nápovědy polí Standardu, panel už nemá štítek „Úprava“ nad nadpisem a mono verzálky (legenda půdorysu, název zakázky v kusovníku) jsou obyčejný `.popisek`.
+- **Nepřidáno**, protože zákazník chtěl jen texty a rozložení: „Doporučit kolegovi“ (`data-doporucit`) a tisk (`data-tisk`). Patří do samostatné stavby.
+- **data-manifest.json** dostal jen `aplikace.en`, anglický záznam v obchodě (název, popisy, hlavní věta, slova snímků ve stejném pořadí). Bez něj `vykresli_aplikaci.py` stavbu neprojde, protože produkt mluví anglicky. Entity, retence, služby, cookies ani úložiště se nemění, takže se zásady obsahově nemění.
+- **uat/scenare.json** má nový scénář pro akceptaci této stavby: započtený úvod, stejný kusovník (8 dílů, Bok, Traverza, Dvířka) a 404 pro účet B na zakázku i kusovník účtu A.
+- Soubory mimo rozsah (functions/**, web/play.js, deploy.yml, _middleware.js, overeni.js, migrace) stavba nezměnila.
+
 _Schvaluje se přes ARGA (simtegen_approve_spec) nebo na mini PC._

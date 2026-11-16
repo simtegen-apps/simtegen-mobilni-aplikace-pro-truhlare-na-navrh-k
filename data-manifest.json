@@ -36,7 +36,7 @@
         "komunikace"
       ],
       "ucel": "účet zákazníka a přihlášení",
-      "pole": "e-mailová adresa, čas založení účtu",
+      "pole": "e-mailová adresa, čas založení účtu, jazyk aplikace",
       "retence": "do smazání účtu zákazníkem"
     },
     {
@@ -49,7 +49,7 @@
         "bezpecnost"
       ],
       "ucel": "jednorázové přihlášení e-mailovým odkazem",
-      "pole": "otisk tokenu, e-mailová adresa, expirace",
+      "pole": "otisk tokenu, e-mailová adresa, expirace, jazyk aplikace",
       "retence": "24 hodin"
     },
     {
@@ -216,7 +216,7 @@
     },
     {
       "entita": "upominky",
-      "ucel": "aby každé upozornění na konec zkušebního nebo předplaceného období a každý e-mail s odpovědí na hlášení odešel nejvýš jednou; aby se prosba o hodnocení v Google Play ukázala v aplikaci nejvýš dvakrát (jen po opakované platbě, nikdy e-mailem)",
+      "ucel": "aby každé upozornění na konec zkušebního nebo předplaceného období a každý e-mail s odpovědí na hlášení odešel nejvýš jednou; aby se prosba o hodnocení v Google Play ukázala v aplikaci nejvýš dvakrát (jen po opakované platbě, nikdy e-mailem); a aby otázka, proč nepokračujete, šla za každé skončené období zodpovědět jen jednou (pamatujeme si, že jste odpověděli, ne co)",
       "pole": "odkaz na účet, druh upozornění, čas odeslání",
       "retence": "do smazání účtu zákazníkem",
       "play_typy": [
@@ -345,7 +345,20 @@
         "stitek": "Standard dílny",
         "titulek": "Díly podle konstrukce vaší dílny"
       }
-    ]
+    ],
+    "en": {
+      "nazev": "Kusovník: Cabinet Cutting List",
+      "popis": "Design kitchens on site and get a cutting list for the cutting centre.",
+      "dlouhy_popis": "Kusovník is an app for joiners and fitted-kitchen makers who measure on site with a phone or tablet.\n\nWhat the app does:\n• Enter the walls, windows and doors, then place cabinets on the walls — base, wall, tall and corner units.\n• The wall drawing shows cabinets, windows and doors to scale.\n• The app warns you when cabinets overlap or run into a window.\n• One tap gives the full parts list — side panels, bottoms, tops or rails, shelves, back panels, doors and drawer fronts — built to your workshop standard (board thickness, grooved or overlaid back, gaps, edge banding). It includes a rough board count.\n• Download the cutting list as a CSV file for the cutting centre.\n• Use the app in Czech or English; the cutting list also downloads as an English CSV with the same sizes.\n• Jobs stay in your account: finish the measurements in the workshop on a computer and copy an older job as a template for a new one.\n\nBefore you sign up, tap Try the demo: you get a temporary account with a made-up kitchen and its cutting list, which disappears after 24 hours.\n\nYou sign in with a one-time link from your e-mail, no password. Data is stored in the EU; you can download it or delete your account with all data at any time in the app.\n\nHow you pay: the 14-day trial is free, with no payment card and no commitment. After that the app is a subscription you buy in the app through Google Play. You will see the price and period in the app before you buy. The subscription renews automatically and you can cancel it at any time in Google Play.\n\nAlways check the sizes in the cutting list before sending it to the cutting centre.",
+      "hlavni_veta": "From site measurement to cutting list",
+      "snimky": [
+        { "stitek": "Jobs", "titulek": "Every job saved in your account" },
+        { "stitek": "Measuring a wall", "titulek": "Wall, window and cabinets to scale" },
+        { "stitek": "Kitchen preview", "titulek": "The whole run in front of the client" },
+        { "stitek": "Cutting list", "titulek": "A cutting list for the cutting centre" },
+        { "stitek": "Workshop standard", "titulek": "Parts built your workshop's way" }
+      ]
+    }
   },
   "poznamka": "Jediny zdroj pravdy o datech produktu. Zasady, obchodni podminky, zpracovatelska smlouva, formular pro odstoupeni, zaznam o zpracovani i postup pri incidentu se GENERUJI z tohoto souboru (python3 vykresli_zasady.py) a kontrola_manifestu.py shazuje build, kdyz se kod nebo vygenerovane soubory s manifestem rozejdou. Kazda nova tabulka = zaznam v ukladame + migrace v db/migrace/ se sloupcem uzivatel_id. Prazdne sloty (ico, sidlo, dic, zapis_or, kontakt_email, ucinnost_od, cena_dph, retence_logy, retence_podpora, odpovedna_osoba, zastup, ucetni, balancni_test) se vykresli cervene jako (doplnit ...) - s nimi se nesmi jit do produkce. obsah_zakaznika_popis a subjekty_obsahu popisuji obsah, ktery do produktu vklada zakaznik (zpracovatelska smlouva, cl. 2) - stavitel je vyplni podle produktu. agregaty = tabulky bez uzivatel_id, ktere smi obsahovat jen souhrnna cisla (den, stranka, pocet) - kontrola hlida, ze v nich neni zadny osobni sloupec.",
   "adresa": "https://kusovnik.simtegen.com"

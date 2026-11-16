@@ -1,33 +1,33 @@
 {
-  "uvod": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru. U zákazníka v telefonu nebo tabletu zadáte stěny a skříňky a aplikace z nich spočítá kusovník desek pro nářezové centrum.",
+  "uvod": "Kusovník pro truhláře: u zákazníka zadáte stěny a skříňky, aplikace spočítá kusovník desek pro nářezové centrum.",
   "temata": [
     {
       "nadpis": "Jak založit zakázku",
-      "text": "V Zakázkách klepněte na Nová zakázka a vyplňte název, třeba jméno zákazníka a místnost. Zakázka se ukládá průběžně, takže měření na tabletu u zákazníka dopracujete později v dílně na počítači."
+      "text": "V Zakázkách klepněte na Nová zakázka a vyplňte název. Zakázka se ukládá průběžně, měření dopracujete později na počítači."
     },
     {
       "nadpis": "Jak zadat stěnu, okna a skříňky",
-      "text": "V zakázce klepněte na Přidat stěnu a zadejte její délku a výšku. Na stěně pak přidáte okna a dveře a tlačítkem Přidat skříňku spodní, horní, vysoké nebo rohové skříňky.\n\nVýkres stěny ukazuje vše v měřítku. Když se skříňky překrývají nebo zasahují do okna, aplikace vás upozorní."
+      "text": "V zakázce klepněte na Přidat stěnu a zadejte délku a výšku. Pak přidejte okna, dveře a skříňky.\n\nKdyž se skříňky překrývají nebo zasahují do okna, aplikace vás upozorní."
     },
     {
       "nadpis": "Jak vygenerovat kusovník",
-      "text": "V zakázce klepněte na Vygenerovat kusovník. Díly se spočítají podle standardu vaší dílny — tloušťky desky, typu zad, spár a olepení hran, které nastavíte v Můj standard.\n\nTlačítkem Stáhnout CSV stáhnete soubor pro nářezové centrum. Rozměry před odesláním vždy zkontrolujte."
+      "text": "V zakázce klepněte na Vygenerovat kusovník a pak na Stáhnout CSV pro nářezové centrum. Rozměry před odesláním zkontrolujte.\n\nDíly se počítají podle Mého standardu: tloušťka desky, záda, spáry a olepení. Bez zaškrtnutí hotového dílu po olepení je v kusovníku řez a hranu přidá nářezové centrum."
     },
     {
       "nadpis": "Jak použít starší zakázku jako šablonu",
-      "text": "V zakázce klepněte na Kopírovat jako šablonu. Vznikne nová zakázka se stejnými stěnami a skříňkami, kterou upravíte pro nového zákazníka."
+      "text": "V zakázce klepněte na Kopírovat jako šablonu. Vznikne nová zakázka se stejnými stěnami a skříňkami."
     },
     {
-      "nadpis": "Jak přepnout aplikaci do angličtiny",
-      "text": "Jazyk přepnete tlačítky Čeština a English dole na úvodní obrazovce, na obrazovce Účet v části Jazyk aplikace nebo přímo v Náhledu, když kuchyň ukazujete zákazníkovi. Aplikace si volbu na tomto zařízení zapamatuje.\n\nV angličtině stáhnete i kusovník — soubor CSV má anglické názvy dílů a sloupců, ale stejné rozměry, počty a pořadí sloupců jako český. Vaše zakázky, názvy stěn a materiálů zůstávají tak, jak jste je zapsali. Obchodní podmínky, zásady a tahle nápověda jsou jen česky."
+      "nadpis": "Jak změnit jazyk",
+      "text": "Aplikace mluví jazykem vašeho telefonu, česky nebo anglicky. Ručně ho změníte na obrazovce Účet v řádku Jazyk.\n\nV angličtině stáhnete i anglický kusovník se stejnými rozměry. Podmínky, zásady a nápověda jsou jen česky."
     },
     {
       "nadpis": "Jak smazat stěnu nebo zakázku",
-      "text": "Na stěně klepněte na Smazat stěnu. Stěna zmizí hned i se skříňkami; když jste ji smazali omylem, klepněte v hlášení dole na Vrátit.\n\nSmazání zakázky vrátit nejde, proto se vás aplikace nejdřív zeptá. Zakázka se smaže i se stěnami a kusovníky."
+      "text": "Na stěně klepněte na Smazat stěnu; omyl vrátíte tlačítkem Vrátit dole.\n\nSmazání zakázky vrátit nejde, proto se aplikace nejdřív zeptá."
     },
     {
       "nadpis": "Jak stáhnout svá data nebo smazat účet",
-      "text": "Na obrazovce Účet klepněte na Stáhnout moje data — dostanete všechno, co o vás vedeme, v jednom souboru.\n\nTamtéž je Smazat účet a všechna data. Krok je nevratný, proto ho aplikace nechá potvrdit."
+      "text": "Na obrazovce Účet klepněte na Stáhnout moje data, nebo na Smazat účet a všechna data. Smazání je nevratné."
     }
   ],
   "otazky": []

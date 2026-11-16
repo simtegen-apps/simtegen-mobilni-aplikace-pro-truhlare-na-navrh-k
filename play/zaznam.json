@@ -1,5 +1,36 @@
 {
   "jazyk": "cs-CZ",
+  "vychozi": "en-US",
+  "preklady": {
+    "en-US": {
+      "nazev": "Kusovník: Cabinet Cutting List",
+      "kratky_popis": "Design kitchens on site and get a cutting list for the cutting centre.",
+      "dlouhy_popis": "Kusovník is an app for joiners and fitted-kitchen makers who measure on site with a phone or tablet.\n\nWhat the app does:\n• Enter the walls, windows and doors, then place cabinets on the walls — base, wall, tall and corner units.\n• The wall drawing shows cabinets, windows and doors to scale.\n• The app warns you when cabinets overlap or run into a window.\n• One tap gives the full parts list — side panels, bottoms, tops or rails, shelves, back panels, doors and drawer fronts — built to your workshop standard (board thickness, grooved or overlaid back, gaps, edge banding). It includes a rough board count.\n• Download the cutting list as a CSV file for the cutting centre.\n• Use the app in Czech or English; the cutting list also downloads as an English CSV with the same sizes.\n• Jobs stay in your account: finish the measurements in the workshop on a computer and copy an older job as a template for a new one.\n\nBefore you sign up, tap Try the demo: you get a temporary account with a made-up kitchen and its cutting list, which disappears after 24 hours.\n\nYou sign in with a one-time link from your e-mail, no password. Data is stored in the EU; you can download it or delete your account with all data at any time in the app.\n\nHow you pay: the 14-day trial is free, with no payment card and no commitment. After that the app is a subscription you buy in the app through Google Play. You will see the price and period in the app before you buy. The subscription renews automatically and you can cancel it at any time in Google Play.\n\nAlways check the sizes in the cutting list before sending it to the cutting centre.",
+      "hlavni_veta": "From site measurement to cutting list",
+      "snimky": [
+        {
+          "stitek": "Jobs",
+          "titulek": "Every job saved in your account"
+        },
+        {
+          "stitek": "Measuring a wall",
+          "titulek": "Wall, window and cabinets to scale"
+        },
+        {
+          "stitek": "Kitchen preview",
+          "titulek": "The whole run in front of the client"
+        },
+        {
+          "stitek": "Cutting list",
+          "titulek": "A cutting list for the cutting centre"
+        },
+        {
+          "stitek": "Workshop standard",
+          "titulek": "Parts built your workshop's way"
+        }
+      ]
+    }
+  },
   "nazev": "Kusovník pro truhláře",
   "kratky_popis": "Návrh kuchyní u zákazníka a kusovník desek pro nářezové centrum.",
   "dlouhy_popis": "Kusovník pro truhláře je aplikace pro truhláře a výrobce kuchyní na míru, kteří měří přímo u zákazníka v telefonu nebo tabletu.\n\nCo aplikace dělá:\n• Zadáte rozměry stěn, oken a dveří a na stěny postavíte skříňky — spodní, horní, vysoké i rohové.\n• Výkres stěny ukazuje skříňky, okna a dveře v měřítku.\n• Aplikace upozorní, když se skříňky překrývají nebo zasahují do okna.\n• Jedním klepnutím vznikne kusovník dílů — boky, dna, víka nebo traverzy, police, záda, dvířka a čela zásuvek — podle konstrukčního standardu vaší dílny (tloušťka desky, záda v drážce nebo nasazená, spáry, olepení hran). Součástí je orientační odhad počtu desek.\n• Kusovník stáhnete jako soubor CSV pro nářezové centrum.\n• Aplikaci můžete používat česky nebo anglicky; kusovník stáhnete i jako anglické CSV se stejnými rozměry.\n• Zakázky zůstávají ve vašem účtu: měření dopracujete v dílně na počítači a starší zakázku zkopírujete jako šablonu pro novou.\n\nNež se zaregistrujete, můžete si aplikaci projít tlačítkem Vyzkoušet ukázku: dostanete dočasný účet s vymyšlenou kuchyní a kusovníkem, který za 24 hodin zmizí.\n\nPřihlašujete se jednorázovým odkazem z e-mailu, bez hesla. Data jsou uložena v EU; v aplikaci si je kdykoli stáhnete nebo účet se všemi daty smažete.\n\nJak se platí: zkušební doba 14 dní je zdarma, bez platební karty a bez závazku. Potom se aplikace platí předplatným, které si koupíte přímo v aplikaci přes Google Play. Cenu a délku období předplatného uvidíte v aplikaci před nákupem. Předplatné se obnovuje automaticky a zrušíte ho kdykoli v Google Play.\n\nRozměry v kusovníku před odesláním do nářezového centra vždy zkontrolujte.",
@@ -182,7 +213,8 @@
         ],
         "volitelne": true,
         "zdroje": [
-          "zdroj příchodu (odkaz z kampaně)"
+          "zdroj příchodu (odkaz z kampaně)",
+          "důvody, proč zákazníci nepokračují (souhrnně, bez vazby na osobu)"
         ]
       },
       {
