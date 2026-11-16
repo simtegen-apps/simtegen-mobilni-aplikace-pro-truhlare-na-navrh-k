@@ -1,33 +1,33 @@
 {
-  "uvod": "Kusovník pro truhláře: u zákazníka zadáte stěny a skříňky, aplikace spočítá kusovník desek pro nářezové centrum.",
+  "uvod": "Stěny a skříňky zadáte u zákazníka, aplikace spočítá kusovník desek pro nářezové centrum.",
   "temata": [
     {
       "nadpis": "Jak založit zakázku",
-      "text": "V Zakázkách klepněte na Nová zakázka a vyplňte název. Zakázka se ukládá průběžně, měření dopracujete později na počítači."
+      "text": "- V Zakázkách klepněte na Nová zakázka.\n- Vyplňte název a klepněte na Založit zakázku.\n- Zakázka se ukládá průběžně, měření dokončíte i na počítači."
     },
     {
       "nadpis": "Jak zadat stěnu, okna a skříňky",
-      "text": "V zakázce klepněte na Přidat stěnu a zadejte délku a výšku. Pak přidejte okna, dveře a skříňky.\n\nKdyž se skříňky překrývají nebo zasahují do okna, aplikace vás upozorní."
+      "text": "- V zakázce klepněte u Stěny na Přidat.\n- Zadejte délku a výšku stěny.\n- Přidejte okna a dveře.\n- Klepněte na Přidat skříňku.\n- Překryv nebo zásah do okna aplikace ohlásí."
     },
     {
       "nadpis": "Jak vygenerovat kusovník",
-      "text": "V zakázce klepněte na Vygenerovat kusovník a pak na Stáhnout CSV pro nářezové centrum. Rozměry před odesláním zkontrolujte.\n\nDíly se počítají podle Mého standardu: tloušťka desky, záda, spáry a olepení. Bez zaškrtnutí hotového dílu po olepení je v kusovníku řez a hranu přidá nářezové centrum."
+      "text": "- V zakázce klepněte na Vygenerovat kusovník.\n- Klepněte na Stáhnout CSV a pošlete soubor nářezovému centru.\n- Rozměry před odesláním zkontrolujte.\n- Díly se počítají podle obrazovky Standard.\n- Bez volby hotového dílu po olepení je v kusovníku řez a hranu přidá nářezové centrum."
     },
     {
       "nadpis": "Jak použít starší zakázku jako šablonu",
-      "text": "V zakázce klepněte na Kopírovat jako šablonu. Vznikne nová zakázka se stejnými stěnami a skříňkami."
+      "text": "- V zakázce klepněte na Kopírovat jako šablonu.\n- Vznikne nová zakázka se stejnými stěnami a skříňkami."
     },
     {
       "nadpis": "Jak změnit jazyk",
-      "text": "Aplikace mluví jazykem vašeho telefonu, česky nebo anglicky. Ručně ho změníte na obrazovce Účet v řádku Jazyk.\n\nV angličtině stáhnete i anglický kusovník se stejnými rozměry. Podmínky, zásady a nápověda jsou jen česky."
+      "text": "- Aplikace mluví jazykem telefonu, česky nebo anglicky.\n- Ručně jazyk změníte na obrazovce Účet v řádku Jazyk.\n- V angličtině stáhnete anglický kusovník se stejnými rozměry.\n- Podmínky, zásady a nápověda jsou jen česky."
     },
     {
       "nadpis": "Jak smazat stěnu nebo zakázku",
-      "text": "Na stěně klepněte na Smazat stěnu; omyl vrátíte tlačítkem Vrátit dole.\n\nSmazání zakázky vrátit nejde, proto se aplikace nejdřív zeptá."
+      "text": "- Na stěně klepněte na Smazat stěnu.\n- Omyl vrátíte tlačítkem Vrátit dole.\n- Smazání zakázky vrátit nejde, aplikace se proto nejdřív zeptá."
     },
     {
       "nadpis": "Jak stáhnout svá data nebo smazat účet",
-      "text": "Na obrazovce Účet klepněte na Stáhnout moje data, nebo na Smazat účet a všechna data. Smazání je nevratné."
+      "text": "- Na obrazovce Účet klepněte na Stáhnout moje data.\n- Tamtéž je Smazat účet a všechna data.\n- Smazání účtu je nevratné."
     }
   ],
   "otazky": []
