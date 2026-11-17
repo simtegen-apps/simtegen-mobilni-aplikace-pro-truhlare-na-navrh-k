@@ -61,7 +61,7 @@ Vyplní se sama: workflow Vydání ji s každým vydáním posílá Googlu (`bez
 | Finanční údaje (Financial info) | Historie nákupů (Purchase history) | Ano | povinné | Funkce aplikace (App functionality), Správa účtu (Account management) | predplatne, platby, objednavky, play_nakupy |
 | Zprávy (Messages) | Jiné zprávy v aplikaci (Other in-app messages) | Ano | volitelné | Funkce aplikace (App functionality), Komunikace vývojáře (Developer communications) | hlaseni, hlášení chyb (tlačítko Nahlásit chybu) |
 | Aktivita v aplikaci (App activity) | Jiný obsah vytvořený uživatelem (Other user-generated content) | Ano | povinné | Funkce aplikace (App functionality) | standardy, materialy, zakazky, steny, skrinky, kusovniky |
-| Aktivita v aplikaci (App activity) | Interakce s aplikací (App interactions) | Ano | volitelné | Analýza (Analytics) | zdroj příchodu (odkaz z kampaně) |
+| Aktivita v aplikaci (App activity) | Interakce s aplikací (App interactions) | Ano | volitelné | Analýza (Analytics) | zdroj příchodu (odkaz z kampaně), důvody, proč zákazníci nepokračují (souhrnně, bez vazby na osobu) |
 | Informace o aplikaci a výkonu (App info and performance) | Diagnostika (Diagnostics) | Ano | povinné | Funkce aplikace (App functionality), Komunikace vývojáře (Developer communications), Analýza (Analytics) | hlášení chyb (tlačítko Nahlásit chybu), počty chyb aplikace (souhrnně, bez vazby na osobu) |
 
 ## 4. Obsah aplikace — ostatní prohlášení (App content)

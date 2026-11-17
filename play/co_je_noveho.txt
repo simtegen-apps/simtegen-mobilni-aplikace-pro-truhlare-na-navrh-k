@@ -1,1 +1,1 @@
-Aplikaci můžete nově používat v angličtině — přepnete ji na úvodní obrazovce, u účtu nebo přímo v náhledu kuchyně, když ji ukazujete zákazníkovi. Kusovník stáhnete i jako anglický soubor CSV pro nářezové centrum se stejnými rozměry. Vaše zakázky, standard i kusovníky zůstávají beze změny.
+Aplikace je přehlednější: kratší texty, jednodušší úvodní obrazovka a menu až po přihlášení. Jazyk se nastaví sám podle telefonu, ručně ho změníte v Účtu v řádku Jazyk. Vaše zakázky, standard i kusovníky zůstávají beze změny.

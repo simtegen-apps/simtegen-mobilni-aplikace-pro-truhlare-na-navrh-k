@@ -16,6 +16,7 @@
 // back — the address the request came in on cannot.
 
 import { json, novyToken, otisk, ted, ODKAZ_TRVANI } from "../../spolecne.js";
+import { prihlasovaciEmail } from "../../ochrana.js";
 
 const EMAIL = /^[^\s@]{1,64}@[^\s@]{1,189}\.[^\s@]{2,}$/;
 const MISTNI = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
@@ -115,10 +116,7 @@ export async function onRequestPost(context) {
     body: JSON.stringify({
       from: env.EMAIL_ODESILATEL,
       to: [email],
-      subject: context.data.produkt ? `${context.data.produkt}: přihlašovací odkaz` : "Váš přihlašovací odkaz",
-      text:
-        "Dobrý den,\n\npro přihlášení otevřete tento odkaz (platí 1 hodinu):\n"
-        + `${odkaz}\n\nPokud jste o přihlášení nežádali, e-mail ignorujte.\n`,
+      ...prihlasovaciEmail(context.data.produkt, odkaz, context.data.jazyk),
     }),
   });
   if (!odpoved.ok) {

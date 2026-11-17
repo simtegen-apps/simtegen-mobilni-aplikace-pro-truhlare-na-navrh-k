@@ -553,6 +553,77 @@
       ]
     },
     {
+      "nazev": "Zjednodušené texty nemění data: stejný kusovník, oddělené účty a započtený úvod",
+      "kroky": [
+        {
+          "jako": "nikdo",
+          "pozadavek": "POST /api/navsteva",
+          "telo": { "stranka": "uvod" },
+          "ocekavam": 200,
+          "obsahuje": ["\"ok\":true"]
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/zakazky",
+          "telo": { "nazev": "UAT-jednoduse-A kuchyň", "oznaceni_zakaznika": "UAT-zakaznik-jednoduse-A" },
+          "ocekavam": 200,
+          "uloz": { "zakazka": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "PUT /api/zakazky/{zakazka}",
+          "telo": {
+            "zakazka": { "nazev": "UAT-jednoduse-A kuchyň", "oznaceni_zakaznika": "UAT-zakaznik-jednoduse-A" },
+            "steny": [
+              {
+                "nazev": "UAT-stena-jednoduse-A",
+                "delka_mm": 3000,
+                "vyska_mm": 2600,
+                "otvory": [],
+                "skrinky": [
+                  { "odsazeni_mm": 0, "sirka_mm": 600, "vyska_mm": 720, "hloubka_mm": 510,
+                    "pocet_polic": 1, "pocet_dvirek": 1, "pocet_zasuvek": 0 }
+                ]
+              }
+            ]
+          },
+          "ocekavam": 200
+        },
+        {
+          "jako": "A",
+          "pozadavek": "POST /api/kusovnik",
+          "telo": { "zakazka_id": "{zakazka}" },
+          "ocekavam": 200,
+          "obsahuje": ["\"pocet_dilu\":8", "Bok", "Traverza", "Dvířka"],
+          "uloz": { "kusovnik": "id" }
+        },
+        {
+          "jako": "A",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}/csv",
+          "ocekavam": 200,
+          "obsahuje": ["material;dil;delka_mm", "Bok", "720"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/zakazky/{zakazka}",
+          "ocekavam": 404,
+          "neobsahuje": ["UAT-jednoduse-A", "UAT-stena-jednoduse-A", "UAT-zakaznik-jednoduse-A"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/kusovnik/{kusovnik}",
+          "ocekavam": 404,
+          "neobsahuje": ["UAT-jednoduse-A", "UAT-stena-jednoduse-A"]
+        },
+        {
+          "jako": "B",
+          "pozadavek": "GET /api/zakazky",
+          "ocekavam": 200,
+          "neobsahuje": ["UAT-jednoduse-A", "UAT-zakaznik-jednoduse-A"]
+        }
+      ]
+    },
+    {
       "nazev": "Účet a vlastní data zůstávají dostupné vždy",
       "kroky": [
         {
