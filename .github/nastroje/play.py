@@ -121,15 +121,23 @@ def _recenze(session, balicek: str) -> list[dict]:
         uzivatel = next((c["userComment"] for c in r.get("comments") or [] if "userComment" in c), None)
         if not uzivatel:
             continue
-        odpoved = any("developerComment" in c for c in r.get("comments") or [])
+        vyvojar = next((c["developerComment"] for c in r.get("comments") or [] if "developerComment" in c), None)
         cas = (uzivatel.get("lastModified") or {}).get("seconds")
+        # When the firm's reply was last written: a review edited AFTER it
+        # (the customer answering us) is news again, not "answered"
+        # (aplikace_play._prevezmi_recenze, audit 19. 11. 2026).
+        cas_odpovedi = ((vyvojar or {}).get("lastModified") or {}).get("seconds")
         vystup.append({
             "id": r.get("reviewId"),
             "hvezdy": uzivatel.get("starRating"),
             "text": (uzivatel.get("text") or "").strip()[:2000],
             "jazyk": uzivatel.get("reviewerLanguage"),
+            # The review's lastModified: a changed value = the customer
+            # edited it (new stars or text) and SimteGen takes it again.
             "cas": datetime.fromtimestamp(int(cas), timezone.utc).isoformat() if cas else None,
-            "odpovezeno": odpoved,
+            "odpovezeno": vyvojar is not None,
+            "odpoved_cas": (datetime.fromtimestamp(int(cas_odpovedi), timezone.utc).isoformat()
+                            if cas_odpovedi else None),
         })
     return vystup
 

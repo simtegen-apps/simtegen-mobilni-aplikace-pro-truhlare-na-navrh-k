@@ -74,7 +74,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # The bot token may dispatch this, so a stolen token must not be
       # enough: a run passes only with SimteGen's signature or when a listed
@@ -83,7 +83,10 @@ jobs:
         env:
           PODPIS_KLIC: ${{ vars.SIMTEGEN_PODPIS }}
           SPRAVCI: ${{ vars.SIMTEGEN_SPRAVCI }}
-          AKTER: ${{ github.triggering_actor }}
+          # Who chose the inputs, not who pressed Re-run: with triggering_actor
+          # an admin re-running a forged, failed run let it through unsigned
+          # (security audit 19. 11. 2026).
+          AKTER: ${{ github.actor }}
           WORKFLOW: ${{ github.workflow }}
           VSTUPY: ${{ toJSON(inputs) }}
         run: python3 .github/nastroje/over_pokyn.py
