@@ -32,8 +32,12 @@
 #   Konverze (migrace 0920): zkušební období skončená za 30 d a celkem,
 #   z nich zaplacená, zaplacená po upomínce, odeslané upomínky za 30 d podle
 #   druhu, účty s ukázkovými daty. null = produkt migraci ještě nemá.
-#   Podle zdroje příchodu (migrace 0910, utm_source): návštěvy 30 d, účty,
-#   nové účty 30 d, platící a druhá platba — nejvýš 20 zdrojů.
+#   Podle zdroje příchodu (migrace 0910, utm_source; aplikace z Google Play =
+#   google-play): návštěvy 30 d, účty, nové účty 30 d, platící, druhá platba,
+#   platící teď a zaplacené měsíce (z toho Google Play) — nejvýš 20 zdrojů,
+#   účty bez označení jako „(bez označení)“; a totéž podle kampaně.
+#   Proč odcházejí (migrace 0960): počty důvodů za 90 dní podle kanálu
+#   (otázka po konci zkušební doby / předplatného, dotazník Google Play).
 
 name: Metriky
 
@@ -134,16 +138,23 @@ jobs:
             echo "== $repo"
             ucty=$(q "$DB" "SELECT COUNT(*) FROM uzivatele WHERE email NOT LIKE '%@ukazka.invalid'")
             ucty_nove=$(q "$DB" "SELECT COUNT(*) FROM uzivatele WHERE vytvoreno > $T30 AND email NOT LIKE '%@ukazka.invalid'")
-            aktivni30=$(q "$DB" "SELECT COUNT(DISTINCT r.uzivatel_id) FROM relace r JOIN uzivatele u ON u.id = r.uzivatel_id WHERE r.vytvoreno > $T30 AND u.email NOT LIKE '%@ukazka.invalid'")
-            aktivni7=$(q "$DB" "SELECT COUNT(DISTINCT r.uzivatel_id) FROM relace r JOIN uzivatele u ON u.id = r.uzivatel_id WHERE r.vytvoreno > $T7 AND u.email NOT LIKE '%@ukazka.invalid'")
+            # Active = a session created in the window, OR one still alive: the
+            # middleware renews a session on use (30 days from the renewal), so
+            # a regular who never logs in again has no new row — counting new
+            # rows only missed exactly the customers who stay (audit D3).
+            aktivni30=$(q "$DB" "SELECT COUNT(DISTINCT r.uzivatel_id) FROM relace r JOIN uzivatele u ON u.id = r.uzivatel_id WHERE (r.vytvoreno > $T30 OR r.expirace > unixepoch()) AND u.email NOT LIKE '%@ukazka.invalid'")
+            aktivni7=$(q "$DB" "SELECT COUNT(DISTINCT r.uzivatel_id) FROM relace r JOIN uzivatele u ON u.id = r.uzivatel_id WHERE (r.vytvoreno > $T7 OR r.expirace > unixepoch() + 23 * 86400) AND u.email NOT LIKE '%@ukazka.invalid'")
             ma_predplatne=$(q "$DB" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='predplatne'")
             ma_platby=$(q "$DB" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='platby'")
             if [ "$ma_predplatne" = "1" ] && [ "$ma_platby" = "1" ]; then
               pred_aktivni=$(q "$DB" "SELECT COUNT(*) FROM predplatne p WHERE p.plati_do > unixepoch() AND EXISTS (SELECT 1 FROM platby x WHERE x.uzivatel_id = p.uzivatel_id)")
               pred_vyprsele=$(q "$DB" "SELECT COUNT(*) FROM predplatne p WHERE p.plati_do <= unixepoch() AND EXISTS (SELECT 1 FROM platby x WHERE x.uzivatel_id = p.uzivatel_id)")
+              # Churn: paid periods that ended in the last 30 days and were
+              # not renewed (the end date would have moved on).
+              odchod30=$(q "$DB" "SELECT COUNT(*) FROM predplatne p WHERE p.plati_do > $T30 AND p.plati_do <= unixepoch() AND EXISTS (SELECT 1 FROM platby x WHERE x.uzivatel_id = p.uzivatel_id)")
               zkusebni=$(q "$DB" "SELECT COUNT(*) FROM uzivatele u WHERE u.vytvoreno > $T30 AND u.email NOT LIKE '%@ukazka.invalid' AND NOT EXISTS (SELECT 1 FROM platby x WHERE x.uzivatel_id = u.id)")
             else
-              pred_aktivni=0; pred_vyprsele=0; zkusebni=0
+              pred_aktivni=0; pred_vyprsele=0; zkusebni=0; odchod30=0
             fi
             if [ "$ma_platby" = "1" ]; then
               platby30=$(q "$DB" "SELECT COUNT(*) FROM platby WHERE zapsano > $T30")
@@ -159,17 +170,57 @@ jobs:
               zobrazeni30=0
             fi
             zdroje='{}'
+            kampane='{}'
             ma_zdroje=$(q "$DB" "SELECT COUNT(*) FROM pragma_table_info('uzivatele') WHERE name='zdroj'")
             if [ "$ma_zdroje" = "1" ]; then
+              # Per source (batch D2 14. 11. 2026): `u.zdroj IS z.zdroj` so the
+              # accounts that came by no labelled link are a row of their own
+              # (key "(bez označení)") instead of vanishing — without it a
+              # campaign looked like most of the business. Demo accounts out.
+              # zaplacene_mesice = months paid (platby.mesice: the template
+              # stores no amounts; SimteGen turns months into crowns with the
+              # approved price), play_mesice the Google Play part of them,
+              # platici_ted = a paid period alive right now.
+              bez="u.email NOT LIKE '%@ukazka.invalid'"
               if [ "$ma_platby" = "1" ]; then
-                platici_sql="(SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj = z.zdroj AND EXISTS (SELECT 1 FROM platby p WHERE p.uzivatel_id = u.id))"
-                druha_sql="(SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj = z.zdroj AND (SELECT COUNT(*) FROM platby p WHERE p.uzivatel_id = u.id) >= 2)"
+                platici_sql="(SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj IS z.zdroj AND $bez AND EXISTS (SELECT 1 FROM platby p WHERE p.uzivatel_id = u.id))"
+                druha_sql="(SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj IS z.zdroj AND $bez AND (SELECT COUNT(*) FROM platby p WHERE p.uzivatel_id = u.id) >= 2)"
+                mesice_sql="(SELECT COALESCE(SUM(p.mesice), 0) FROM platby p JOIN uzivatele u ON u.id = p.uzivatel_id WHERE u.zdroj IS z.zdroj AND $bez)"
+                play_sql="(SELECT COALESCE(SUM(p.mesice), 0) FROM platby p JOIN uzivatele u ON u.id = p.uzivatel_id WHERE u.zdroj IS z.zdroj AND $bez AND p.poznamka = 'Google Play')"
               else
-                platici_sql=0; druha_sql=0
+                platici_sql=0; druha_sql=0; mesice_sql=0; play_sql=0
+              fi
+              if [ "$ma_predplatne" = "1" ] && [ "$ma_platby" = "1" ]; then
+                ted_sql="(SELECT COUNT(*) FROM predplatne x JOIN uzivatele u ON u.id = x.uzivatel_id WHERE u.zdroj IS z.zdroj AND $bez AND x.plati_do > unixepoch() AND EXISTS (SELECT 1 FROM platby p WHERE p.uzivatel_id = u.id))"
+              else
+                ted_sql="NULL"
               fi
               zdroje=$(npx --yes "$WRANGLER" d1 execute "$DB" --remote --json --command \
-                "SELECT z.zdroj AS zdroj, (SELECT COALESCE(SUM(n.pocet), 0) FROM zdroje_navstev n WHERE n.zdroj = z.zdroj AND n.den >= date('now', '-30 days')) AS navstevy_30d, (SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj = z.zdroj) AS ucty, (SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj = z.zdroj AND u.vytvoreno > $T30) AS ucty_30d, $platici_sql AS platici, $druha_sql AS druha_platba FROM (SELECT zdroj FROM uzivatele WHERE zdroj IS NOT NULL UNION SELECT zdroj FROM zdroje_navstev) z ORDER BY ucty DESC, navstevy_30d DESC LIMIT 20" \
-                | jq '[.[0].results[] | {key: .zdroj, value: del(.zdroj)}] | from_entries')
+                "SELECT z.zdroj AS zdroj, (SELECT COALESCE(SUM(n.pocet), 0) FROM zdroje_navstev n WHERE n.zdroj IS z.zdroj AND n.den >= date('now', '-30 days')) AS navstevy_30d, (SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj IS z.zdroj AND $bez) AS ucty, (SELECT COUNT(*) FROM uzivatele u WHERE u.zdroj IS z.zdroj AND $bez AND u.vytvoreno > $T30) AS ucty_30d, $platici_sql AS platici, $druha_sql AS druha_platba, $ted_sql AS platici_ted, $mesice_sql AS zaplacene_mesice, $play_sql AS play_mesice FROM (SELECT zdroj FROM uzivatele u WHERE $bez UNION SELECT zdroj FROM zdroje_navstev) z ORDER BY ucty DESC, navstevy_30d DESC LIMIT 20" \
+                | jq '[.[0].results[] | {key: (.zdroj // "(bez označení)"), value: del(.zdroj)}] | from_entries')
+              # Per campaign (utm_campaign) within a source: which ad, which
+              # catalogue entry. Labelled campaigns only, at most 20.
+              kz="u.zdroj = z.zdroj AND COALESCE(u.kampan, '') = z.kampan AND $bez"
+              if [ "$ma_platby" = "1" ]; then
+                k_platici="(SELECT COUNT(*) FROM uzivatele u WHERE $kz AND EXISTS (SELECT 1 FROM platby p WHERE p.uzivatel_id = u.id))"
+                k_mesice="(SELECT COALESCE(SUM(p.mesice), 0) FROM platby p JOIN uzivatele u ON u.id = p.uzivatel_id WHERE $kz)"
+              else
+                k_platici=0; k_mesice=0
+              fi
+              kampane=$(npx --yes "$WRANGLER" d1 execute "$DB" --remote --json --command \
+                "SELECT z.zdroj AS zdroj, z.kampan AS kampan, (SELECT COALESCE(SUM(n.pocet), 0) FROM zdroje_navstev n WHERE n.zdroj = z.zdroj AND n.kampan = z.kampan AND n.den >= date('now', '-30 days')) AS navstevy_30d, (SELECT COUNT(*) FROM uzivatele u WHERE $kz) AS ucty, $k_platici AS platici, $k_mesice AS zaplacene_mesice FROM (SELECT zdroj, COALESCE(kampan, '') AS kampan FROM uzivatele u WHERE zdroj IS NOT NULL AND $bez UNION SELECT zdroj, kampan FROM zdroje_navstev) z WHERE z.kampan != '' ORDER BY ucty DESC, navstevy_30d DESC LIMIT 20" \
+                | jq '[.[0].results[] | {key: (.zdroj + " / " + .kampan), value: del(.zdroj, .kampan)}] | from_entries')
+            fi
+            # Why customers left (migration 0960, batch D2): the one-tap
+            # question after a trial or paid period, and Google Play's cancel
+            # survey — tallies of the last 90 days per channel and reason.
+            # null = the product does not ask yet.
+            odchody='null'
+            ma_odchody=$(q "$DB" "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='odchody'")
+            if [ "$ma_odchody" = "1" ]; then
+              odchody=$(npx --yes "$WRANGLER" d1 execute "$DB" --remote --json --command \
+                "SELECT kanal, duvod, SUM(pocet) AS pocet FROM odchody WHERE den >= date('now', '-90 days') GROUP BY kanal, duvod" \
+                | jq 'reduce .[0].results[] as $r ({}; .[$r.kanal][$r.duvod] = $r.pocet)')
             fi
             # Trial → paid (migration 0920): only accounts the app has seen in
             # their trial since the migration (zkusebni_doba), demo accounts
@@ -202,7 +253,7 @@ jobs:
             # "objednavky_predplatneho". By name, the first was dropped and the
             # second counted as use.
             tabulky=$(npx --yes "$WRANGLER" d1 execute "$DB" --remote --json --command \
-              "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf%' AND name NOT IN ('d1_migrations','uzivatele','prihlasovaci_odkazy','relace','predplatne','platby','hlaseni','navstevy','zdroje_navstev','zkusebni_doba','upominky','ukazkova_data','chyby_stranek','play_nakupy')" \
+              "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf%' AND name NOT IN ('d1_migrations','uzivatele','prihlasovaci_odkazy','relace','predplatne','platby','hlaseni','navstevy','zdroje_navstev','zkusebni_doba','upominky','ukazkova_data','chyby_stranek','play_nakupy','odchody')" \
               | jq -r '.[0].results[].name')
             pouziti='{}'
             zaznam_or=""
@@ -267,15 +318,17 @@ jobs:
               --argjson ucty "$ucty" --argjson ucty_nove "$ucty_nove" \
               --argjson aktivni7 "$aktivni7" --argjson aktivni30 "$aktivni30" \
               --argjson zkusebni "$zkusebni" --argjson pa "$pred_aktivni" --argjson pv "$pred_vyprsele" \
+              --argjson odchod30 "$odchod30" --argjson ma_pred "$ma_predplatne" \
               --argjson platby30 "$platby30" --argjson platici "$platici" --argjson druha "$druha" \
               --argjson hlaseni30 "$hlaseni30" --argjson pouziti "$pouziti" --argjson zobrazeni30 "$zobrazeni30" \
-              --argjson zdroje "$zdroje" --argjson konverze "$konverze" \
+              --argjson zdroje "$zdroje" --argjson kampane "$kampane" --argjson odchody "$odchody" --argjson konverze "$konverze" \
               --argjson cesta "$cesta" --argjson chyby "$chyby" \
               '{repo: $repo, den: $den, zobrazeni_30d: $zobrazeni30, ucty_celkem: $ucty, ucty_nove_30d: $ucty_nove,
                 aktivni_7d: $aktivni7, aktivni_30d: $aktivni30, zkusebni: $zkusebni,
-                predplatne_aktivni: $pa, predplatne_vyprsele: $pv,
+                predplatne_aktivni: $pa, predplatne_vyprsele: $pv, odchod_30d: $odchod30,
+                meri_predplatne: ($ma_pred == 1),
                 platby_30d: $platby30, platici_ucty: $platici, ucty_s_druhou_platbou: $druha,
-                hlaseni_30d: $hlaseni30, pouziti: $pouziti, zdroje: $zdroje, konverze: $konverze,
+                hlaseni_30d: $hlaseni30, pouziti: $pouziti, zdroje: $zdroje, kampane: $kampane, odchody_90d: $odchody, konverze: $konverze,
                 cesta: $cesta, chyby_stranek: $chyby}' > "vystup/$repo.cisla"
             node sifruj.mjs < "vystup/$repo.cisla" > "vystup/$repo.json"
             rm -f "vystup/$repo.cisla"

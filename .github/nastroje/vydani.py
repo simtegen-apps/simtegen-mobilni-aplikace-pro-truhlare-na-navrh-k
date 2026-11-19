@@ -9,9 +9,16 @@ Two steps, both deterministic, no model anywhere:
             writes twa-manifest.json for Bubblewrap, with a version code
             that only ever grows.
   nahraj    uploads the signed bundle to Google Play through the Android
-            Publisher API, INTERNAL track only. Promotion to production is
-            the owner's tap in Play Console — the one step of the release
-            cycle that stays human, on purpose.
+            Publisher API, INTERNAL track only.
+  povys     promotes that same version code to PRODUCTION — in a job of its
+            own, with a service account of its own that holds nothing but
+            the production permission, and without the upload key: it can
+            only move a bundle this pipeline built, never bring a new one.
+            Only when the app is already in production (the first
+            production release stays the owner's tap in Play Console), the
+            domain is the one the product's repo declares, and the app's
+            shell changed (otisk_obalu) — a change of the website alone is
+            in the app the moment it deploys, no store release needed.
 
 Why the live site and not the product repo: the template repo's token
 cannot read product repos, and the thing Android verifies at run time
@@ -41,10 +48,18 @@ import sys
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 VYSTUP = Path("vydani")
 _EPOCHA = datetime(2024, 1, 1, tzinfo=timezone.utc)
+# The English listing's language as Google Play names it (vykresli_aplikaci.JAZYK_EN).
+JAZYK_EN_PLAY = "en-US"
+# "What's new" for English customers. Fixed, never from the inputs: the note
+# SimteGen sends is Czech, a translation would need a model, and the
+# production job accepts exactly this text besides the hashed Czech one — so
+# the internal key cannot smuggle words into production through it.
+POZNAMKA_EN = "A new version of the app."
 
 
 def verze(ted: datetime | None = None) -> tuple[int, str]:
@@ -146,21 +161,59 @@ def _stahni_manifest(host: str) -> dict:
 
 def nakupy_v_produktu(host: str) -> bool:
     """Does the deployed product sell in the app? /api/play answers a
-    stranger 401 (or 200) when it exists, 404 when it does not."""
+    stranger 401 (or 200) when it exists, 404 when it does not.
+
+    Anything else stops the run (audit 19. 11. 2026). It used to mean "does
+    not sell": one 5xx or timeout built an app without Play Billing — and,
+    the shell fingerprint having changed, the production job promoted it,
+    taking in-app purchases away from every customer until the next deploy."""
     pozadavek = urllib.request.Request(f"https://{host}/api/play", headers={"User-Agent": "simtegen-vydani"})
     try:
         with urllib.request.urlopen(pozadavek, timeout=30) as odpoved:
-            return odpoved.status == 200
+            if odpoved.status == 200:
+                return True
+            kod = odpoved.status
     except urllib.error.HTTPError as e:
-        return e.code == 401
-    except Exception:  # noqa: BLE001 — unreachable means "not known to sell"
-        return False
+        if e.code in (401, 404):
+            return e.code == 401
+        kod = e.code
+    except Exception as e:  # noqa: BLE001 — unknown is not "no"
+        raise SystemExit(f"https://{host}/api/play neodpověděl ({e}) — nevím, jestli produkt prodává v aplikaci; "
+                         "vydání se nestaví (bez nákupů by se postavilo jinak). Zkusí se to při dalším nasazení.")
+    raise SystemExit(f"https://{host}/api/play vrátil {kod} — nevím, jestli produkt prodává v aplikaci; "
+                     "vydání se nestaví. Zkusí se to při dalším nasazení.")
+
+
+def balicek_z_repa(projekt: str, vlastnik: str) -> str | None:
+    """The package the product's own repo declares (data-manifest.json on
+    main; product repos are public). None when it cannot be read — a
+    network hiccup must not stop a release the check exists only to guard."""
+    adresa = f"https://raw.githubusercontent.com/{vlastnik}/{projekt}/main/data-manifest.json"
+    try:
+        with urllib.request.urlopen(urllib.request.Request(adresa, headers={"User-Agent": "simtegen-vydani"}),
+                                    timeout=30) as odpoved:
+            manifest = json.loads(odpoved.read().decode("utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    balicek = (manifest.get("aplikace") or {}).get("balicek") if isinstance(manifest, dict) else None
+    return str(balicek) if balicek else None
 
 
 def priprav(projekt: str, domena: str = "") -> dict:
     host = domena.strip() or f"{projekt}.pages.dev"
     nakupy = nakupy_v_produktu(host)
     twa = twa_manifest(_stahni_manifest(host), host, nakupy=nakupy)
+    # The app is built from the domain, its listing, release note and Data
+    # safety form from the repo. A hand run with one product's repo and
+    # another's domain (11. 11. 2026: Pneusklad's repo, kusovnik.simtegen.com)
+    # sent Pneusklad's declarations to Kusovník's store entry.
+    if not _BALICEK.fullmatch(twa["packageId"] or ""):
+        # It goes to GITHUB_OUTPUT and from there to the production job.
+        raise SystemExit(f"Web manifest na {host} uvádí neplatný balíček aplikace.")
+    z_repa = balicek_z_repa(projekt, os.environ.get("GITHUB_REPOSITORY_OWNER") or "simtegen-apps")
+    if z_repa and z_repa != twa["packageId"]:
+        raise SystemExit(f"Repo {projekt} patří k aplikaci {z_repa}, ale doména {host} k {twa['packageId']}. "
+                         "Zkontroluj pole „Název repa produktu“ a „Vlastní doména“ — musí být téhož produktu.")
     VYSTUP.mkdir(exist_ok=True)
     (VYSTUP / "twa-manifest.json").write_text(json.dumps(twa, ensure_ascii=False, indent=2), encoding="utf-8")
     vystup = os.environ.get("GITHUB_OUTPUT")
@@ -186,68 +239,208 @@ _UPLOAD = "https://androidpublisher.googleapis.com/upload/androidpublisher/v3/ap
 PRAVO_VYDANI = "Uvolňovat aplikace do testovacích kanálů (Release apps to testing tracks)"
 PRAVO_ZAZNAM = "Spravovat prezentaci v obchodě (Manage store presence)"
 PRAVO_PREDPLATNE = "Spravovat produkty a předplatná v obchodě (Manage store products and subscriptions)"
+# An app never released to production is a draft ("Koncept aplikace") — an
+# internal track does not change that — and on a draft Google refuses the
+# listing's contacts and images and the subscription's price conversion
+# without this one, while texts and releases pass. Pneusklad, 12. 11. 2026:
+# every other permission was there; ticking this made all of it go through.
+PRAVO_KONCEPTY = "Vytváření, úpravy a mazání konceptů aplikací (Edit and delete draft apps)"
 
 
-def _ok(odpoved, co, pravo: str | None = None):
+def duvod_googlu(text: str) -> str:
+    """Google's refusal on one line: status, message and the reasons from the
+    details. Raw, its JSON starts with a lone "{" — and a ::warning:: shows
+    only the first line, which GitHub also masks as *** (a line of the
+    service-account secret is a lone "{" too). Every refusal of 12. 11. 2026
+    read "selhalo (403): ***" and said nothing."""
+    try:
+        chyba = json.loads(text).get("error") or {}
+    except (ValueError, AttributeError):
+        chyba = {}
+    if isinstance(chyba, dict) and chyba:
+        casti = [str(chyba.get("status") or ""), str(chyba.get("message") or "")]
+        for d in (chyba.get("errors") or []) + (chyba.get("details") or []):
+            if isinstance(d, dict):
+                casti.append(str(d.get("reason") or d.get("@type", "").rsplit(".", 1)[-1] or ""))
+                casti.append(str(d.get("message") or d.get("detail") or ""))
+        vysledek = []
+        for c in casti:
+            if c and c not in vysledek:
+                vysledek.append(c)
+        return " | ".join(vysledek)[:500]
+    return " ".join(text.split())[:500]
+
+
+def jeden_radek(chyba) -> str:
+    """A message for ::warning::, which keeps only its first line."""
+    return " — ".join(r.strip() for r in str(chyba).splitlines() if r.strip())
+
+
+def _ok(odpoved, co, pravo: str | None = None, ucet: str = "PLAY_SERVICE_ACCOUNT_JSON"):
+    """`ucet`: the secret whose account was refused — the hint must never
+    send the owner to give production rights to the internal account."""
     if odpoved.status_code >= 300:
-        zprava = f"Google Play: {co} selhalo ({odpoved.status_code}): {odpoved.text[:500]}"
+        zprava = f"Google Play: {co} selhalo ({odpoved.status_code}): {duvod_googlu(odpoved.text)}"
         if pravo and odpoved.status_code in (401, 403):
-            zprava += (f"\nServisnímu účtu (PLAY_SERVICE_ACCOUNT_JSON) nejspíš chybí oprávnění „{pravo}“: "
+            zprava += (f"\nServisnímu účtu ({ucet}) nejspíš chybí oprávnění „{pravo}“: "
                        "Play Console → Uživatelé a oprávnění → servisní účet → Oprávnění k účtu "
                        "(nebo Oprávnění aplikace u této aplikace). Změna se může projevit až za několik hodin.")
+            if pravo in (PRAVO_ZAZNAM, PRAVO_PREDPLATNE):
+                zprava += (f"\nJe aplikace ještě koncept (nikdy v produkci)? Pak k tomu potřebuje i „{PRAVO_KONCEPTY}“ "
+                           "— bez něj Google odmítne kontakty, obrázky i předplatné, i když texty projdou.")
         raise SystemExit(zprava)
     return odpoved.json() if odpoved.text else {}
 
 
-def nahraj_zaznam(session, balicek: str, edit: str, obchod: Path, host: str) -> list[str]:
+def _obrazky_zaznamu(obchod: Path, ikona: Path | None = None) -> list[tuple[str, list[Path]]]:
+    # One set of tablet pictures serves both of Google's tablet sizes; without
+    # any, Play hardly offers the app on tablets. `ikona`: a translation's
+    # folder has no icon of its own — the app's icon speaks no language.
+    tablety = sorted(obchod.glob("tablet-*.jpg"))
+    obrazky = (("phoneScreenshots", sorted(obchod.glob("telefon-*.jpg"))),
+               ("sevenInchScreenshots", tablety),
+               ("tenInchScreenshots", tablety),
+               ("featureGraphic", [obchod / "grafika.jpg"]),
+               ("icon", [ikona or obchod / "ikona.png"]))
+    return [(typ, [s for s in soubory if s.exists()]) for typ, soubory in obrazky
+            if any(s.exists() for s in soubory)]
+
+
+def casti_zaznamu(obchod: Path) -> list[str]:
+    """The parts of a listing that can go in an edit on their own."""
+    return ["texty", "kontakty", *(typ for typ, _ in _obrazky_zaznamu(obchod))]
+
+
+def jazyky_zaznamu(obchod: Path, zaznam: dict) -> list[tuple[str, dict, Path]]:
+    """(language, texts, folder of its pictures) for every listing: Czech
+    from the top of zaznam.json and obchod/, each translation from
+    `preklady` and obchod/<language>/ (vizualni_kontrola.py --obchod)."""
+    jazyky = [(zaznam.get("jazyk") or "cs-CZ", zaznam, obchod)]
+    for jazyk, texty in (zaznam.get("preklady") or {}).items():
+        if isinstance(texty, dict) and str(texty.get("nazev") or "").strip() and re.fullmatch(r"[a-z]{2}-[A-Z]{2}", jazyk):
+            jazyky.append((jazyk, texty, obchod / jazyk))
+    return jazyky
+
+
+def _cti(session, url: str) -> dict | None:
+    """What Play holds now, or None when it holds nothing (or will not say):
+    unknown means "upload", never "skip"."""
+    odpoved = session.get(url)
+    if odpoved.status_code != 200:
+        return None
+    try:
+        data = odpoved.json()
+    except ValueError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def nahraj_zaznam(session, balicek: str, edit: str, obchod: Path, host: str,
+                  casti: set[str] | None = None, obrazky: bool = True) -> list[str]:
     """The store listing into an edit: texts from the product's
     play/zaznam.json (generated from its manifest — the same claims as its
     privacy policy), contacts, and the images the release rendered from the
-    product (vizualni_kontrola.py --obchod). Images are replaced wholesale,
-    so a removed screen does not linger in the store. Returns what was
-    uploaded, for the summary."""
+    product (vizualni_kontrola.py --obchod) — in Czech and in every
+    translation, the store's default language as zaznam.json says (English
+    for a product that speaks it). `casti` limits it to those parts
+    (casti_zaznamu). Returns what was uploaded, for the summary.
+
+    Only what changed goes up: every listing change of a live app goes to
+    Google review, and a release follows every deploy. Texts and contacts
+    are compared with what Play holds. Pictures are replaced wholesale (a
+    removed screen must not linger) when `obrazky` — the product's screens
+    changed since the last upload (otisk_zdroju) — and otherwise only where
+    Play has none (a new language, a failed earlier upload)."""
     zaznam = json.loads((obchod / "zaznam.json").read_text(encoding="utf-8"))
-    jazyk = zaznam.get("jazyk") or "cs-CZ"
     zaklad = f"{_API}/{balicek}/edits/{edit}"
-    _ok(session.put(f"{zaklad}/listings/{jazyk}", json={
-        "language": jazyk, "title": zaznam["nazev"], "shortDescription": zaznam["kratky_popis"],
-        "fullDescription": zaznam["dlouhy_popis"]}), "záznam v obchodě", PRAVO_ZAZNAM)
-    _ok(session.patch(f"{zaklad}/details", json={
-        "defaultLanguage": jazyk, "contactEmail": zaznam["kontakt_email"],
-        "contactWebsite": f"https://{host}"}), "kontakty v obchodě", PRAVO_ZAZNAM)
-    nahrano = ["texty"]
-    # One set of tablet pictures serves both of Google's tablet sizes; without
-    # any, Play hardly offers the app on tablets.
-    tablety = sorted(obchod.glob("tablet-*.jpg"))
-    for typ, soubory in (("phoneScreenshots", sorted(obchod.glob("telefon-*.jpg"))),
-                         ("sevenInchScreenshots", tablety),
-                         ("tenInchScreenshots", tablety),
-                         ("featureGraphic", [obchod / "grafika.jpg"]),
-                         ("icon", [obchod / "ikona.png"])):
-        soubory = [s for s in soubory if s.exists()]
-        if not soubory:
-            continue
-        _ok(session.delete(f"{zaklad}/listings/{jazyk}/{typ}"), f"smazání starých obrázků {typ}", PRAVO_ZAZNAM)
-        for soubor in soubory:
-            _ok(session.post(f"{_UPLOAD}/{balicek}/edits/{edit}/listings/{jazyk}/{typ}?uploadType=media",
-                             data=soubor.read_bytes(),
-                             headers={"Content-Type": "image/png" if soubor.suffix == ".png" else "image/jpeg"}),
-                f"nahrání {soubor.name}", PRAVO_ZAZNAM)
-        nahrano.append(f"{typ} ×{len(soubory)}")
+    jazyky = jazyky_zaznamu(obchod, zaznam)
+    nahrano = []
+    if casti is None or "texty" in casti:
+        for jazyk, texty, _ in jazyky:
+            chci = {"title": texty["nazev"], "shortDescription": texty["kratky_popis"],
+                    "fullDescription": texty["dlouhy_popis"]}
+            ted = _cti(session, f"{zaklad}/listings/{jazyk}") or {}
+            if all(ted.get(k) == v for k, v in chci.items()):
+                continue
+            _ok(session.put(f"{zaklad}/listings/{jazyk}", json={"language": jazyk, **chci}),
+                f"záznam v obchodě ({jazyk})", PRAVO_ZAZNAM)
+            nahrano.append(f"texty {jazyk}")
+    if casti is None or "kontakty" in casti:
+        chci = {"defaultLanguage": zaznam.get("vychozi") or jazyky[0][0],
+                "contactEmail": zaznam["kontakt_email"], "contactWebsite": f"https://{host}"}
+        ted = _cti(session, f"{zaklad}/details") or {}
+        if not all(ted.get(k) == v for k, v in chci.items()):
+            _ok(session.patch(f"{zaklad}/details", json=chci), "kontakty v obchodě", PRAVO_ZAZNAM)
+            nahrano.append("kontakty")
+    for jazyk, _, slozka in jazyky:
+        for typ, soubory in _obrazky_zaznamu(slozka, obchod / "ikona.png"):
+            if casti is not None and typ not in casti:
+                continue
+            if not obrazky and (_cti(session, f"{zaklad}/listings/{jazyk}/{typ}") or {}).get("images"):
+                continue
+            _ok(session.delete(f"{zaklad}/listings/{jazyk}/{typ}"), f"smazání starých obrázků {typ}",
+                PRAVO_ZAZNAM)
+            for soubor in soubory:
+                _ok(session.post(f"{_UPLOAD}/{balicek}/edits/{edit}/listings/{jazyk}/{typ}?uploadType=media",
+                                 data=soubor.read_bytes(),
+                                 headers={"Content-Type": "image/png" if soubor.suffix == ".png" else "image/jpeg"}),
+                    f"nahrání {soubor.name}", PRAVO_ZAZNAM)
+            nahrano.append(f"{typ} ×{len(soubory)}" if jazyk == jazyky[0][0] else f"{jazyk} {typ} ×{len(soubory)}")
     return nahrano
 
 
-def nahraj_zaznam_zvlast(session, balicek: str, obchod: Path, host: str) -> list[str]:
+def nahraj_zaznam_zvlast(session, balicek: str, obchod: Path, host: str, obrazky: bool = True) -> list[str]:
     """The listing in its own edit, after the release is committed. Until
     9. 11. 2026 it rode in the release's edit, and Google refused the whole
     commit with one bare 403 — the owner could not tell whether the release
     or the listing lacked a permission, and the build that was fine had to be
     uploaded by hand. Now a listing Google refuses costs only the listing
     (reported, retried with the next release), and the hint names its
-    permission. A refused edit is deleted, so nothing half-done waits in it."""
+    permission. A refused edit is deleted, so nothing half-done waits in it.
+
+    A 403 at the commit is then split: every part (texts, contacts, each
+    kind of image) in an edit of its own. With the permission granted, Google
+    still refused the whole listing for two days (10.–11. 11. 2026) with the
+    same bare 403, and every call before the commit had passed — the commit
+    is the only place Google says no, and it does not say to what. Parts it
+    takes land in the store; the message names the ones it refused."""
+    try:
+        return _zaznam_v_uprave(session, balicek, obchod, host, None, obrazky)
+    except SystemExit as e:
+        if "potvrzení záznamu v obchodě selhalo (403)" not in str(e):
+            raise
+        prvni = str(e)
+    prijato, odmitnuto = [], []
+    for cast in casti_zaznamu(obchod):
+        try:
+            prijato += _zaznam_v_uprave(session, balicek, obchod, host, {cast}, obrazky)
+        except SystemExit as e:
+            kde = re.search(r"Google Play: (.+?) selhalo \((\d+)\): ?([^\n]*)", str(e))
+            # Google's own words for the first refusal only: the parts are
+            # usually refused for the same reason, and the line stays short.
+            duvod = kde.group(3).strip() if kde and not odmitnuto else ""
+            odmitnuto.append((f"{cast} ({kde.group(1)}, {kde.group(2)}" + (f": {duvod})" if duvod else ")"))
+                             if kde else cast)
+    if not prijato:
+        # 11. 11. 2026: the cause behind two days of this was no default
+        # listing at all — the API edits one, it never creates it.
+        raise SystemExit(prvni + "\nGoogle odmítl i každou část záznamu zvlášť: " + "; ".join(odmitnuto)
+                         + "\nMá aplikace výchozí záznam? Přes API ho Google nezaloží: Play Console → "
+                         "Zvýšení počtu uživatelů → Prezentace v Obchodě → Záznamy v obchodě → "
+                         "Vytvořit výchozí záznam (texty a obrázky z artefaktu podklady, složka obchod).")
+    raise SystemExit("Záznam v obchodě jen zčásti — Google přijal: " + ", ".join(prijato)
+                     + "; odmítl: " + "; ".join(odmitnuto))
+
+
+def _zaznam_v_uprave(session, balicek: str, obchod: Path, host: str, casti: set[str] | None,
+                     obrazky: bool = True) -> list[str]:
     edit = _ok(session.post(f"{_API}/{balicek}/edits", json={}), "založení úpravy záznamu", PRAVO_ZAZNAM)["id"]
     try:
-        nahrano = nahraj_zaznam(session, balicek, edit, obchod, host)
+        nahrano = nahraj_zaznam(session, balicek, edit, obchod, host, casti, obrazky)
+        if not nahrano:
+            # Nothing differs from Play: no commit, no review for nothing.
+            session.delete(f"{_API}/{balicek}/edits/{edit}")
+            return ["beze změny"]
         _ok(session.post(f"{_API}/{balicek}/edits/{edit}:commit"), "potvrzení záznamu v obchodě", PRAVO_ZAZNAM)
     except SystemExit:
         try:
@@ -398,15 +591,21 @@ def bezpecnost(adresar: Path = VYSTUP) -> Path | None:
 # region Google prices in euros or dollars, and "other regions", then sell
 # exactly that (tax inclusive, like the Czech one).
 # Created and activated if missing, repriced if an approved price moved
-# (Google keeps existing subscribers on their price), never deleted.
+# (Google keeps existing subscribers on their price — after a cut we move
+# them down too, a rise stays the owner's call), never deleted.
 
 ZAKLADNI_PLAN = "zakladni"
-_DPH = 1.21
+# Money as Decimal, never float (the firm's rule: no float in money — the
+# audit of 18. 11. 2026 found this file the one exception).
+_DPH = Decimal("1.21")
+_HALER = Decimal("0.01")
 
 
-def _penize(mena: str, castka: float) -> dict:
-    cele = int(castka)
-    return {"currencyCode": mena, "units": str(cele), "nanos": int(round((castka - cele) * 1e9))}
+def _penize(mena: str, castka) -> dict:
+    d = Decimal(str(castka))
+    cele = int(d)
+    return {"currencyCode": mena, "units": str(cele),
+            "nanos": int(((d - cele) * 10 ** 9).to_integral_value(rounding=ROUND_HALF_UP))}
 
 
 def _penize_text(mena: str, castka: str) -> dict:
@@ -421,15 +620,19 @@ def _plan(polozka: dict, prevod: dict) -> dict:
     for kod, p in (prevod.get("convertedRegionPrices") or {}).items():
         cena = p.get("price")
         if kod == "CZ":
-            cena = _penize("CZK", float(polozka["cena_czk"]))
+            cena = _penize("CZK", polozka["cena_czk"])
         elif cena and cena.get("currencyCode") in ceny:
             cena = _penize_text(cena["currencyCode"], ceny[cena["currencyCode"]])
         regiony.append({"regionCode": kod, "newSubscriberAvailability": True, "price": cena})
     if not any(r["regionCode"] == "CZ" for r in regiony):
         regiony.append({"regionCode": "CZ", "newSubscriberAvailability": True,
-                        "price": _penize("CZK", float(polozka["cena_czk"]))})
+                        "price": _penize("CZK", polozka["cena_czk"])})
+    # legacyCompatible: the one base plan older billing clients see. The
+    # TWA's Digital Goods bridge may ask the old way; without the flag it
+    # could find no offer at all and the app would sell nothing (audit
+    # 19. 11. 2026, unverified on a device — harmless either way).
     plan = {"basePlanId": ZAKLADNI_PLAN, "regionalConfigs": sorted(regiony, key=lambda r: r["regionCode"]),
-            "autoRenewingBasePlanType": {"billingPeriodDuration": polozka["obdobi"]}}
+            "autoRenewingBasePlanType": {"billingPeriodDuration": polozka["obdobi"], "legacyCompatible": True}}
     jine = dict(prevod.get("convertedOtherRegionsPrice") or {})
     if "USD" in ceny and "EUR" in ceny:
         jine = {"usdPrice": _penize_text("USD", ceny["USD"]), "eurPrice": _penize_text("EUR", ceny["EUR"])}
@@ -449,6 +652,9 @@ def _sedi(predplatne: dict, plan: dict) -> bool:
         return (m.get("currencyCode"), int(m.get("units") or 0), int(m.get("nanos") or 0))
 
     stavajici = (predplatne.get("basePlans") or [{}])[0]
+    if bool((stavajici.get("autoRenewingBasePlanType") or {}).get("legacyCompatible")) != bool(
+            (plan.get("autoRenewingBasePlanType") or {}).get("legacyCompatible")):
+        return False
     ted = {r.get("regionCode"): castka(r.get("price")) for r in stavajici.get("regionalConfigs") or []}
     for r in plan["regionalConfigs"]:
         nove = castka(r["price"])
@@ -458,31 +664,113 @@ def _sedi(predplatne: dict, plan: dict) -> bool:
     return all(castka(jine.get(k)) == castka(chci.get(k)) for k in ("usdPrice", "eurPrice")) if chci else True
 
 
-def _cz_cena(predplatne: dict) -> float | None:
+def _cz_cena(predplatne: dict) -> Decimal | None:
     for plan in predplatne.get("basePlans") or []:
         for r in plan.get("regionalConfigs") or []:
             if r.get("regionCode") == "CZ" and r.get("price"):
-                return int(r["price"].get("units") or 0) + int(r["price"].get("nanos") or 0) / 1e9
+                return Decimal(int(r["price"].get("units") or 0)) + Decimal(int(r["price"].get("nanos") or 0)) / 10 ** 9
     return None
 
 
-def nahraj_predplatne(session, balicek: str, polozky: list[dict], nazev: str) -> list[str]:
+def _castka(m: dict | None) -> tuple[str | None, Decimal]:
+    """Google's Money as (currency, Decimal) — never a float."""
+    m = m or {}
+    return m.get("currencyCode"), Decimal(int(m.get("units") or 0)) + Decimal(int(m.get("nanos") or 0)) / 10 ** 9
+
+
+def zmeny_cen(stavajici_plan: dict, novy_plan: dict) -> tuple[list[str], list[str]]:
+    """(cheaper, dearer) region codes between the plan in the store and the
+    one we send. Only a region present in both with the same currency
+    compares: a currency switch is no price move a subscriber could hold."""
+    driv = {r.get("regionCode"): _castka(r.get("price")) for r in stavajici_plan.get("regionalConfigs") or []}
+    levnejsi, drazsi = [], []
+    for r in novy_plan.get("regionalConfigs") or []:
+        kod, nove = r.get("regionCode"), _castka(r.get("price"))
+        stare = driv.get(kod)
+        if not stare or stare[0] != nove[0] or not stare[1]:
+            continue
+        if nove[1] < stare[1]:
+            levnejsi.append(kod)
+        elif nove[1] > stare[1]:
+            drazsi.append(kod)
+    return sorted(levnejsi), sorted(drazsi)
+
+
+def _migruj_zlevneni(session, balicek: str, pid: str, regiony: list[str], verze: str,
+                     ted: datetime | None = None) -> None:
+    """A price cut reaches the subscribers already paying (audit 19. 11.
+    2026): Google keeps existing subscribers on their old price unless their
+    region is migrated, so after a cut they kept paying MORE than a newcomer
+    for the same thing. The cutoff is now, after the PATCH: every price
+    version older than it (the old price) moves to the current one.
+    A price RISE is never migrated here — moving paying customers up is the
+    owner's decision, with Google's notice period, not a release step."""
+    cas = (ted or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    _ok(session.post(f"{_API}/{balicek}/subscriptions/{pid}/basePlans/{ZAKLADNI_PLAN}:migratePrices", json={
+        "packageName": balicek, "productId": pid, "basePlanId": ZAKLADNI_PLAN,
+        "regionalPriceMigrations": [{"regionCode": kod, "oldestAllowedPriceVersionTime": cas} for kod in regiony],
+        "regionsVersion": {"version": verze},
+    }), f"zlevnění pro stávající předplatitele {pid}", PRAVO_PREDPLATNE)
+
+
+# Google's limits for a subscription listing. An English benefit two
+# characters over (42) made Google refuse the subscription of every app at
+# every release for days (17. 11. 2026) — and the owner heard "probably no
+# payments profile". Checked here, before anything goes to Google.
+MAX_TITULEK_PREDPLATNEHO = 55
+MAX_VYHODA = 40
+MAX_POPIS_PREDPLATNEHO = 80
+
+
+def _titulek(nazev: str, pripona: str) -> str:
+    """The app's name shortened so that the whole title fits, the period
+    word kept: a cut "… — měsíční předpl" would say nothing."""
+    misto = MAX_TITULEK_PREDPLATNEHO - len(pripona)
+    jmeno = nazev if len(nazev) <= misto else nazev[:misto - 1].rstrip() + "…"
+    return jmeno + pripona
+
+
+def _listingy_predplatneho(nazev: str, nazev_en: str | None, rocni: bool) -> list[dict]:
+    """Czech always; English too when the app has an English store listing.
+    Google wants a subscription listing in the app's DEFAULT language, and a
+    product that speaks English has en-US as its store default since
+    13. 11. 2026 (#232) — a Czech-only listing would then be refused."""
+    listingy = [{"languageCode": "cs-CZ",
+                 "title": _titulek(nazev, f" — {'roční' if rocni else 'měsíční'} předplatné"),
+                 "benefits": ["Všechny funkce bez omezení", "Stejný účet v aplikaci i na webu"],
+                 "description": "Předplatné se automaticky obnovuje, zrušit ho lze kdykoli v Google Play."}]
+    if nazev_en:
+        listingy.append({"languageCode": JAZYK_EN_PLAY,
+                         "title": _titulek(nazev_en, f" — {'yearly' if rocni else 'monthly'} subscription"),
+                         "benefits": ["All features, no limits", "Same account in the app and on the web"],
+                         "description": "The subscription renews automatically; cancel any time in Google Play."})
+    for listing in listingy:
+        prilis = ([listing["title"]] if len(listing["title"]) > MAX_TITULEK_PREDPLATNEHO else []) \
+            + [v for v in listing["benefits"] if len(v) > MAX_VYHODA] \
+            + ([listing["description"]] if len(listing["description"]) > MAX_POPIS_PREDPLATNEHO else [])
+        if prilis:
+            raise SystemExit(f"Text předplatného je pro Google Play moc dlouhý: {prilis}")
+    return listingy
+
+
+def nahraj_predplatne(session, balicek: str, polozky: list[dict], nazev: str,
+                      nazev_en: str | None = None) -> list[str]:
     """Create / reprice the app's subscription products. Returns one line
-    per product for the summary; raises SystemExit with Google's words."""
+    per product for the summary; raises SystemExit with Google's words.
+    `nazev_en`: the app's English store name — then the subscription gets
+    an English listing too, and an existing one missing it gets it added."""
     hotovo = []
     for polozka in polozky:
         pid = polozka["id"]
         rocni = polozka["obdobi"] == "P1Y"
         prevod = _ok(session.post(f"{_API}/{balicek}/pricing:convertRegionPrices", json={
-            "price": _penize("CZK", round(float(polozka["cena_czk"]) / _DPH, 2))}), "převod ceny do zemí",
+            "price": _penize("CZK", (Decimal(str(polozka["cena_czk"])) / _DPH).quantize(_HALER, ROUND_HALF_UP))}),
+            "převod ceny do zemí",
             PRAVO_PREDPLATNE)
         verze = (prevod.get("regionVersion") or {}).get("version") or "2022/02"
         telo = {
             "packageName": balicek, "productId": pid,
-            "listings": [{"languageCode": "cs-CZ",
-                          "title": f"{nazev[:40]} — {'roční' if rocni else 'měsíční'} předplatné",
-                          "benefits": ["Všechny funkce bez omezení", "Stejný účet v aplikaci i na webu"],
-                          "description": "Předplatné se automaticky obnovuje, zrušit ho lze kdykoli v Google Play."}],
+            "listings": _listingy_predplatneho(nazev, nazev_en, rocni),
             "basePlans": [_plan(polozka, prevod)],
         }
         odpoved = session.get(f"{_API}/{balicek}/subscriptions/{pid}")
@@ -495,14 +783,31 @@ def nahraj_predplatne(session, balicek: str, polozky: list[dict], nazev: str) ->
             hotovo.append(f"{pid}: založeno za {polozka['cena_czk']} Kč")
             continue
         stavajici = _ok(odpoved, f"čtení předplatného {pid}", PRAVO_PREDPLATNE)
-        if _cz_cena(stavajici) == float(polozka["cena_czk"]) and (
-                not polozka.get("ceny") or _sedi(stavajici, telo["basePlans"][0])):
+        cena_sedi = _cz_cena(stavajici) == Decimal(str(polozka["cena_czk"])) and _sedi(
+            stavajici, {**telo["basePlans"][0], **({} if polozka.get("ceny") else {
+                "regionalConfigs": [], "otherRegionsConfig": {}})})
+        ma_jazyky = {x.get("languageCode") for x in stavajici.get("listings") or []}
+        chybi_jazyk = not {x["languageCode"] for x in telo["listings"]} <= ma_jazyky
+        if cena_sedi and not chybi_jazyk:
             hotovo.append(f"{pid}: beze změny ({polozka['cena_czk']} Kč)")
             continue
+        maska = ",".join(m for m, ano in (("listings", chybi_jazyk), ("basePlans", not cena_sedi)) if ano)
         _ok(session.patch(f"{_API}/{balicek}/subscriptions/{pid}",
-                          params={"updateMask": "basePlans", "regionsVersion.version": verze}, json=telo),
-            f"změna ceny předplatného {pid}", PRAVO_PREDPLATNE)
-        hotovo.append(f"{pid}: nová cena {polozka['cena_czk']} Kč (stávající předplatitelé platí dál původní)")
+                          params={"updateMask": maska, "regionsVersion.version": verze}, json=telo),
+            f"změna předplatného {pid}", PRAVO_PREDPLATNE)
+        cena_veta = []
+        if not cena_sedi:
+            levnejsi, drazsi = zmeny_cen((stavajici.get("basePlans") or [{}])[0], telo["basePlans"][0])
+            if levnejsi:
+                _migruj_zlevneni(session, balicek, pid, levnejsi, verze)
+            if levnejsi and not drazsi:
+                cena_veta = [f"nová cena {polozka['cena_czk']} Kč (zlevnění platí i pro stávající předplatitele)"]
+            elif levnejsi:
+                cena_veta = [f"nová cena {polozka['cena_czk']} Kč (kde zlevnila, platí i pro stávající "
+                             f"předplatitele; kde zdražila ({len(drazsi)} zemí), stávající platí dál původní)"]
+            else:
+                cena_veta = [f"nová cena {polozka['cena_czk']} Kč (stávající předplatitelé platí dál původní)"]
+        hotovo.append(f"{pid}: " + "; ".join(cena_veta + (["doplněn anglický popis"] if chybi_jazyk else [])))
     return hotovo
 
 
@@ -524,16 +829,31 @@ def predplatne_ze_vstupu(text: str) -> list[dict]:
             # would sell euros in one region and Google's guess in the next.
             if (isinstance(ceny, dict) and set(ceny) == {"EUR", "USD"}
                     and all(isinstance(v, str) and re.fullmatch(r"\d{1,5}(?:\.\d{1,2})?", v)
-                            and float(v) > 0 for v in ceny.values())):
+                            and Decimal(v) > 0 for v in ceny.values())):
                 polozka["ceny"] = {"EUR": ceny["EUR"], "USD": ceny["USD"]}
             vysledek.append(polozka)
     return vysledek
 
 
 NEZNAMA = "neznama"
+# Google would not take the edit now: other changes of the app wait for its
+# review (the first production release can take days), or it wants them
+# sent for review by hand. Not a failure — the web in the app is new anyway
+# — and the next deploy tries again (audit 19. 11. 2026: before, every
+# deploy during a review read "vydání selhalo").
+V_KONTROLE = "v_kontrole"
 
 
-def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznamka: str) -> dict:
+def v_kontrole(odpoved) -> bool:
+    """A commit refused because of changes in review, not because of us."""
+    text = (odpoved.text or "").lower()
+    return odpoved.status_code in (400, 403, 409) and (
+        "in review" in text or "under review" in text or "being reviewed" in text
+        or "changesnotsentforreview" in text or "changes_in_review" in text or "changesinreview" in text)
+
+
+def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznamka: str,
+                  anglicky: bool = False) -> dict:
     """One edit with the release only: insert → upload bundle → internal
     track → commit. `session` is an authorised requests-like session (tests
     pass a fake). The listing goes in its own edit afterwards
@@ -541,7 +861,8 @@ def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznam
     build back. Returns {"versionCode", "status"}; status "neznama" when
     Google does not know the package yet (the first upload is a human's, the
     API refuses it); raises SystemExit with Google's words — and, on a 403,
-    the permission to add — on anything else."""
+    the permission to add — on anything else. `anglicky`: the app has an
+    English listing, so the release note gets the fixed English line too."""
 
     def ok(odpoved, co):
         return _ok(odpoved, co, PRAVO_VYDANI)
@@ -558,7 +879,8 @@ def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznam
                  "nahrání balíčku")
     kod = str(nahrano["versionCode"])
     vydani = {"name": nazev_verze, "versionCodes": [kod], "status": "completed",
-              "releaseNotes": [{"language": "cs-CZ", "text": poznamka[:500] or "Průběžné vydání."}]}
+              "releaseNotes": [{"language": "cs-CZ", "text": poznamka[:500] or "Průběžné vydání."}]
+              + ([{"language": JAZYK_EN_PLAY, "text": POZNAMKA_EN}] if anglicky else [])}
     odpoved = session.put(f"{_API}/{balicek}/edits/{edit}/tracks/internal",
                           json={"track": "internal", "releases": [vydani]})
     if odpoved.status_code == 400 and "draft" in odpoved.text.lower():
@@ -568,7 +890,12 @@ def nahraj_bundle(session, balicek: str, bundle: bytes, nazev_verze: str, poznam
         odpoved = session.put(f"{_API}/{balicek}/edits/{edit}/tracks/internal",
                               json={"track": "internal", "releases": [vydani]})
     ok(odpoved, "zařazení do interního testování")
-    ok(session.post(f"{_API}/{balicek}/edits/{edit}:commit"), "potvrzení vydání")
+    odpoved = session.post(f"{_API}/{balicek}/edits/{edit}:commit")
+    if v_kontrole(odpoved):
+        session.delete(f"{_API}/{balicek}/edits/{edit}")
+        print(f"Google Play teď nepřijímá změny: {duvod_googlu(odpoved.text)}")
+        return {"versionCode": kod, "status": V_KONTROLE}
+    ok(odpoved, "potvrzení vydání")
     return {"versionCode": kod, "status": vydani["status"]}
 
 
@@ -594,9 +921,21 @@ def nahraj(cesta_bundle: str) -> dict:
     twa = json.loads((VYSTUP / "twa-manifest.json").read_text(encoding="utf-8"))
     session = AuthorizedSession(pristup)
     obchod = VYSTUP / "obchod"
+    try:
+        # A broken listing file must not stop the release itself.
+        preklady = json.loads((obchod / "zaznam.json").read_text(encoding="utf-8")).get("preklady") or {}
+    except (OSError, ValueError, AttributeError):
+        preklady = {}
+    poznamka = poznamka_k_vydani()[:500] or "Průběžné vydání."
     vysledek = nahraj_bundle(session, twa["packageId"], Path(cesta_bundle).read_bytes(),
-                             twa["appVersionName"], poznamka_k_vydani())
+                             twa["appVersionName"], poznamka, anglicky=JAZYK_EN_PLAY in preklady)
     vystup = os.environ.get("GITHUB_OUTPUT")
+    if vystup:
+        # Production publishes the internal release's note; this hash lets it
+        # check the note is still the one this run wrote (the internal key
+        # could rewrite it in between).
+        with open(vystup, "a", encoding="utf-8") as f:
+            f.write(f"poznamka_sha={_sha(poznamka)}\n")
     if vysledek["status"] == NEZNAMA:
         print(f"Google Play aplikaci {twa['packageId']} zatím nezná. První verzi nahraj ručně v Play Console "
               "(Interní testování → Vytvořit vydání → soubor .aab z artefaktu tohoto běhu).")
@@ -605,14 +944,27 @@ def nahraj(cesta_bundle: str) -> dict:
                 f.write(f"stav={NEZNAMA}\n")
         return vysledek
     vysledek["zaznam"] = None
-    if (obchod / "zaznam.json").exists():
+    if vysledek["status"] == V_KONTROLE:
+        print("Google teď kontroluje předchozí změny aplikace — tahle verze ani záznam se nenahrály; web je "
+              "v aplikaci nový i tak. Další nasazení to zkusí znovu.")
+    if (obchod / "zaznam.json").exists() and vysledek["status"] != V_KONTROLE:
         # Like the form below: the release is in; a refused listing is
         # reported with its permission, and the next release tries again.
+        otisk_soubor = obchod / "otisk.txt"
+        otisk = otisk_soubor.read_text(encoding="utf-8").strip() if otisk_soubor.exists() else ""
+        otisk = otisk if re.fullmatch(r"[0-9a-f]{64}", otisk) else ""
+        obrazky = not otisk or otisk != os.environ.get("PREDCHOZI_OTISK_OBCHODU", "").strip()
         try:
-            vysledek["zaznam"] = nahraj_zaznam_zvlast(session, twa["packageId"], obchod, twa["host"])
-            print("Záznam v obchodě:", ", ".join(vysledek["zaznam"]))
+            vysledek["zaznam"] = nahraj_zaznam_zvlast(session, twa["packageId"], obchod, twa["host"], obrazky)
+            print("Záznam v obchodě:", ", ".join(vysledek["zaznam"]),
+                  "" if obrazky else "(obrazovky produktu beze změny — snímky jen tam, kde v Play chybí)")
+            if otisk and vystup:
+                # Only after every picture went up: a refused one is retried
+                # next time instead of being taken for current.
+                with open(vystup, "a", encoding="utf-8") as f:
+                    f.write(f"obchod_otisk={otisk}\n")
         except (Exception, SystemExit) as e:  # noqa: BLE001
-            print(f"::warning::Záznam v obchodě se nepodařilo nahrát: {e}")
+            print(f"::warning::Záznam v obchodě se nepodařilo nahrát: {jeden_radek(e)}")
         if vystup:
             with open(vystup, "a", encoding="utf-8") as f:
                 f.write(f"zaznam_play={'1' if vysledek['zaznam'] else '0'}\n")
@@ -627,7 +979,7 @@ def nahraj(cesta_bundle: str) -> dict:
             vysledek["bezpecnost"] = True
             print("Bezpečnost údajů: formulář vyplněn.")
         except (Exception, SystemExit) as e:  # noqa: BLE001
-            print(f"::warning::Bezpečnost údajů se nepodařilo nahrát: {e}")
+            print(f"::warning::Bezpečnost údajů se nepodařilo nahrát: {jeden_radek(e)}")
         if vystup:
             with open(vystup, "a", encoding="utf-8") as f:
                 f.write(f"bezpecnost={'1' if vysledek['bezpecnost'] else '0'}\n")
@@ -636,11 +988,13 @@ def nahraj(cesta_bundle: str) -> dict:
         # Like the form: the release is in; a refused price is reported,
         # and the next release tries again.
         try:
-            vysledek["predplatne"] = nahraj_predplatne(session, twa["packageId"], polozky, twa.get("name") or "")
+            nazev_en = str((preklady.get(JAZYK_EN_PLAY) or {}).get("nazev") or "") or None
+            vysledek["predplatne"] = nahraj_predplatne(session, twa["packageId"], polozky, twa.get("name") or "",
+                                                       nazev_en)
             print("Předplatné v Google Play:", "; ".join(vysledek["predplatne"]))
             stav_predplatneho = "1"
         except (Exception, SystemExit) as e:  # noqa: BLE001
-            print(f"::warning::Předplatné v Google Play se nepodařilo nastavit: {e}")
+            print(f"::warning::Předplatné v Google Play se nepodařilo nastavit: {jeden_radek(e)}")
             stav_predplatneho = "0"
         if vystup:
             with open(vystup, "a", encoding="utf-8") as f:
@@ -652,6 +1006,274 @@ def nahraj(cesta_bundle: str) -> dict:
         with open(vystup, "a", encoding="utf-8") as f:
             f.write(f"stav={vysledek['status']}\n")
     return vysledek
+
+
+# ── Production ────────────────────────────────────────────────────────
+#
+# Threat model, the one that decided the shape (CLAUDE.md, "Publikace"):
+#   - The release key (PLAY_SERVICE_ACCOUNT_JSON) and the upload key live in
+#     `vydej`; a thief with both can put any bundle on the INTERNAL track —
+#     testers only. The production key (PLAY_PRODUKCE_SERVICE_ACCOUNT_JSON)
+#     lives only in the `produkce` job, behind a GitHub environment that
+#     admits runs from main alone, next to no upload key and no product
+#     code. A thief with it alone can promote what we built, nothing else:
+#     Google takes only bundles signed with the registered upload key.
+#   - What goes up is checked against Play itself, not against anything the
+#     run was told: the version must already be on the internal track, newer
+#     than production, and production must already exist.
+#   - The domain must be the one the product's repo declares on main
+#     (data-manifest.json → adresa), fail closed: the app is a window onto a
+#     domain, and a manifest copied to a stranger's site would otherwise
+#     carry our package to production.
+#   - The shell's fingerprint is kept in the production release's own name
+#     in Play (where only the owner and the production key write), never in
+#     a branch the bot token could touch.
+
+PRAVO_PRODUKCE = ("Vydávání v produkční verzi, vyloučení zařízení a používání Play App Signing "
+                  "(Release to production, exclude devices, and use Play App Signing)")
+_BALICEK = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$")
+_PROJEKT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
+_ADRESA = re.compile(r"^https://([a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+)/?$")
+# A production release the owner is steering by hand: halted, rolled out in
+# stages, or prepared as a draft. Automation never replaces those.
+_RUCNI_STAVY = ("halted", "inProgress", "draft")
+_OTISK = re.compile(r"\bobal ([0-9a-f]{12})\b")
+# What makes two bundles the same app for a user: everything in the TWA
+# description but the version, and the generator (its version decides the
+# target API level).
+_BEZ_VERZE = ("appVersionName", "appVersionCode", "appVersion", "signingKey")
+
+
+def _stahni_bajty(url: str) -> bytes:
+    with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "simtegen-vydani"}),
+                                timeout=30) as odpoved:
+        return odpoved.read()
+
+
+def otisk_obalu(twa: dict, generator: str, stahni=_stahni_bajty) -> str:
+    """SHA-256 of the app's shell: the TWA description without its version,
+    the Bubblewrap release, and the icons' bytes (an icon may change under
+    the same address). Equal fingerprint = nothing for a user to update."""
+    import hashlib
+
+    h = hashlib.sha256()
+    popis = {k: v for k, v in twa.items() if k not in _BEZ_VERZE}
+    h.update(json.dumps(popis, sort_keys=True, ensure_ascii=False).encode("utf-8"))
+    h.update(b"\0" + generator.encode("utf-8"))
+    for klic in ("iconUrl", "maskableIconUrl", "monochromeIconUrl"):
+        if twa.get(klic):
+            h.update(b"\0" + klic.encode("ascii") + b"\0" + stahni(twa[klic]))
+    return h.hexdigest()
+
+
+def _sha(text: str) -> str:
+    import hashlib
+
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _cisty(text: str) -> str:
+    """One line, no control characters — for GITHUB_OUTPUT and summaries."""
+    return "".join(c if c.isprintable() else " " for c in text)[:300]
+
+
+def adresa_z_repa(projekt: str, vlastnik: str) -> tuple[str | None, str | None]:
+    """(host, package) the product's repo declares on main — or (None, None)
+    when it cannot be read. Unlike balicek_z_repa this one fails closed: a
+    production release without the check does not happen. Only an explicit
+    https `adresa` counts: a bare <projekt>.pages.dev belongs to whoever
+    created that Cloudflare project first, which need not be us."""
+    adresa = f"https://raw.githubusercontent.com/{vlastnik}/{projekt}/main/data-manifest.json"
+    try:
+        manifest = json.loads(_stahni_bajty(adresa).decode("utf-8"))
+    except Exception:  # noqa: BLE001
+        return None, None
+    if not isinstance(manifest, dict):
+        return None, None
+    shoda = _ADRESA.fullmatch(str(manifest.get("adresa") or "").strip())
+    balicek = (manifest.get("aplikace") or {}).get("balicek")
+    return (shoda.group(1) if shoda else None), (str(balicek) if balicek else None)
+
+
+def brana_produkce(projekt: str, domena: str, balicek: str, kod: str, otisk: str,
+                   vlastnik: str, cti_repo=adresa_z_repa) -> str | None:
+    """None when the run may go on to Play; otherwise why not (Czech)."""
+    if not _PROJEKT.fullmatch(projekt or ""):
+        return "neplatný název repa produktu"
+    if not _BALICEK.fullmatch(balicek or ""):
+        return "neplatný název balíčku"
+    if not re.fullmatch(r"\d{1,10}", kod or ""):
+        return "neplatný kód verze"
+    if not re.fullmatch(r"[0-9a-f]{64}", otisk or ""):
+        return "chybí otisk obalu aplikace"
+    host = (domena or "").strip()
+    if not host:
+        # <projekt>.pages.dev: nothing to compare. Said plainly — compared
+        # anyway it read "doména  není adresa produktu", which sent the owner
+        # looking for a wrong domain instead of a missing one.
+        return "produkt nemá vlastní doménu — bez vlastní domény se do produkce nepovyšuje"
+    z_repa, balicek_repa = cti_repo(projekt, vlastnik)
+    if z_repa is None:
+        return ("repo produktu nejde přečíst, nebo v data-manifest.json nemá adresu https:// — "
+                "bez ověřené domény se do produkce nevydává")
+    if host != z_repa:
+        return f"doména {host} není adresa produktu z jeho repa ({z_repa})"
+    if balicek_repa != balicek:
+        return f"balíček {balicek} není balíček produktu z jeho repa ({balicek_repa})"
+    return None
+
+
+def _verze_v_kanalu(kanal: dict) -> list[tuple[dict, int]]:
+    return [(r, int(k)) for r in kanal.get("releases") or [] for k in r.get("versionCodes") or []]
+
+
+def povys(session, balicek: str, kod: str, verze: str, otisk: str, poznamka_sha: str = "") -> dict:
+    """Production release of a version already on the internal track.
+    Returns {"stav": "povyseno" | "preskoceno", "duvod": …}; raises
+    SystemExit with Google's words (and the permission) on a refusal."""
+
+    def ok(odpoved, co):
+        return _ok(odpoved, co, PRAVO_PRODUKCE, "PLAY_PRODUKCE_SERVICE_ACCOUNT_JSON")
+
+    edit = ok(session.post(f"{_API}/{balicek}/edits", json={}), "založení úpravy pro produkci")["id"]
+
+    def konec(duvod: str) -> dict:
+        session.delete(f"{_API}/{balicek}/edits/{edit}")
+        return {"stav": "preskoceno", "duvod": duvod}
+
+    produkce = ok(session.get(f"{_API}/{balicek}/edits/{edit}/tracks/production"), "čtení produkce")
+    vydani_produkce = produkce.get("releases") or []
+    rucne = sorted({r.get("status") for r in vydani_produkce if r.get("status") in _RUCNI_STAVY})
+    if rucne:
+        return konec(f"v produkci je vydání, které řídíš ručně ({', '.join(rucne)}) — automat ho nepřepíše")
+    zive = [r for r in vydani_produkce if r.get("status") == "completed"]
+    if not zive:
+        return konec("aplikace ještě není v produkci — první vydání do produkce je ruční (Play Console)")
+    if not any(_OTISK.search(r.get("name") or "") for r in zive):
+        # The owner's first release from the console carries only a version
+        # in its name: whether the shell changed since is unknowable, and
+        # "changed" sent a second release into production on the next deploy
+        # — often straight into Google's review of the first (audit
+        # 19. 11. 2026). Fail closed and say how to fix it.
+        return konec("produkční vydání nemá v názvu otisk obalu (vydané ručně z konzole) — automat nic "
+                     "nepovyšuje; další produkční vydání pojmenuj podle souhrnu Vydání („… · obal …“)")
+    if any(otisk[:12] in _OTISK.findall(r.get("name") or "") for r in zive):
+        return konec("obal aplikace se nezměnil — nový web je v aplikaci sám, vydání netřeba")
+    nejvyssi = max((k for _, k in _verze_v_kanalu({"releases": zive})), default=0)
+    if int(kod) <= nejvyssi:
+        return konec(f"verze {kod} není novější než produkční {nejvyssi}")
+    interni = ok(session.get(f"{_API}/{balicek}/edits/{edit}/tracks/internal"), "čtení interního testování")
+    vydani = next((r for r, k in _verze_v_kanalu(interni) if k == int(kod) and r.get("status") == "completed"), None)
+    if vydani is None:
+        return konec(f"verze {kod} není dokončená v interním testování — do produkce jde jen to, co tam je")
+    poznamky = vydani.get("releaseNotes") or []
+    cesky = next((n.get("text") or "" for n in poznamky if n.get("language") == "cs-CZ"), None)
+    # The Czech note this run hashed, plus at most the fixed English line —
+    # anything else was written by someone else and is not published.
+    cizi = [n for n in poznamky if n.get("language") != "cs-CZ"
+            and not (n.get("language") == JAZYK_EN_PLAY and n.get("text") == POZNAMKA_EN)]
+    cs_pocet = sum(1 for n in poznamky if n.get("language") == "cs-CZ")
+    if cs_pocet != 1 or cizi or len(poznamky) > 2 or cesky is None or _sha(cesky) != poznamka_sha:
+        return konec("poznámka k vydání v interním testování není ta, kterou napsal tento běh — nepublikuje se")
+    nove = {"name": f"{verze} · obal {otisk[:12]}"[:50], "versionCodes": [str(kod)], "status": "completed",
+            "releaseNotes": [{"language": "cs-CZ", "text": cesky}]
+            + ([{"language": JAZYK_EN_PLAY, "text": POZNAMKA_EN}] if len(poznamky) == 2 else [])}
+    ok(session.put(f"{_API}/{balicek}/edits/{edit}/tracks/production",
+                   json={"track": "production", "releases": [nove]}), "zařazení do produkce")
+    odpoved = session.post(f"{_API}/{balicek}/edits/{edit}:commit")
+    if v_kontrole(odpoved):
+        return konec("Google teď kontroluje jiné změny aplikace — povýšení počká na další nasazení")
+    ok(odpoved, "potvrzení produkce")
+    return {"stav": "povyseno", "duvod": f"verze {verze} (kód {kod}) odeslána ke kontrole Googlu do produkce"}
+
+
+def povys_z_prostredi(env: dict | None = None) -> dict:
+    """The `produkce` job: gate, then Play. A skip is a normal outcome;
+    a refusal by Google fails the job (main returns 1: a red run is what
+    the owner looks at)."""
+    env = env if env is not None else os.environ
+    ucet_text = env.get("PLAY_PRODUKCE_SERVICE_ACCOUNT_JSON", "")
+    if not ucet_text:
+        vysledek = {"stav": "preskoceno", "duvod": "chybí secret PLAY_PRODUKCE_SERVICE_ACCOUNT_JSON "
+                                                   "v prostředí play-produkce"}
+    else:
+        duvod = brana_produkce(env.get("PROJEKT", ""), env.get("DOMENA", ""), env.get("BALICEK", ""),
+                               env.get("KOD", ""), env.get("OTISK", ""),
+                               env.get("GITHUB_REPOSITORY_OWNER") or "simtegen-apps")
+        if duvod:
+            vysledek = {"stav": "preskoceno", "duvod": duvod}
+        else:
+            from google.auth.transport.requests import AuthorizedSession
+            from google.oauth2 import service_account
+
+            pristup = service_account.Credentials.from_service_account_info(
+                json.loads(ucet_text), scopes=["https://www.googleapis.com/auth/androidpublisher"])
+            try:
+                vysledek = povys(AuthorizedSession(pristup), env["BALICEK"], env["KOD"], env.get("VERZE", ""),
+                                 env["OTISK"], env.get("POZNAMKA_SHA", ""))
+            except SystemExit as e:
+                # Google's words go to this job's log only; the result file
+                # sits on a public branch and travels on as data.
+                print(f"::warning::Produkce: {jeden_radek(e)}")
+                vysledek = {"stav": "chyba", "duvod": "Google povýšení odmítl — důvod je v logu kroku Povyseni"}
+    vystup = env.get("GITHUB_OUTPUT")
+    if vystup:
+        with open(vystup, "a", encoding="utf-8") as f:
+            f.write(f"stav={vysledek['stav']}\nduvod={_cisty(vysledek['duvod'])}\n")
+    print(f"Produkce: {_cisty(vysledek['duvod'])}")
+    return vysledek
+
+
+def zapis(env: dict | None = None) -> dict:
+    """The `zapis` job: `vydej`'s result plus what production did. Without
+    `vydej`'s file (it failed before writing) a bare result, so SimteGen
+    still hears the run ended."""
+    env = env if env is not None else os.environ
+    cesta = VYSTUP / "vysledek.json"
+    if cesta.exists() and _sha(cesta.read_text(encoding="utf-8")) != env.get("VYSLEDEK_SHA"):
+        # The artifact store is reachable from the job that runs the
+        # product's code; only the file `vydej` vouched for counts.
+        print("::warning::Výsledek z vydej nesedí s jeho otiskem — zapisuje se jen holý výsledek.")
+        cesta.unlink()
+    if cesta.exists():
+        data = json.loads(cesta.read_text(encoding="utf-8"))
+    else:
+        data = vysledek({**env, "STAV": env.get("STAV_VYDEJ") or "failure"})
+    stav = env.get("PRODUKCE") or None
+    duvod = env.get("PRODUKCE_DUVOD") or None
+    if stav is None and env.get("PRODUKCE_JOB") == "failure":
+        stav, duvod = "chyba", "job produkce selhal — důvod je v jeho logu"
+    elif stav is None and env.get("PRODUKCE_JOB") == "skipped" and env.get("PRODUKCE_ZAPNUTO") != "ano":
+        stav, duvod = "vypnuto", "automatické vydání do produkce je vypnuté (org proměnná PLAY_PRODUKCE)"
+    data["produkce"], data["produkce_duvod"] = stav, _cisty(duvod or "") or None
+    otisk = env.get("OBCHOD_OTISK", "")
+    if re.fullmatch(r"[0-9a-f]{64}", otisk):
+        (VYSTUP / "obchod.json").write_text(json.dumps({"otisk": otisk}) + "\n", encoding="utf-8")
+    cesta.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    return data
+
+
+# Bubblewrap's project names its Gradle distribution without a checksum;
+# Gradle then runs whatever that URL serves. Pinned here — a different
+# Gradle (a Bubblewrap bump) stops the build until its checksum is added
+# (from https://services.gradle.org/distributions/<file>.sha256).
+GRADLE_OTISKY = {
+    "https\\://services.gradle.org/distributions/gradle-8.11.1-bin.zip":
+        "f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6",
+}
+
+
+def pripni_gradle(projekt: Path = VYSTUP) -> str:
+    cesta = projekt / "gradle" / "wrapper" / "gradle-wrapper.properties"
+    radky = cesta.read_text(encoding="utf-8").splitlines()
+    url = next((r.split("=", 1)[1].strip() for r in radky if r.startswith("distributionUrl=")), "")
+    if url not in GRADLE_OTISKY:
+        raise SystemExit(f"Bubblewrap chce Gradle {url or '(neuvedený)'}, který nemá ověřený otisk — "
+                         "doplň ho do GRADLE_OTISKY ve vydani.py.")
+    radky = [r for r in radky if not r.startswith("distributionSha256Sum=")]
+    radky.append(f"distributionSha256Sum={GRADLE_OTISKY[url]}")
+    cesta.write_text("\n".join(radky) + "\n", encoding="utf-8")
+    return GRADLE_OTISKY[url]
 
 
 def cilove_api(projekt_slozka: Path) -> int | None:
@@ -682,9 +1304,12 @@ def vysledek(env: dict | None = None) -> dict:
         "kod": twa.get("appVersionCode"),
         "cilove_api": cilove_api(VYSTUP),
         "docasny_klic": env.get("DOCASNY") == "1",
-        "nahrano": env.get("NAHRANO") == "success" and env.get("STAV_PLAY") != NEZNAMA,
+        "nahrano": env.get("NAHRANO") == "success" and env.get("STAV_PLAY") not in (NEZNAMA, V_KONTROLE),
         "stav_play": env.get("STAV_PLAY") or None,
         "zaznam": env.get("ZAZNAM") == "1",
+        # Job `obchod` (store pictures from the product) failed: the package
+        # went on without the listing, and the next release tries it again.
+        "obchod_selhal": env.get("OBCHOD") not in (None, "", "success"),
         # The listing reached Play (None: not attempted — no listing, unknown
         # app, or the release itself did not go in).
         "zaznam_play": {"1": True, "0": False}.get(env.get("ZAZNAM_PLAY", "")),
@@ -694,22 +1319,178 @@ def vysledek(env: dict | None = None) -> dict:
         # in Play set (None = nothing to set: no approved price, no billing).
         "nakupy": env.get("NAKUPY") == "1",
         "predplatne_play": {"1": True, "0": False}.get(env.get("PREDPLATNE_PLAY", "")),
+        # Production (job `produkce`): "povyseno" | "preskoceno" | "chyba",
+        # None when the job did not run (switched off, upload failed…).
+        "produkce": env.get("PRODUKCE") or None,
+        "produkce_duvod": (env.get("PRODUKCE_DUVOD") or "")[:300] or None,
         "run_url": env.get("RUN_URL", ""),
         "cas": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
-    (VYSTUP / "vysledek.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+    text = json.dumps(data, ensure_ascii=False, indent=1)
+    (VYSTUP / "vysledek.json").write_text(text, encoding="utf-8")
+    vystup = env.get("GITHUB_OUTPUT")
+    if vystup:
+        with open(vystup, "a", encoding="utf-8") as f:
+            f.write(f"sha={_sha(text)}\n")
     return data
 
 
+# ── Play Console: what has no API ─────────────────────────────────────
+#
+# Creating the app, its first bundle, the default store listing, the store
+# category and the App content declarations exist only in Play Console
+# (11. 11. 2026: the API edits a listing but never creates it). Nothing on
+# the mini PC may hold the owner's Google session, so a human — or Claude in
+# the owner's own Chrome, the owner confirming each save (skill
+# play-nova-aplikace in SimteGen) — clicks it through, once per app. Every
+# answer is generated here, from the same claims as the privacy policy, so
+# neither of them invents one.
+
+# Same text as vykresli_aplikaci.PRISTUP_KONTROLORA (a test keeps them equal):
+# the template's release tool cannot import the product's generator.
+PRISTUP_KONTROLORA = (
+    "No login credentials are needed. On the start screen tap \"Vyzkoušet ukázku\" "
+    "(Try the demo): the app creates a temporary account with sample data and all paid "
+    "features unlocked; it is deleted after 24 hours. Sign-in for real customers is by a "
+    "one-time link sent to their e-mail (no password). Purchases are disabled in the demo "
+    "account; the subscription offer and its terms are shown there."
+)
+# Play Console's own Czech labels, as its category list shows them (Byznys,
+# Auto moto, Cestování a místa read off it 11. 11. 2026) — the skill picks the
+# option by this text, so a translation of our own would find nothing.
+KATEGORIE_CZ = {
+    "BUSINESS": "Byznys", "PRODUCTIVITY": "Produktivita", "TOOLS": "Nástroje", "FINANCE": "Finance",
+    "EDUCATION": "Vzdělávání", "LIFESTYLE": "Životní styl", "HOUSE_AND_HOME": "Dům a domácnost",
+    "FOOD_AND_DRINK": "Jídlo a pití", "HEALTH_AND_FITNESS": "Zdraví a fitness", "SHOPPING": "Nakupování",
+    "AUTO_AND_VEHICLES": "Auto moto", "TRAVEL_AND_LOCAL": "Cestování a místa",
+    "SPORTS": "Sport", "PARENTING": "Rodičovství", "EVENTS": "Události", "COMMUNICATION": "Komunikace",
+    "BOOKS_AND_REFERENCE": "Knihy a referenční materiály", "ENTERTAINMENT": "Zábava",
+}
+
+
+# Categories where "no financial / no health features" is not ours to say
+# (audit 19. 11. 2026): an app filed under Finance or Health & fitness most
+# likely HAS such features, and Google checks these declarations against
+# the app. Both declarations go to the owner there; elsewhere the generated
+# "none" is what our apps (business tools) truly are.
+KATEGORIE_PROHLASENI_MAJITELE = ("FINANCE", "HEALTH_AND_FITNESS")
+VYPLNI_MAJITEL = "Finanční funkce a Zdravotní aplikace (kategorie {kategorie} — vyplň sám podle toho, co aplikace dělá)"
+
+
+def inzertni_id(adresar: Path) -> bool | None:
+    """Does the built app ask for the advertising ID? Read from the bundle's
+    own manifest (protobuf, but permission names stay plain strings), not
+    assumed: a library that adds AD_ID would make "Ne" a false declaration.
+    None when there is no bundle to read."""
+    import zipfile
+
+    aab = adresar / "app-release-bundle.aab"
+    if not aab.exists():
+        return None
+    try:
+        with zipfile.ZipFile(aab) as z:
+            return b"permission.AD_ID" in z.read("base/manifest/AndroidManifest.xml")
+    except (zipfile.BadZipFile, KeyError):
+        return None
+
+
+def konzole(twa: dict, zaznam: dict, obchod: Path) -> dict:
+    """Every Play Console form that has no API, answered, in the order the
+    console asks. Machine-readable (obchod/play_console.json, read by the
+    Chrome skill) and the source of PRVNI_VYDANI.md, so the two never
+    differ. Files are named relative to the artifact's obchod/ folder."""
+    host = twa.get("host", "")
+    adresa = f"https://{host}"
+    nazev = zaznam.get("nazev") or twa.get("name") or twa["packageId"]
+    kat = zaznam.get("kategorie") or ""
+    ucty = bool(zaznam.get("ucty"))
+    nakupy = bool((twa.get("features") or {}).get("playBilling"))
+    obrazky = {typ: [s.name for s in soubory] for typ, soubory in _obrazky_zaznamu(obchod)}
+    # None = not answered here, the owner fills it (KATEGORIE_PROHLASENI_MAJITELE).
+    majitele = kat in KATEGORIE_PROHLASENI_MAJITELE
+    return {
+        "balicek": twa["packageId"],
+        "nazev": nazev[:30],
+        "adresa": adresa,
+        "vytvoreni": {
+            "nazev": nazev[:30], "balicek": twa["packageId"], "jazyk": "čeština – cs-CZ",
+            "typ": "Aplikace", "cena": "Zdarma",
+            "deklarace": ["Zásady pro vývojáře", "Play App Signing", "Vývozní zákony USA"],
+        },
+        "prvni_vydani": {
+            "kanal": "Interní testování", "soubor": "app-release-bundle.aab",
+            "klic": "Použít klíč vygenerovaný Googlem", "poznamka": "První verze.",
+            "verze": twa.get("appVersionName"), "kod": twa.get("appVersionCode"),
+        },
+        "vychozi_zaznam": {
+            "nazev": nazev[:30], "kratky_popis": (zaznam.get("kratky_popis") or "")[:80],
+            "dlouhy_popis": (zaznam.get("dlouhy_popis") or "")[:4000],
+            "ikona": (obrazky.get("icon") or [None])[0],
+            "grafika": (obrazky.get("featureGraphic") or [None])[0],
+            "telefon": obrazky.get("phoneScreenshots") or [],
+            "tablet_7": obrazky.get("sevenInchScreenshots") or [],
+            "tablet_10": obrazky.get("tenInchScreenshots") or [],
+        },
+        "nastaveni_obchodu": {
+            "typ": "Aplikace", "kategorie": KATEGORIE_CZ.get(kat, kat), "kategorie_kod": kat,
+            "email": zaznam.get("kontakt_email") or "", "web": adresa,
+        },
+        # Obsah aplikace (App content), one form each, in the order Play
+        # Console lets them be filled (Cílové publikum waits for Přihlašovací
+        # údaje). Pages strips .html with a 308, so the policy URL is the
+        # address it lands on.
+        "zasady_url": f"{adresa}{(zaznam.get('zasady_cesta') or '/zasady.html').removesuffix('.html')}",
+        "pristup": ({"omezeny": True, "nazev_pokynu": "Ukázka", "jmeno": "", "heslo": "",
+                     "pokyny": PRISTUP_KONTROLORA,
+                     # "Plný přístup ke všem funkcím" — a required declaration;
+                     # the owner ticks it, never the skill.
+                     "plny_pristup_zaskrtava_majitel": True} if ucty else {"omezeny": False}),
+        "reklamy": False,
+        "cilova_skupina": {"vek": ["18 a více"], "laka_deti": False},
+        "vladni": False,
+        "financni_funkce": None if majitele else "Aplikace neposkytuje žádné finanční funkce",
+        "zdravi": None if majitele else "Aplikace nemá žádné zdravotní funkce",
+        "inzertni_id": inzertni_id(obchod.parent),
+        # Questions as the IARC questionnaire asks them for "all other apps"
+        # (11. 11. 2026); the terms checkbox on its first page is the owner's.
+        "hodnoceni_obsahu": {
+            "email": zaznam.get("kontakt_email") or "",
+            "kategorie": "Všechny ostatní typy aplikací",
+            "podminky_iarc_zaskrtava_majitel": True,
+            "stazeny_obsah_k_hodnoceni": False, "sdileni_uzivatelskeho_obsahu": False,
+            "online_obsah": False, "vekove_omezene_produkty": False, "sdileni_polohy": False,
+            "digitalni_nakupy": nakupy, "nahodne_polozky": False if nakupy else None,
+            "penezni_odmeny_nft": False, "prohlizec_vyhledavac": False, "zpravy_vzdelavani": False,
+        },
+        "bezpecnost_udaju": "bezpecnost_dat.csv" if (obchod / "bezpecnost_dat.csv").exists() else None,
+        # Owner's own declarations, never answered here: whether the assets
+        # are AI-made (asked when the listing is saved), and the app-level
+        # trader status.
+        "majitel": ["Deklarace podkladů vytvořených pomocí AI (při uložení záznamu)",
+                    "Status obchodníka na úrovni aplikace a smluvní podmínky"]
+        + ([VYPLNI_MAJITEL.format(kategorie=KATEGORIE_CZ.get(kat, kat))] if majitele else []),
+    }
+
+
+def _ano(hodnota: bool) -> str:
+    return "**Ano**" if hodnota else "**Ne**"
+
+
 def navod(adresar: Path = VYSTUP) -> Path:
-    """obchod/PRVNI_VYDANI.md: the owner's first upload, every value filled
-    in. Play Console asks for the package when the app is created and never
-    lets it change again — so the guide names it, not the owner's memory.
-    Written into every artifact; it costs nothing and a later reader of an
-    old run still gets the right values for that build."""
+    """obchod/PRVNI_VYDANI.md and obchod/play_console.json: everything Play
+    Console wants from a person for a new app, every value filled in. Play
+    Console asks for the package when the app is created and never lets it
+    change again — so the guide names it, not the owner's memory. Written
+    into every artifact; it costs nothing and a later reader of an old run
+    still gets the right values for that build."""
     twa = json.loads((adresar / "twa-manifest.json").read_text(encoding="utf-8"))
-    zaznam_soubor = adresar / "obchod" / "zaznam.json"
+    obchod = adresar / "obchod"
+    obchod.mkdir(parents=True, exist_ok=True)
+    zaznam_soubor = obchod / "zaznam.json"
     zaznam = json.loads(zaznam_soubor.read_text(encoding="utf-8")) if zaznam_soubor.exists() else {}
+    k = konzole(twa, zaznam, obchod)
+    (obchod / "play_console.json").write_text(json.dumps(k, ensure_ascii=False, indent=2) + "\n",
+                                              encoding="utf-8")
     nazev = zaznam.get("nazev") or twa.get("name") or twa["packageId"]
     host = twa.get("host", "")
     radky = [
@@ -764,15 +1545,67 @@ def navod(adresar: Path = VYSTUP) -> Path:
             "",
         ]
     if zaznam:
+        z, n, h = k["vychozi_zaznam"], k["nastaveni_obchodu"], k["hodnoceni_obsahu"]
         radky += [
-            "Ostatní prohlášení (reklamy, cílová skupina, hodnocení obsahu) podle `BEZPECNOST_DAT.md` ve stejné složce:",
+            "### Výchozí záznam v obchodě — jednou ručně",
             "",
-            f"- Kategorie: `{zaznam.get('kategorie')}`, kontaktní e-mail: `{zaznam.get('kontakt_email')}`",
-            f"- Web: `https://{host}`",
-            f"- Zásady ochrany soukromí: `https://{host}{zaznam.get('zasady_cesta') or '/zasady.html'}`",
-            "- Texty, ikona, grafika a snímky se nahrávají samy s každým vydáním.",
-            "- Přístup k aplikaci (pro kontrolora Googlu): hotový text je v `BEZPECNOST_DAT.md` — "
-            "kontrolor klepne na „Vyzkoušet ukázku“, žádné heslo.",
+            "Zvýšení počtu uživatelů → Prezentace v Obchodě → Záznamy v obchodě → **Vytvořit výchozí",
+            "záznam**. API záznam jen upravuje, nezaloží ho; přesné hodnoty pak přepisuje každé vydání.",
+            "",
+            f"- **Název aplikace:** {z['nazev']}",
+            f"- **Krátký popis:** {z['kratky_popis']}",
+            f"- **Ikona:** `{z['ikona']}` · **Grafika:** `{z['grafika']}`",
+            f"- **Snímky z telefonu:** {', '.join(f'`{s}`' for s in z['telefon']) or '—'}",
+            f"- **Tablet 7\" i 10\":** {', '.join(f'`{s}`' for s in z['tablet_7']) or '—'}",
+            "- **Úplný popis:**",
+            "",
+            "```",
+            z["dlouhy_popis"],
+            "```",
+            "",
+            "Při uložení se Google zeptá na **podklady vytvořené pomocí AI** — to je tvoje prohlášení.",
+            "",
+            "### Nastavení obchodu",
+            "",
+            f"- **Aplikace/hra:** {n['typ']} (zkontroluj — u Pneuskladu tam bylo „Hra“)",
+            f"- **Kategorie:** {n['kategorie']} (`{n['kategorie_kod']}`)",
+            f"- **E-mail:** `{n['email']}` · **Web:** `{n['web']}` · telefon nevyplňuj",
+            "",
+            "### Obsah aplikace (Panel → Nastavení aplikace, nebo Sledování a vylepšování → Zásady a programy → Obsah aplikace)",
+            "",
+            f"- **Zásady ochrany soukromí:** `{k['zasady_url']}`",
+            f"- **Reklamy:** obsahuje aplikace reklamy? {_ano(k['reklamy'])}",
+        ]
+        if k["pristup"]["omezeny"]:
+            radky += [
+                "- **Přihlašovací údaje (dřív Přístup k aplikaci):** Ano, část je omezená → Zadejte",
+                "  podrobnosti → název `Ukázka`, jméno a heslo nevyplňuj, do „Další informace“ níž;",
+                "  povinné prohlášení o plném přístupu zaškrtáváš ty:",
+                "",
+                "  ```",
+                f"  {k['pristup']['pokyny']}",
+                "  ```",
+            ]
+        else:
+            radky.append("- **Přihlašovací údaje:** Ne, žádná část aplikace není omezená.")
+        ad_id = k["inzertni_id"]
+        radky += [
+            f"- **Cílové publikum:** {', '.join(k['cilova_skupina']['vek'])} (až po přihlašovacích údajích)",
+            f"- **Státní aplikace:** {_ano(k['vladni'])} · **Finanční funkce:** "
+            f"{k['financni_funkce'] or '**vyplň sám** (viz Na tobě)'} · "
+            f"**Zdraví:** {k['zdravi'] or '**vyplň sám** (viz Na tobě)'}",
+            "- **Inzertní ID:** " + ("**Ne** (balíček oprávnění AD_ID nemá)" if ad_id is False else
+                                     "**Ano** — balíček žádá AD_ID, zjisti proč" if ad_id else
+                                     "zkontroluj v balíčku, jestli žádá AD_ID"),
+            f"- **Hodnocení obsahu:** e-mail `{h['email']}`, „{h['kategorie']}“, souhlas s podmínkami IARC "
+            "zaškrtáváš ty; obsah k hodnocení, sdílení obsahu, online obsah, věkově omezené produkty, "
+            f"poloha **Ne**; nákup digitálního zboží {_ano(h['digitalni_nakupy'])}"
+            + ("; náhodné položky **Ne**" if h["digitalni_nakupy"] else "")
+            + "; peněžní odměny/NFT, prohlížeč, zpravodajství/vzdělávání **Ne**.",
+            f"- **Na tobě:** {'; '.join(k['majitel'])}.",
+            "",
+            "Totéž strojově v `play_console.json` — podle něj to umí vyplnit Claude v tvém Chromu",
+            "(skill `play-nova-aplikace` v repu SimteGenu; každé uložení potvrzuješ ty).",
         ]
     else:
         radky += ["Produkt zatím nemá záznam v obchodě (vznikne s jeho příští stavbou)."]
@@ -804,7 +1637,28 @@ def main(argv: list[str]) -> int:
     if len(argv) >= 3 and argv[1] == "nahraj":
         nahraj(argv[2])
         return 0
-    print("Použití: vydani.py priprav | vydani.py nahraj <soubor.aab>")
+    if len(argv) >= 2 and argv[1] == "otisk":
+        twa = json.loads((VYSTUP / "twa-manifest.json").read_text(encoding="utf-8"))
+        zamek = Path(__file__).with_name("bubblewrap.lock.json")
+        generator = os.environ.get("BUBBLEWRAP", "") + (f" {_sha(zamek.read_text(encoding='utf-8'))}"
+                                                       if zamek.exists() else "")
+        otisk = otisk_obalu(twa, generator)
+        vystup = os.environ.get("GITHUB_OUTPUT")
+        if vystup:
+            with open(vystup, "a", encoding="utf-8") as f:
+                f.write(f"otisk={otisk}\n")
+        print(f"Otisk obalu aplikace: {otisk[:12]}")
+        return 0
+    if len(argv) >= 2 and argv[1] == "zapis":
+        VYSTUP.mkdir(exist_ok=True)
+        print(json.dumps(zapis(), ensure_ascii=False))
+        return 0
+    if len(argv) >= 2 and argv[1] == "gradle":
+        print(f"Gradle připnutý na otisk {pripni_gradle()[:12]}…")
+        return 0
+    if len(argv) >= 2 and argv[1] == "povys":
+        return 1 if povys_z_prostredi()["stav"] == "chyba" else 0
+    print("Použití: vydani.py priprav | nahraj <soubor.aab> | otisk | povys | vysledek | navod")
     return 2
 
 

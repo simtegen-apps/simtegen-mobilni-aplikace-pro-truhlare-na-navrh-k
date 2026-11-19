@@ -147,20 +147,47 @@ def _dny(n: int) -> str:
     return "den" if n == 1 else ("dny" if 2 <= n <= 4 else "dní")
 
 
-def _paticka(manifest: dict, co: str) -> str:
+# The account's language (migration 0950, set by the page — batch B,
+# 14. 11. 2026): English mail for a customer who reads the app in English,
+# Czech for everyone else and for every account from before.
+_MESICE_EN = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def en_datum(unix: int) -> str:
+    """British order, like the app in English (web/simtegen.js): 25 Oct 2026."""
+    d = den_v_cesku(unix)
+    return f"{d.day} {_MESICE_EN[d.month - 1]} {d.year}"
+
+
+def _podpis(manifest: dict) -> str:
+    return (str(manifest.get("provozovatel") or "SimteGen, s.r.o.")
+            + (f" · {manifest['kontakt_email']}" if manifest.get("kontakt_email") else "") + "\n")
+
+
+def _paticka(manifest: dict, co: str, jazyk: str = "cs") -> str:
+    if jazyk == "en":
+        return (f"\n\nWe send this e-mail because your {co} in our service is ending — it is a service "
+                "message about your account, not advertising.\n" + _podpis(manifest))
     return (
         f"\n\nTento e-mail posíláme, protože vám v naší službě končí {co} — je to provozní "
-        "zpráva k vašemu účtu, ne reklama.\n"
-        + str(manifest.get("provozovatel") or "SimteGen, s.r.o.")
-        + (f" · {manifest['kontakt_email']}" if manifest.get("kontakt_email") else "") + "\n"
+        "zpráva k vašemu účtu, ne reklama.\n" + _podpis(manifest)
     )
 
 
-def zprava_obnova(manifest: dict, repo: str, konec: int, nyni: int) -> tuple[str, str]:
+def zprava_obnova(manifest: dict, repo: str, konec: int, nyni: int, jazyk: str = "cs") -> tuple[str, str]:
     """(subject, text) of the renewal reminder: when it ends, where to order."""
     produkt = str(manifest.get("produkt") or repo).strip()
     adresa = str(manifest.get("adresa") or f"https://{repo}.pages.dev").rstrip("/")
     dni = (den_v_cesku(konec) - den_v_cesku(nyni)).days
+    if jazyk == "en":
+        return (
+            f"{produkt}: your subscription ends {en_datum(konec)}",
+            f"Hello,\n\nyour paid {produkt} period ends on {en_datum(konec)} (in {dni} "
+            f"{'day' if dni == 1 else 'days'}). To keep working without a break, order the next period in "
+            f"the app under Account:\n{adresa}/?platba\n\nA bank transfer takes a day or two, which is why "
+            "we write a week ahead. If you have already ordered the next period, ignore this e-mail."
+            + _paticka(manifest, "paid period", "en"),
+        )
     return (
         f"{produkt}: předplatné končí {cz_datum(konec)}",
         f"Dobrý den,\n\npředplacené období služby {produkt} končí {cz_datum(konec)} (za {dni} {_dny(dni)}). "
@@ -170,11 +197,19 @@ def zprava_obnova(manifest: dict, repo: str, konec: int, nyni: int) -> tuple[str
     )
 
 
-def zprava_odpoved(manifest: dict, repo: str, odpoved: str) -> tuple[str, str]:
+def zprava_odpoved(manifest: dict, repo: str, odpoved: str, jazyk: str = "cs") -> tuple[str, str]:
     """(subject, text) of the answer mail: the firm's answer, where else to
     find it. No link but the product's own address."""
     produkt = str(manifest.get("produkt") or repo).strip()
     adresa = str(manifest.get("adresa") or f"https://{repo}.pages.dev").rstrip("/")
+    if jazyk == "en":
+        return (
+            f"{produkt}: a reply to your report",
+            f"Hello,\n\nwe have replied to your report in {produkt}:\n\n{odpoved.strip()}\n\n"
+            f"You will find the reply in the app next to your report too:\n{adresa}\n\n"
+            "We send this e-mail because you sent us a report from the app — it is a service message "
+            "about your account, not advertising.\n" + _podpis(manifest),
+        )
     return (
         f"{produkt}: odpověď na vaše hlášení",
         f"Dobrý den,\n\nna vaše hlášení v aplikaci {produkt} jsme odpověděli:\n\n{odpoved.strip()}\n\n"
@@ -185,11 +220,35 @@ def zprava_odpoved(manifest: dict, repo: str, odpoved: str) -> tuple[str, str]:
     )
 
 
-def zprava(druh: str, manifest: dict, repo: str, konec: int, nyni: int) -> tuple[str, str]:
-    """(subject, text) — short, Czech, the product's name and the way to pay."""
+def zprava(druh: str, manifest: dict, repo: str, konec: int, nyni: int, jazyk: str = "cs",
+           s_odchodem: bool = False) -> tuple[str, str]:
+    """(subject, text) — short, the product's name and the way to pay; Czech,
+    or English for an account that reads the app in English. `s_odchodem`:
+    the product asks why customers do not carry on (migration 0960, batch D2)
+    — the last trial mail points to the one-tap question in the app."""
     produkt = str(manifest.get("produkt") or repo).strip()
     adresa = str(manifest.get("adresa") or f"https://{repo}.pages.dev").rstrip("/")
     odkaz = f"{adresa}/?platba"
+    if jazyk == "en":
+        paticka = _paticka(manifest, "trial", "en")
+        if druh == "konec":
+            return (
+                f"{produkt}: your trial has ended",
+                f"Hello,\n\nyour {produkt} trial ended on {en_datum(konec)}. Your data stay saved: you can "
+                "still sign in, download them or delete your account. To keep working, order a subscription "
+                f"in the app under Account:\n{odkaz}\n\n"
+                + ("Not carrying on? When you sign in, tell us why with one tap — it helps us improve.\n\n"
+                   if s_odchodem else "")
+                + "This is our last reminder about the trial." + paticka,
+            )
+        dni = (den_v_cesku(konec) - den_v_cesku(nyni)).days
+        kdy = "today" if dni <= 0 else "tomorrow" if dni == 1 else f"in {dni} days"
+        return (
+            f"{produkt}: your trial ends {kdy}",
+            f"Hello,\n\nyour {produkt} trial ends {kdy} ({en_datum(konec)}). To keep working without a "
+            f"break, order a subscription in the app under Account:\n{odkaz}\n\n"
+            "Your data stay saved after the trial ends too." + paticka,
+        )
     datum = cz_datum(konec)
     paticka = _paticka(manifest, "zkušební období")
     if druh == "konec":
@@ -198,7 +257,9 @@ def zprava(druh: str, manifest: dict, repo: str, konec: int, nyni: int) -> tuple
             f"Dobrý den,\n\nzkušební období služby {produkt} skončilo {datum}. Vaše data zůstávají "
             "uložená: přihlásíte se dál, stáhnete si je nebo účet smažete. Pokračovat v práci půjde po "
             f"objednání předplatného v aplikaci v části Účet:\n{odkaz}\n\n"
-            "Tohle je naše poslední upozornění ke zkušebnímu období." + paticka,
+            + ("Nechcete pokračovat? Po přihlášení nám jedním klepnutím řekněte proč — pomůže nám to "
+               "zlepšit.\n\n" if s_odchodem else "")
+            + "Tohle je naše poslední upozornění ke zkušebnímu období." + paticka,
         )
     dni = (den_v_cesku(konec) - den_v_cesku(nyni)).days
     kdy = "dnes" if dni <= 0 else "zítra" if dni == 1 else f"za {dni} {_dny(dni)}"
@@ -210,12 +271,25 @@ def zprava(druh: str, manifest: dict, repo: str, konec: int, nyni: int) -> tuple
     )
 
 
-def kandidati_sql(nyni: int, s_platbami: bool, s_predplatnym: bool) -> str:
+def _jazyk_sloupec(s_jazykem: bool) -> str:
+    # Before migration 0950 the column is not there: NULL = Czech.
+    return ", u.jazyk AS jazyk " if s_jazykem else ", NULL AS jazyk "
+
+
+# Someone who already ordered (an invoice is on its way or unpaid within the
+# grace, functions/api/_middleware.js ochrannaLhuta) is not told to order:
+# "your trial ends, subscribe" after the order reads as if it was lost.
+_BEZ_OBJEDNAVKY = (" AND NOT EXISTS (SELECT 1 FROM objednavky o WHERE o.uzivatel_id = {sloupec} "
+                   "AND o.stav IN ('nova', 'fakturovana'))")
+
+
+def kandidati_sql(nyni: int, s_platbami: bool, s_predplatnym: bool, s_jazykem: bool = False,
+                  s_objednavkami: bool = False) -> str:
     """Accounts whose trial ends within the reminder windows and who have
     not paid. Integers only go into the text — wrangler has no binds."""
     nyni = int(nyni)
     sql = (
-        "SELECT z.uzivatel_id AS id, u.email AS email, z.konec AS konec "
+        "SELECT z.uzivatel_id AS id, u.email AS email, z.konec AS konec" + _jazyk_sloupec(s_jazykem) +
         "FROM zkusebni_doba z JOIN uzivatele u ON u.id = z.uzivatel_id "
         f"WHERE z.konec > {nyni - 3 * DEN} AND z.konec <= {nyni + 4 * DEN} "
         f"AND u.email NOT LIKE '%{UKAZKOVY_UCET}'"
@@ -225,15 +299,17 @@ def kandidati_sql(nyni: int, s_platbami: bool, s_predplatnym: bool) -> str:
     if s_predplatnym:
         sql += (" AND NOT EXISTS (SELECT 1 FROM predplatne p WHERE p.uzivatel_id = z.uzivatel_id "
                 "AND p.plati_do > z.konec)")
+    if s_objednavkami:
+        sql += _BEZ_OBJEDNAVKY.format(sloupec="z.uzivatel_id")
     return sql
 
 
-def obnova_sql(nyni: int, s_play: bool) -> str:
+def obnova_sql(nyni: int, s_play: bool, s_jazykem: bool = False, s_objednavkami: bool = False) -> str:
     """Accounts whose paid period ends within the renewal window and who
     have paid at least once. Integers only go into the text."""
     nyni = int(nyni)
     sql = (
-        "SELECT p.uzivatel_id AS id, u.email AS email, p.plati_do AS konec "
+        "SELECT p.uzivatel_id AS id, u.email AS email, p.plati_do AS konec" + _jazyk_sloupec(s_jazykem) +
         "FROM predplatne p JOIN uzivatele u ON u.id = p.uzivatel_id "
         f"WHERE p.plati_do > {nyni + 4 * DEN} AND p.plati_do <= {nyni + 8 * DEN} "
         f"AND u.email NOT LIKE '%{UKAZKOVY_UCET}' "
@@ -242,15 +318,18 @@ def obnova_sql(nyni: int, s_play: bool) -> str:
     if s_play:
         sql += (" AND NOT EXISTS (SELECT 1 FROM play_nakupy n WHERE n.uzivatel_id = p.uzivatel_id "
                 "AND n.plati_do >= p.plati_do)")
+    if s_objednavkami:
+        sql += _BEZ_OBJEDNAVKY.format(sloupec="p.uzivatel_id")
     return sql
 
 
-def odpovedi_sql(nyni: int) -> str:
+def odpovedi_sql(nyni: int, s_jazykem: bool = False) -> str:
     """Reports with a final answer from the last three days. Integers only
     go into the text; the states are this file's constants."""
     stavy = ", ".join(f"'{s}'" for s in ODPOVED_STAVY)
     return (
-        "SELECT h.id AS hid, h.uzivatel_id AS id, u.email AS email, h.odpoved AS odpoved, h.zmeneno AS zmeneno "
+        "SELECT h.id AS hid, h.uzivatel_id AS id, u.email AS email, h.odpoved AS odpoved, h.zmeneno AS zmeneno"
+        + _jazyk_sloupec(s_jazykem) +
         "FROM hlaseni h JOIN uzivatele u ON u.id = h.uzivatel_id "
         f"WHERE h.stav IN ({stavy}) AND h.odpoved IS NOT NULL AND TRIM(h.odpoved) != '' "
         f"AND h.zmeneno > {int(nyni) - 3 * DEN} AND u.email NOT LIKE '%{UKAZKOVY_UCET}'"
@@ -316,19 +395,22 @@ def zpracuj(repo: str, env: dict, nyni: int, *, d1=d1, nacti_manifest=nacti_mani
     {"preskoceno": reason}. The callables are parameters for the tests."""
     db = f"{repo}-db"
     tabulky = {r["name"] for r in d1(db, "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN "
-                                         "('zkusebni_doba', 'upominky', 'platby', 'predplatne', 'play_nakupy', 'hlaseni')")}
+                                         "('zkusebni_doba', 'upominky', 'platby', 'predplatne', 'play_nakupy', 'hlaseni', "
+                                         "'odchody', 'objednavky')")}
     if not {"zkusebni_doba", "upominky"} <= tabulky:
         return {"preskoceno": "bez migrace 0920 (přijde s obnovou šablony)"}
-    kandidati = d1(db, kandidati_sql(nyni, "platby" in tabulky, "predplatne" in tabulky))
+    s_jazykem = bool(d1(db, "SELECT name FROM pragma_table_info('uzivatele') WHERE name = 'jazyk'"))
+    kandidati = d1(db, kandidati_sql(nyni, "platby" in tabulky, "predplatne" in tabulky, s_jazykem,
+                                     "objednavky" in tabulky))
     for k in kandidati:
         k["druh"] = druh_upominky(int(k["konec"]), nyni)
     if {"platby", "predplatne"} <= tabulky:
-        for k in d1(db, obnova_sql(nyni, "play_nakupy" in tabulky)):
+        for k in d1(db, obnova_sql(nyni, "play_nakupy" in tabulky, s_jazykem, "objednavky" in tabulky)):
             if obnova_vcas(int(k["konec"]), nyni):
                 k["druh"] = f"obnova_{int(k['konec'])}"
                 kandidati.append(k)
     if "hlaseni" in tabulky:
-        for k in d1(db, odpovedi_sql(nyni)):
+        for k in d1(db, odpovedi_sql(nyni, s_jazykem)):
             k["druh"] = f"odpoved_{int(k['hid'])}_{int(k['zmeneno'])}"
             kandidati.append(k)
     # Public repo, public logs (as in platba.py): every address is masked the
@@ -366,12 +448,13 @@ def zpracuj(repo: str, env: dict, nyni: int, *, d1=d1, nacti_manifest=nacti_mani
         if not d1(db, f"INSERT OR IGNORE INTO upominky (uzivatel_id, druh, odeslano) "
                       f"VALUES ({uid}, '{druh}', {int(nyni)}) RETURNING uzivatel_id"):
             continue  # claimed by a run in parallel
+        jazyk = "en" if k.get("jazyk") == "en" else "cs"
         if klic == "odpoved":
-            predmet, text = zprava_odpoved(manifest, repo, str(k.get("odpoved") or ""))
+            predmet, text = zprava_odpoved(manifest, repo, str(k.get("odpoved") or ""), jazyk)
         elif klic == "obnova":
-            predmet, text = zprava_obnova(manifest, repo, konec, nyni)
+            predmet, text = zprava_obnova(manifest, repo, konec, nyni, jazyk)
         else:
-            predmet, text = zprava(druh, manifest, repo, konec, nyni)
+            predmet, text = zprava(druh, manifest, repo, konec, nyni, jazyk, "odchody" in tabulky)
         try:
             posli(env["RESEND_API_KEY"], env["EMAIL_ODESILATEL"], k["email"],
                   manifest.get("kontakt_email") or None, predmet, text)
