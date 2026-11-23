@@ -10,7 +10,7 @@
   "datova_schranka": "",
   "verze_dokumentu": "2.0",
   "ucinnost_od": "",
-  "cena_dph": "včetně DPH",
+  "cena_dph": "bez DPH, poskytovatel není plátcem DPH",
   "zkusebni_dni": 14,
   "retence_logy": "",
   "retence_podpora": "",
@@ -352,11 +352,26 @@
       "dlouhy_popis": "Kusovník is an app for joiners and fitted-kitchen makers who measure on site with a phone or tablet.\n\nWhat the app does:\n• Enter the walls, windows and doors, then place cabinets on the walls — base, wall, tall and corner units.\n• The wall drawing shows cabinets, windows and doors to scale.\n• The app warns you when cabinets overlap or run into a window.\n• One tap gives the full parts list — side panels, bottoms, tops or rails, shelves, back panels, doors and drawer fronts — built to your workshop standard (board thickness, grooved or overlaid back, gaps, edge banding). It includes a rough board count.\n• Download the cutting list as a CSV file for the cutting centre.\n• Use the app in Czech or English; the cutting list also downloads as an English CSV with the same sizes.\n• Jobs stay in your account: finish the measurements in the workshop on a computer and copy an older job as a template for a new one.\n\nBefore you sign up, tap Try the demo: you get a temporary account with a made-up kitchen and its cutting list, which disappears after 24 hours.\n\nYou sign in with a one-time link from your e-mail, no password. Data is stored in the EU; you can download it or delete your account with all data at any time in the app.\n\nHow you pay: the 14-day trial is free, with no payment card and no commitment. After that the app is a subscription you buy in the app through Google Play. You will see the price and period in the app before you buy. The subscription renews automatically and you can cancel it at any time in Google Play.\n\nAlways check the sizes in the cutting list before sending it to the cutting centre.",
       "hlavni_veta": "From site measurement to cutting list",
       "snimky": [
-        { "stitek": "Jobs", "titulek": "Every job saved in your account" },
-        { "stitek": "Measuring a wall", "titulek": "Wall, window and cabinets to scale" },
-        { "stitek": "Kitchen preview", "titulek": "The whole run in front of the client" },
-        { "stitek": "Cutting list", "titulek": "A cutting list for the cutting centre" },
-        { "stitek": "Workshop standard", "titulek": "Parts built your workshop's way" }
+        {
+          "stitek": "Jobs",
+          "titulek": "Every job saved in your account"
+        },
+        {
+          "stitek": "Measuring a wall",
+          "titulek": "Wall, window and cabinets to scale"
+        },
+        {
+          "stitek": "Kitchen preview",
+          "titulek": "The whole run in front of the client"
+        },
+        {
+          "stitek": "Cutting list",
+          "titulek": "A cutting list for the cutting centre"
+        },
+        {
+          "stitek": "Workshop standard",
+          "titulek": "Parts built your workshop's way"
+        }
       ]
     }
   },
