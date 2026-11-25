@@ -8,17 +8,12 @@
   "sidlo": "Korunní 2569/108, Vinohrady, 101 00 Praha 10",
   "zapis_or": "Městským soudem v Praze pod spisovou značkou C 357544",
   "datova_schranka": "",
-  "verze_dokumentu": "2.0",
-  "ucinnost_od": "",
   "cena_dph": "bez DPH, poskytovatel není plátcem DPH",
   "zkusebni_dni": 14,
-  "retence_logy": "",
-  "retence_podpora": "",
   "retence_doklady": "10 let",
   "odpovedna_osoba": "jednatel společnosti",
   "zastup": "nestanoven",
   "ucetni": "účetnictví vede správce sám",
-  "balancni_test": "",
   "obsah_zakaznika_popis": "označení zakázky a koncového zákazníka, které truhlář sám vyplní (typicky jméno nebo název, někdy obec či adresa místa montáže), naměřené rozměry místnosti, stěn, oken a dveří, rozměry a parametry navržených skříněk a volné poznámky k zakázce",
   "subjekty_obsahu": "koncoví zákazníci truhláře, u kterých se kuchyň nebo skříň měří a montuje, případně kontaktní osoby na stavbě",
   "obsah_zakaznika": "uklada_se",
@@ -113,7 +108,12 @@
       ],
       "ucel": "objednávka předplatného a doklad o souhlasu se zahájením služby",
       "pole": "odkaz na účet, délka a varianta předplatného, cena, fakturační údaje, zda jde o spotřebitele, souhlas se zahájením a jeho čas, stav",
-      "retence": "do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu"
+      "retence": "do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu",
+      "en": {
+        "ucel": "subscription order and record of the consent to start the service",
+        "pole": "link to the account, length and option of the subscription, price, billing details, whether a consumer, the consent to start and its time, status",
+        "retence": "until the customer deletes the account; the operator keeps accounting documents outside the app for the period required by law"
+      }
     },
     {
       "entita": "standardy",
@@ -125,7 +125,12 @@
       ],
       "ucel": "konstrukční standard dílny, podle kterého se počítá kusovník",
       "pole": "odkaz na účet, název standardu, tloušťka desky a zad, provedení zad (drážka/nasazená) a rozměry drážky, odskok police, spáry dvířek, traverzy místo víka, výška soklu a horních skříněk, tloušťky olepení hran, zda je rozměr uveden po olepení, prořez, formát desky, časy",
-      "retence": "do smazání účtu zákazníkem"
+      "retence": "do smazání účtu zákazníkem",
+      "en": {
+        "ucel": "the workshop's construction standard the cutting list is calculated by",
+        "pole": "link to the account, name of the standard, board and back thickness, back type (groove/applied) and groove dimensions, shelf setback, door gaps, rails instead of a top, plinth and wall-cabinet height, edge banding thicknesses, whether sizes are after banding, offcut, board format, times",
+        "retence": "until the customer deletes the account"
+      }
     },
     {
       "entita": "materialy",
@@ -137,7 +142,12 @@
       ],
       "ucel": "seznam desek a dekorů, které truhlář používá",
       "pole": "odkaz na účet, název materiálu, kód dekoru, tloušťka, zda má dekor směr vlákna, dekor hrany, čas založení",
-      "retence": "do smazání účtu zákazníkem"
+      "retence": "do smazání účtu zákazníkem",
+      "en": {
+        "ucel": "the boards and decors the joiner uses",
+        "pole": "link to the account, material name, decor code, thickness, whether the decor has grain direction, edge decor, time created",
+        "retence": "until the customer deletes the account"
+      }
     },
     {
       "entita": "zakazky",
@@ -150,7 +160,13 @@
       ],
       "ucel": "zakázka truhláře (návrh kuchyně nebo skříně) uložená pro pozdější dopracování a kopírování",
       "pole": "odkaz na účet, název zakázky, označení koncového zákazníka a poznámka (obsah vkládá zákazník), stav, časy",
-      "retence": "do smazání účtu zákazníkem"
+      "retence": "do smazání účtu zákazníkem",
+      "role": "zpracovatel",
+      "en": {
+        "ucel": "the joiner's job (a kitchen or wardrobe design) saved for finishing and copying later",
+        "pole": "link to the account, job name, label of the end customer and note (the customer puts them in), status, times",
+        "retence": "until the customer deletes the account"
+      }
     },
     {
       "entita": "steny",
@@ -162,7 +178,13 @@
       ],
       "ucel": "naměřené stěny místnosti včetně oken a dveří",
       "pole": "odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas",
-      "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem"
+      "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem",
+      "role": "zpracovatel",
+      "en": {
+        "ucel": "measured walls of the room including windows and doors",
+        "pole": "link to the account and the job, order, wall name, length and height in mm, corners, list of openings (type, offset, width, height, sill), time",
+        "retence": "with the job, at the latest until the customer deletes the account"
+      }
     },
     {
       "entita": "skrinky",
@@ -174,7 +196,13 @@
       ],
       "ucel": "navržené skříňky a jejich rozměry jako podklad pro kusovník",
       "pole": "odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas",
-      "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem"
+      "retence": "se zakázkou, nejpozději do smazání účtu zákazníkem",
+      "role": "zpracovatel",
+      "en": {
+        "ucel": "designed cabinets and their dimensions as the basis of the cutting list",
+        "pole": "link to the account, the job and the wall, order, type, offset on the wall, width, height, depth, number of shelves, doors and drawers, drawer front height, back type, link to the material, note, time",
+        "retence": "with the job, at the latest until the customer deletes the account"
+      }
     },
     {
       "entita": "kusovniky",
@@ -186,7 +214,13 @@
       ],
       "ucel": "vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl",
       "pole": "odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas",
-      "retence": "do smazání účtu zákazníkem"
+      "retence": "do smazání účtu zákazníkem",
+      "role": "zpracovatel",
+      "en": {
+        "ucel": "the generated cutting list for the cutting centre, saved with the parameters it came from",
+        "pole": "link to the account and the job, list of parts (name, dimensions, quantity, edge banding, material), snapshot of the construction standard, number of parts, area, estimated number of boards, time",
+        "retence": "until the customer deletes the account"
+      }
     },
     {
       "entita": "play_nakupy",
@@ -376,5 +410,7 @@
     }
   },
   "poznamka": "Jediny zdroj pravdy o datech produktu. Zasady, obchodni podminky, zpracovatelska smlouva, formular pro odstoupeni, zaznam o zpracovani i postup pri incidentu se GENERUJI z tohoto souboru (python3 vykresli_zasady.py) a kontrola_manifestu.py shazuje build, kdyz se kod nebo vygenerovane soubory s manifestem rozejdou. Kazda nova tabulka = zaznam v ukladame + migrace v db/migrace/ se sloupcem uzivatel_id. Prazdne sloty (ico, sidlo, dic, zapis_or, kontakt_email, ucinnost_od, cena_dph, retence_logy, retence_podpora, odpovedna_osoba, zastup, ucetni, balancni_test) se vykresli cervene jako (doplnit ...) - s nimi se nesmi jit do produkce. obsah_zakaznika_popis a subjekty_obsahu popisuji obsah, ktery do produktu vklada zakaznik (zpracovatelska smlouva, cl. 2) - stavitel je vyplni podle produktu. agregaty = tabulky bez uzivatel_id, ktere smi obsahovat jen souhrnna cisla (den, stranka, pocet) - kontrola hlida, ze v nich neni zadny osobni sloupec.",
-  "adresa": "https://kusovnik.simtegen.com"
+  "adresa": "https://kusovnik.simtegen.com",
+  "obsah_zakaznika_popis_en": "the label of the job and of the end customer the joiner fills in (typically a name, sometimes the town or the address of the installation), measured dimensions of the room, walls, windows and doors, dimensions and parameters of the designed cabinets and free notes on the job",
+  "subjekty_obsahu_en": "the joiner's end customers whose kitchen or wardrobe is measured and installed, possibly contact persons on site"
 }
