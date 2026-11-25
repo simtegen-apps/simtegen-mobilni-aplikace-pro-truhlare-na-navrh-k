@@ -1,7 +1,7 @@
 <!-- GENEROVANÝ SOUBOR — neupravuj ručně. Zdroj: data-manifest.json, generátor: vykresli_zasady.py. -->
 # Záznam o činnostech zpracování — Kusovník pro truhláře
 
-**Verze:** 2.0 · **poslední aktualizace:** (doplnit datum) · **zpracoval:** jednatel společnosti
+**Verze:** 2.1 · **poslední aktualizace:** 24. 11. 2026 · **zpracoval:** jednatel společnosti
 **Přezkoumat:** nejméně 1× ročně a při každé změně zpracování, zpracovatelů nebo účelů.
 
 **Správce:** SimteGen, s.r.o., IČO 13980351, se sídlem Korunní 2569/108, Vinohrady, 101 00 Praha 10,
@@ -29,10 +29,6 @@ správcem, a **B** pro zpracování prováděná pro zákazníky, kde je SimteGe
 | objednavky | objednávka předplatného a doklad o souhlasu se zahájením služby | zákazníci služby | odkaz na účet, délka a varianta předplatného, cena, fakturační údaje, zda jde o spotřebitele, souhlas se zahájením a jeho čas, stav | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem; účetní doklady vede provozovatel mimo aplikaci po zákonnou dobu |
 | standardy | konstrukční standard dílny, podle kterého se počítá kusovník | zákazníci služby | odkaz na účet, název standardu, tloušťka desky a zad, provedení zad (drážka/nasazená) a rozměry drážky, odskok police, spáry dvířek, traverzy místo víka, výška soklu a horních skříněk, tloušťky olepení hran, zda je rozměr uveden po olepení, prořez, formát desky, časy | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
 | materialy | seznam desek a dekorů, které truhlář používá | zákazníci služby | odkaz na účet, název materiálu, kód dekoru, tloušťka, zda má dekor směr vlákna, dekor hrany, čas založení | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
-| zakazky | zakázka truhláře (návrh kuchyně nebo skříně) uložená pro pozdější dopracování a kopírování | zákazníci služby | odkaz na účet, název zakázky, označení koncového zákazníka a poznámka (obsah vkládá zákazník), stav, časy | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
-| steny | naměřené stěny místnosti včetně oken a dveří | zákazníci služby | odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas | čl. 6/1/b — plnění smlouvy | se zakázkou, nejpozději do smazání účtu zákazníkem |
-| skrinky | navržené skříňky a jejich rozměry jako podklad pro kusovník | zákazníci služby | odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas | čl. 6/1/b — plnění smlouvy | se zakázkou, nejpozději do smazání účtu zákazníkem |
-| kusovniky | vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl | zákazníci služby | odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
 | play_nakupy | evidence předplatného koupeného v Google Play | zákazníci služby | odkaz na účet, doklad o nákupu od Googlu, produkt, konec zaplaceného období, stav, čas ověření | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
 | zkusebni_doba | upozornění na blížící se a uplynulý konec zkušebního období (v aplikaci a nejvýš třemi provozními e-maily — 2–3 dny a 1 den před koncem a po jeho uplynutí; žádná reklama) | zákazníci služby | odkaz na účet, datum konce zkušebního období, jak ho aplikace odvodí z vašeho účtu | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
 | upominky | aby každé upozornění na konec zkušebního nebo předplaceného období a každý e-mail s odpovědí na hlášení odešel nejvýš jednou; aby se prosba o hodnocení v Google Play ukázala v aplikaci nejvýš dvakrát (jen po opakované platbě, nikdy e-mailem); a aby otázka, proč nepokračujete, šla za každé skončené období zodpovědět jen jednou (pamatujeme si, že jste odpověděli, ne co) | zákazníci služby | odkaz na účet, druh upozornění, čas odeslání | čl. 6/1/b — plnění smlouvy | do smazání účtu zákazníkem |
@@ -40,17 +36,17 @@ správcem, a **B** pro zpracování prováděná pro zákazníky, kde je SimteGe
 | zdroj příchodu | zjistit, která naše propagace (reklama, katalog) přivádí zákazníky | zákazníci a návštěvníci | název zdroje a kampaně z odkazu, kterým jste přišli (např. „sklik“, „jarni-akce“), u účtu; souhrnné počty návštěv podle zdroje bez vazby na osobu. Nic se neukládá do vašeho prohlížeče. | čl. 6/1/f — oprávněný zájem | u účtu do jeho smazání; souhrnné počty bez osobních údajů |
 | chyby aplikace | najít a opravit chyby, na které v aplikaci narazíte, i když nám je nenahlásíte | zákazníci a návštěvníci | souhrnné počty chyb skriptu podle dne, obrazovky a místa v našem kódu — bez textu chyby, bez vazby na osobu nebo zařízení. Nic se neukládá do vašeho prohlížeče. | čl. 6/1/f — oprávněný zájem | souhrnné počty bez osobních údajů |
 | proč zákazníci nepokračují | zjistit, proč zákazníci po zkušební době nebo předplatném nepokračují, a podle toho produkt zlepšit | zákazníci | souhrnné počty důvodů podle dne a cesty — vaše odpověď na nepovinnou otázku po konci zkušebního nebo předplaceného období a důvod zrušení předplatného, který zaznamená Google Play — bez vazby na osobu. U účtu si pamatujeme jen to, že jste na otázku za dané období odpověděli (aby se neopakovala), ne co jste odpověděli. | čl. 6/1/f — oprávněný zájem | souhrnné počty bez osobních údajů |
-| provozní a bezpečnostní logy | provozní a bezpečnostní záznamy (logy) | zákazníci a návštěvníci | IP adresa, čas a typ požadavku, identifikace prohlížeče | čl. 6/1/f — oprávněný zájem | (doplnit skutečnou dobu, typicky 30 dnů) |
-| podpora a komunikace | vyřízení dotazu nebo požadavku podpory | zákazníci, zájemci | e-mailová adresa a obsah komunikace | čl. 6/1/b, u nezákazníků čl. 6/1/f | (doplnit, typicky 1 rok) |
+| provozní a bezpečnostní logy | provozní a bezpečnostní záznamy (logy) | zákazníci a návštěvníci | IP adresa, čas a typ požadavku, identifikace prohlížeče | čl. 6/1/f — oprávněný zájem | 30 dní |
+| podpora a komunikace | vyřízení dotazu nebo požadavku podpory | zákazníci, zájemci | e-mailová adresa a obsah komunikace | čl. 6/1/b, u nezákazníků čl. 6/1/f | 12 měsíců |
 | účetní a daňové doklady | účetní a daňové doklady | zákazníci | fakturační údaje, částka, datum | čl. 6/1/c — právní povinnost | 10 let; vedeno mimo aplikaci |
 
 **Oprávněný zájem (čl. 6/1/f)** je u logů vymezen jako zajištění provozu, dostupnosti
 a bezpečnosti služby a možnost dohledat příčinu poruchy nebo útoku. Test proporcionality:
-(doplnit odkaz na provedený balanční test nebo datum jeho provedení).
+proveden 24. 11. 2026 (dokument vede správce, na vyžádání jej předloží).
 
 ### A.2 Kategorie příjemců
 
-Zpracovatelé uvedení v části A.3; účetní (účetnictví vede správce sám); orgány veřejné moci
+Zpracovatelé uvedení v části A.3; účetnictví: účetnictví vede správce sám; orgány veřejné moci
 v rozsahu, v jakém to ukládá zákon. Údaje se neprodávají ani nepředávají k reklamním účelům.
 
 ### A.3 Zpracovatelé a předávání mimo EU
@@ -61,6 +57,7 @@ v rozsahu, v jakém to ukládá zákon. Údaje se neprodávají ani nepředávaj
 | Resend (Plus Five Five, Inc.) (USA) | odeslání přihlašovacího odkazu na e-mail; upozornění na konec zkušebního období; upozornění na konec předplaceného období a odpovědi na hlášení | USA / EU | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
 | GitHub, Inc. (Microsoft) (USA) | evidence hlášení zákazníků pro podporu (text hlášení, technické údaje o stránce a anonymní otisk účtu s údajem, zda je předplatné zaplacené, a stářím účtu — šifrovaně, GitHub vidí jen nečitelný blok; bez e-mailu a jména) | USA / EU | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
 | Google Ireland Limited / Google Commerce Limited (Irsko) | prodej předplatného v aplikaci z Google Play a ověření nákupu (platbu zpracovává Google) | EU | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
+| Anthropic, PBC (USA) | automatické třídění hlášení a dotazů zaslaných podpoře a odpovědi na běžné dotazy pomocí umělé inteligence (text hlášení a technické údaje o stránce, bez e-mailu a jména, pokud je sami do textu nenapíšete); data se nepoužívají k trénování modelů; složitější a právní věci vyřizuje člověk | USA | standardní smluvní doložky EK (čl. 46/2/c), případně rámec EU–USA pro ochranu údajů |
 
 Kopie záruk: uloženy u správce, na žádost poskytovány subjektům údajů.
 
@@ -87,10 +84,19 @@ do aplikace vkládají údaje třetích osob. Právním rámcem je
 | **Kategorie subjektů údajů** | koncoví zákazníci truhláře, u kterých se kuchyň nebo skříň měří a montuje, případně kontaktní osoby na stavbě |
 | **Kategorie údajů** | označení zakázky a koncového zákazníka, které truhlář sám vyplní (typicky jméno nebo název, někdy obec či adresa místa montáže), naměřené rozměry místnosti, stěn, oken a dveří, rozměry a parametry navržených skříněk a volné poznámky k zakázce |
 | **Zvláštní kategorie (čl. 9/10)** | služba k nim není určena; jejich vkládání je smluvně vyloučeno |
-| **Další zpracovatelé** | Cloudflare, Inc.; Resend (Plus Five Five, Inc.); GitHub, Inc. (Microsoft); Google Ireland Limited / Google Commerce Limited (viz A.3) |
+| **Další zpracovatelé** | Cloudflare, Inc.; Resend (Plus Five Five, Inc.); GitHub, Inc. (Microsoft); Google Ireland Limited / Google Commerce Limited; Anthropic, PBC (viz A.3) |
 | **Předání mimo EU** | jen na pokyn správce nebo v rámci dalších zpracovatelů, se zárukami podle A.3 |
 | **Doba zpracování** | po dobu trvání smlouvy o službě; poté výmaz nebo vrácení dle volby správce |
 | **Technická a organizační opatření** | shodná s A.4 |
+
+Entity, ve kterých jsou údaje vložené zákazníkem:
+
+| Entita | Účel | Kategorie údajů | Doba uložení (nesmaže-li je správce dříve) |
+|---|---|---|---|
+| zakazky | zakázka truhláře (návrh kuchyně nebo skříně) uložená pro pozdější dopracování a kopírování | odkaz na účet, název zakázky, označení koncového zákazníka a poznámka (obsah vkládá zákazník), stav, časy | do smazání účtu zákazníkem |
+| steny | naměřené stěny místnosti včetně oken a dveří | odkaz na účet a zakázku, pořadí, název stěny, délka a výška v mm, rohy, seznam otvorů (typ, odsazení, šířka, výška, parapet), čas | se zakázkou, nejpozději do smazání účtu zákazníkem |
+| skrinky | navržené skříňky a jejich rozměry jako podklad pro kusovník | odkaz na účet, zakázku a stěnu, pořadí, typ, odsazení na stěně, šířka, výška, hloubka, počet polic, dvířek a zásuvek, výška čela zásuvky, provedení zad, odkaz na materiál, poznámka, čas | se zakázkou, nejpozději do smazání účtu zákazníkem |
+| kusovniky | vygenerovaný kusovník pro nářezové centrum uložený i s parametry, podle kterých vznikl | odkaz na účet a zakázku, seznam dílů (název, rozměry, počet kusů, olepení hran, materiál), snímek konstrukčního standardu, počet dílů, plocha, odhad počtu desek, čas | do smazání účtu zákazníkem |
 
 ---
 
