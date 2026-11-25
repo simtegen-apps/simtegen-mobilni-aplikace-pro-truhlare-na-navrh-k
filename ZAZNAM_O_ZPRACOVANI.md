@@ -1,7 +1,7 @@
 <!-- GENEROVANÝ SOUBOR — neupravuj ručně. Zdroj: data-manifest.json, generátor: vykresli_zasady.py. -->
 # Záznam o činnostech zpracování — Kusovník pro truhláře
 
-**Verze:** 2.0 · **poslední aktualizace:** (doplnit datum) · **zpracoval:** (doplnit jméno)
+**Verze:** 2.0 · **poslední aktualizace:** (doplnit datum) · **zpracoval:** jednatel společnosti
 **Přezkoumat:** nejméně 1× ročně a při každé změně zpracování, zpracovatelů nebo účelů.
 
 **Správce:** SimteGen, s.r.o., IČO 13980351, se sídlem Korunní 2569/108, Vinohrady, 101 00 Praha 10,
@@ -50,7 +50,7 @@ a bezpečnosti služby a možnost dohledat příčinu poruchy nebo útoku. Test 
 
 ### A.2 Kategorie příjemců
 
-Zpracovatelé uvedení v části A.3; účetní ((doplnit obchodní firmu)); orgány veřejné moci
+Zpracovatelé uvedení v části A.3; účetní (účetnictví vede správce sám); orgány veřejné moci
 v rozsahu, v jakém to ukládá zákon. Údaje se neprodávají ani nepředávají k reklamním účelům.
 
 ### A.3 Zpracovatelé a předávání mimo EU
