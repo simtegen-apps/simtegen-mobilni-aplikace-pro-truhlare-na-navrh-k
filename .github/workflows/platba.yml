@@ -51,8 +51,10 @@ jobs:
     # Only from main. The workflow file is the same on every branch (the
     # bot token may not touch workflows), the scripts it runs are not: a
     # branch pushed with a stolen token could carry its own .github/nastroje
-    # (over_pokyn.py included) next to these secrets.
-    if: github.ref == 'refs/heads/main'
+    # (over_pokyn.py included) next to these secrets. And only in the
+    # template repo: products inherit a copy of this file, and that copy
+    # must never run with the org secrets.
+    if: github.ref == 'refs/heads/main' && github.repository == 'simtegen-apps/simtegen-sablona-pamet'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -69,12 +71,31 @@ jobs:
           # (security audit 19. 11. 2026).
           AKTER: ${{ github.actor }}
           WORKFLOW: ${{ github.workflow }}
-          VSTUPY: ${{ toJSON(inputs) }}
         run: python3 .github/nastroje/over_pokyn.py
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
+
+      # One exact wrangler from the committed lockfile (integrity hashes), no
+      # install scripts, nothing looked up in the registry at run time. The
+      # files are checked against hashes in this workflow file, which the bot
+      # token cannot write (py ops/otisky_vydani.py rewrites them).
+      - name: Wrangler
+        run: |
+          set -euo pipefail
+          sha256sum --check --strict <<'OTISKY'
+          4fcbcc058abacae2ac38480d798fdfecb8690e33274211055a3a8cff302a261f  .github/nastroje/wrangler.package.json
+          1d85c79d1b64c522d125c07ab8d6eea85f7e3eac60e8c308f4154a3725016b5d  .github/nastroje/wrangler.lock.json
+          OTISKY
+          w="$RUNNER_TEMP/wrangler"
+          mkdir -p "$w"
+          cp .github/nastroje/wrangler.package.json "$w/package.json"
+          cp .github/nastroje/wrangler.lock.json "$w/package-lock.json"
+          (cd "$w" && npm ci --ignore-scripts --no-audit --no-fund --silent)
+          [ "$(jq -r .version "$w/node_modules/wrangler/package.json")" = "${WRANGLER##*@}" ] || {
+            echo "Zamceny wrangler neni verze z WRANGLER."; exit 1; }
+          echo "$w/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Zapis platbu
         env:
@@ -85,5 +106,4 @@ jobs:
           PROJEKT: ${{ inputs.projekt }}
           OBJEDNAVKA: ${{ inputs.objednavka }}
           MESICE: ${{ inputs.mesice }}
-          POZNAMKA: ${{ inputs.poznamka }}
         run: python3 .github/nastroje/platba.py

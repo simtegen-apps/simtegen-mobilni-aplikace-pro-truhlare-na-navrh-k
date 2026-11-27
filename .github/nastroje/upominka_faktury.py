@@ -22,6 +22,10 @@ from decimal import Decimal
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import email_obal  # noqa: E402
+# Free text and personal data come from the event file, masked first —
+# never through the step's environment, which the public log shows.
+from over_pokyn import vstup  # noqa: E402
 from faktura import cz_datum, d1, iban_cz, kc, variabilni_symbol  # noqa: E402
 
 
@@ -44,8 +48,12 @@ def text_upominky(poradi: int, cislo: str, castka: int, splatnost: str, ucet: st
     return predmet, text
 
 
-def posli(api_key: str, odesilatel: str, komu: str, kopie: str | None, predmet: str, text: str) -> None:
+def posli(api_key: str, odesilatel: str, komu: str, kopie: str | None, predmet: str, text: str,
+          html: str | None = None) -> None:
     payload = {"from": odesilatel, "to": [komu], "subject": predmet, "text": text}
+    if html:
+        payload["html"] = html
+        email_obal.s_logem(payload)
     if kopie and kopie.lower() != komu.lower():
         payload["bcc"] = [kopie]
     req = urllib.request.Request(
@@ -65,7 +73,7 @@ def main() -> int:
             return 1
     projekt, objednavka, cislo = env["PROJEKT"], int(env["OBJEDNAVKA"]), env["CISLO"]
     castka, poradi = int(env["CASTKA_CZK"]), int(env["PORADI"])
-    dodavatel = json.loads(env["DODAVATEL"])
+    dodavatel = json.loads(vstup("dodavatel") or "{}")
     rows = d1(f"{projekt}-db", "SELECT o.stav, u.email FROM objednavky o JOIN uzivatele u ON u.id = o.uzivatel_id "
                                f"WHERE o.id = {objednavka}")
     if not rows:
@@ -81,7 +89,10 @@ def main() -> int:
         return 0
     predmet, text = text_upominky(poradi, cislo, castka, env["SPLATNOST"], dodavatel["ucet"],
                                   iban_cz(dodavatel["ucet"]), variabilni_symbol(cislo), dodavatel.get("nazev") or "")
-    posli(env["RESEND_API_KEY"], env["EMAIL_ODESILATEL"], o["email"], dodavatel.get("email"), predmet, text)
+    # The HTML part: the same text in the product's dress (email_obal).
+    produkt, barva = email_obal.nacti_znacku(email_obal.vlastnik(env), projekt)
+    posli(env["RESEND_API_KEY"], env["EMAIL_ODESILATEL"], o["email"], dodavatel.get("email"), predmet, text,
+          email_obal.html_emailu(predmet, text, produkt, barva))
     print(f"Upomínka {poradi} k faktuře {cislo} odeslána.")
     return 0
 

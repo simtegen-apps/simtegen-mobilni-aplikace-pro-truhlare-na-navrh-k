@@ -8,7 +8,8 @@
                    same checkout. Without the service account it records only
                    "not connected", so SimteGen can say so instead of
                    guessing.
-  odpovez          one reply to one review (env BALICEK, RECENZE, TEXT).
+  odpovez          one reply to one review (env BALICEK, RECENZE; the text
+                   from the event file).
                    The workflow runs it only after over_pokyn.py accepted
                    SimteGen's signature: a public reply in the company's name
                    is not something a stolen bot token may do.
@@ -208,8 +209,13 @@ def stahni(vetev: Path) -> int:
 
 
 def odpovez() -> None:
+    # The reply text comes from the event file, masked first — never through
+    # the step's environment, which the public log shows.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from over_pokyn import vstup
+
     balicek, recenze = os.environ["BALICEK"], os.environ["RECENZE"]
-    text = os.environ["TEXT"].strip()[:MAX_ODPOVED]
+    text = vstup("text").strip()[:MAX_ODPOVED]
     if not text:
         raise SystemExit("Prázdná odpověď se neposílá.")
     _ok(_session().post(f"{_PUBLISHER}/{balicek}/reviews/{recenze}:reply", json={"replyText": text}),
