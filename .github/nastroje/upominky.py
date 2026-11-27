@@ -62,6 +62,10 @@ Without RESEND_API_KEY / EMAIL_ODESILATEL nothing is claimed or sent and
 the run succeeds — the same development mode as the login. NANECISTO=true
 only counts who would get what.
 
+Each mail is multipart (24. 11. 2026): the text part as below, and the same
+text in the product's dress as HTML (email_obal.py — name, colour square from
+the product's web/produkt.css, SimteGen small at the foot).
+
 Stdlib only; the arithmetic is integers; no model anywhere.
 """
 
@@ -74,10 +78,16 @@ import sys
 import time
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
-# The exact wrangler the workflow pins in its env (WRANGLER); the default
-# is the same version, for a run outside the workflow.
-WRANGLER = os.environ.get("WRANGLER") or "wrangler@3.114.17"
+# The workflow runs this file by path; the tests load it by path too.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import email_obal  # noqa: E402
+
+# The wrangler the workflow installed from the pinned lockfile
+# (.github/nastroje/wrangler.lock.json, npm ci --ignore-scripts) and put on
+# PATH: nothing is fetched from the registry at run time.
+WRANGLER = "wrangler"
 DEN = 86400
 UKAZKOVY_UCET = "@ukazka.invalid"
 DRUHY = ("pred_3", "pred_1", "konec")
@@ -340,7 +350,7 @@ def odpovedi_sql(nyni: int, s_jazykem: bool = False) -> str:
 
 def d1(db: str, sql: str) -> list[dict]:
     run = subprocess.run(
-        ["npx", "--yes", WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
+        [WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
         capture_output=True, text=True, encoding="utf-8",
     )
     if run.returncode != 0:
@@ -359,7 +369,7 @@ def produkty(env: dict) -> list[str]:
     elif env.get("PRODUKTY"):
         seznam = env["PRODUKTY"]
     else:
-        run = subprocess.run(["npx", "--yes", WRANGLER, "d1", "list", "--json"],
+        run = subprocess.run([WRANGLER, "d1", "list", "--json"],
                              capture_output=True, text=True, encoding="utf-8")
         if run.returncode != 0:
             raise RuntimeError(f"seznam databází selhal: {run.stderr[-400:]}")
@@ -375,8 +385,12 @@ def nacti_manifest(vlastnik: str, repo: str) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def posli(api_key: str, odesilatel: str, komu: str, odpovedi: str | None, predmet: str, text: str) -> None:
+def posli(api_key: str, odesilatel: str, komu: str, odpovedi: str | None, predmet: str, text: str,
+          html: str | None = None) -> None:
     payload = {"from": odesilatel, "to": [komu], "subject": predmet, "text": text}
+    if html:
+        payload["html"] = html
+        email_obal.s_logem(payload)
     if odpovedi:
         payload["reply_to"] = odpovedi
     req = urllib.request.Request(
@@ -390,9 +404,22 @@ def posli(api_key: str, odesilatel: str, komu: str, odpovedi: str | None, predme
 
 # ── One product ───────────────────────────────────────────────────────
 
-def zpracuj(repo: str, env: dict, nyni: int, *, d1=d1, nacti_manifest=nacti_manifest, posli=posli) -> dict:
+def html_zpravy(manifest: dict, repo: str, klic: str, predmet: str, text: str, jazyk: str,
+                barva: str | None) -> str:
+    """The HTML part of a reminder or an answer: its own text in the
+    product's dress (email_obal), the product's address a link — the only
+    links in these mails, and the manifest's own (never the customer's)."""
+    produkt = str(manifest.get("produkt") or repo).strip()
+    adresa = str(manifest.get("adresa") or f"https://{repo}.pages.dev").rstrip("/")
+    odkazy = (adresa,) if klic == "odpoved" else (f"{adresa}/?platba",)
+    return email_obal.html_emailu(predmet, text, produkt, barva, jazyk, odkazy=odkazy)
+
+
+def zpracuj(repo: str, env: dict, nyni: int, *, d1=d1, nacti_manifest=nacti_manifest, posli=posli,
+            nacti_barvu=None) -> dict:
     """Counts per kind for one product: {"pred_3": n, …, "chyby": n} or
-    {"preskoceno": reason}. The callables are parameters for the tests."""
+    {"preskoceno": reason}. The callables are parameters for the tests;
+    without `nacti_barvu` (the tests) the mails' square is ink."""
     db = f"{repo}-db"
     tabulky = {r["name"] for r in d1(db, "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN "
                                          "('zkusebni_doba', 'upominky', 'platby', 'predplatne', 'play_nakupy', 'hlaseni', "
@@ -428,6 +455,7 @@ def zpracuj(repo: str, env: dict, nyni: int, *, d1=d1, nacti_manifest=nacti_mani
                 for r in d1(db, f"SELECT uzivatel_id, druh FROM upominky WHERE uzivatel_id IN ({ids})")}
     nanecisto = env.get("NANECISTO") == "true"
     manifest = None
+    barva = None
     for k in kandidati:
         uid, konec, druh = int(k["id"]), int(k.get("konec") or 0), k["druh"]
         if (uid, druh) in odeslane or str(k.get("email") or "").endswith(UKAZKOVY_UCET):
@@ -439,6 +467,7 @@ def zpracuj(repo: str, env: dict, nyni: int, *, d1=d1, nacti_manifest=nacti_mani
         if manifest is None:
             # Only when something is due: no name, no mail (skipped whole).
             manifest = nacti_manifest(env.get("VLASTNIK") or "simtegen-apps", repo)
+            barva = nacti_barvu(env.get("VLASTNIK") or "simtegen-apps", repo) if nacti_barvu else None
         if klic == "obnova" and not obnova_v_zasadach(manifest):
             souhrn["obnova_bez_zasad"] = souhrn.get("obnova_bez_zasad", 0) + 1
             continue
@@ -457,7 +486,8 @@ def zpracuj(repo: str, env: dict, nyni: int, *, d1=d1, nacti_manifest=nacti_mani
             predmet, text = zprava(druh, manifest, repo, konec, nyni, jazyk, "odchody" in tabulky)
         try:
             posli(env["RESEND_API_KEY"], env["EMAIL_ODESILATEL"], k["email"],
-                  manifest.get("kontakt_email") or None, predmet, text)
+                  manifest.get("kontakt_email") or None, predmet, text,
+                  html_zpravy(manifest, repo, klic, predmet, text, jazyk, barva))
             souhrn[klic] += 1
         except Exception:  # noqa: BLE001 — any failure: give the claim back, try tomorrow
             souhrn["chyby"] += 1
@@ -481,7 +511,7 @@ def main() -> int:
     selhalo = 0
     for repo in produkty(env):
         try:
-            souhrn = zpracuj(repo, env, nyni)
+            souhrn = zpracuj(repo, env, nyni, nacti_barvu=email_obal.nacti_barvu)
         except Exception as e:  # noqa: BLE001 — one product's trouble must not stop the others
             selhalo += 1
             print(f"{repo}: selhalo — {str(e)[:300]}")

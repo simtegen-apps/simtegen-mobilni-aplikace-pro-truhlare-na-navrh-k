@@ -22,15 +22,24 @@ import os
 import subprocess
 import sys
 import urllib.request
+from pathlib import Path
 
-# The exact wrangler the workflow pins in its env (WRANGLER); the default
-# is the same version, for a run outside the workflow.
-WRANGLER = os.environ.get("WRANGLER") or "wrangler@3.114.17"
+# The workflow runs this file by path; the tests load it by path too.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import email_obal  # noqa: E402
+# Free text and personal data come from the event file, masked first —
+# never through the step's environment, which the public log shows.
+from over_pokyn import vstup  # noqa: E402
+
+# The wrangler the workflow installed from the pinned lockfile
+# (.github/nastroje/wrangler.lock.json, npm ci --ignore-scripts) and put on
+# PATH: nothing is fetched from the registry at run time.
+WRANGLER = "wrangler"
 
 
 def d1(db: str, sql: str) -> list[dict]:
     run = subprocess.run(
-        ["npx", "--yes", WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
+        [WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
         capture_output=True, text=True, encoding="utf-8",
     )
     if run.returncode != 0:
@@ -56,8 +65,11 @@ def predplatne_sql(uzivatel_id: int, mesice: int, poznamka: str, start_nejdrive:
     )
 
 
-def posli(api_key: str, odesilatel: str, komu: str, predmet: str, text: str) -> None:
+def posli(api_key: str, odesilatel: str, komu: str, predmet: str, text: str, html: str | None = None) -> None:
     payload = {"from": odesilatel, "to": [komu], "subject": predmet, "text": text}
+    if html:
+        payload["html"] = html
+        email_obal.s_logem(payload)
     req = urllib.request.Request(
         "https://api.resend.com/emails", data=json.dumps(payload).encode("utf-8"),
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST",
@@ -74,7 +86,7 @@ def main() -> int:
             print(f"Chybí {key} (org secret).")
             return 1
     projekt, objednavka = env["PROJEKT"], int(env["OBJEDNAVKA"])
-    mesice, poznamka = int(env["MESICE"]), env.get("POZNAMKA") or ""
+    mesice, poznamka = int(env["MESICE"]), vstup("poznamka")
     if not 1 <= mesice <= 24:
         print("mesice musí být 1–24.")
         return 1
@@ -113,9 +125,15 @@ def main() -> int:
     if env.get("RESEND_API_KEY") and env.get("EMAIL_ODESILATEL"):
         y, m, d = den.split("-") if den.count("-") == 2 else ("", "", "")
         hezky = f"{int(d)}. {int(m)}. {y}" if y else den
-        posli(env["RESEND_API_KEY"], env["EMAIL_ODESILATEL"], o["email"], "Platba přijata — předplatné zapsáno",
-              f"Dobrý den,\n\nděkujeme, platbu jsme přijali ({poznamka}). Vaše předplatné platí do {hezky}.\n"
-              "Stav vidíte v aplikaci u svého účtu.\n")
+        predmet = "Platba přijata — předplatné zapsáno"
+        text = (f"Dobrý den,\n\nděkujeme, platbu jsme přijali ({poznamka}). Vaše předplatné platí do {hezky}.\n"
+                "Stav vidíte v aplikaci u svého účtu.\n")
+        # The HTML part: the same text in the product's dress (email_obal) —
+        # the product's name and colour from its public repo, else the repo
+        # name and ink; never a reason not to send.
+        produkt, barva = email_obal.nacti_znacku(email_obal.vlastnik(env), projekt)
+        posli(env["RESEND_API_KEY"], env["EMAIL_ODESILATEL"], o["email"], predmet, text,
+              email_obal.html_emailu(predmet, text, produkt, barva))
     else:
         print("Bez RESEND_API_KEY / EMAIL_ODESILATEL e-mail zákazníkovi neodešel.")
     return 0

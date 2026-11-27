@@ -908,7 +908,16 @@ def poznamka_k_vydani(produkt: Path = Path("produkt")) -> str:
         text = soubor.read_text(encoding="utf-8").strip()
         if text:
             return text[:500]
-    return os.environ.get("POZNAMKA", "")
+    return _vstup("poznamka")
+
+
+def _vstup(jmeno: str) -> str:
+    """A free-text input from the event file (over_pokyn.vstup), never from
+    the step's environment, which the public log shows."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from over_pokyn import vstup
+
+    return vstup(jmeno)
 
 
 def nahraj(cesta_bundle: str) -> dict:
@@ -983,7 +992,7 @@ def nahraj(cesta_bundle: str) -> dict:
         if vystup:
             with open(vystup, "a", encoding="utf-8") as f:
                 f.write(f"bezpecnost={'1' if vysledek['bezpecnost'] else '0'}\n")
-    polozky = predplatne_ze_vstupu(os.environ.get("PREDPLATNE", ""))
+    polozky = predplatne_ze_vstupu(_vstup("predplatne"))
     if polozky and twa.get("features", {}).get("playBilling"):
         # Like the form: the release is in; a refused price is reported,
         # and the next release tries again.

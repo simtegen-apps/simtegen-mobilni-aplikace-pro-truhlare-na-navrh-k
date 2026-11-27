@@ -8,9 +8,13 @@ details (product database) meet the firm's bank account (input). It
   2. checks the order agrees with what the firm computed (months, price
      the customer saw) — a mismatch is a stop, not a guess,
   3. renders a PDF (reportlab) with a QR payment code (segno, SPAYD),
-  4. mails it to the customer, copy to the firm's contact address (that
-     copy is the accounting archive; the workflow artifact is a spare),
-  5. marks the order `fakturovana`.
+  4. mails it to the customer, copy to the firm's contact address,
+  5. marks the order `fakturovana`,
+  6. writes the accounting archive's copy ENCRYPTED with SimteGen's public
+     key (dodavatel.archiv_klic) for the workflow to upload as an artifact:
+     SimteGen fetches it and files it with the invoice's doklad. This repo
+     is public and so are its artifacts to any signed-in GitHub user — the
+     plain PDF (the customer's name and address) is never uploaded.
 
 Python does the arithmetic with Decimal; no model is involved anywhere.
 Stdlib + segno + reportlab; run on ubuntu-latest with DejaVu fonts.
@@ -19,6 +23,7 @@ Stdlib + segno + reportlab; run on ubuntu-latest with DejaVu fonts.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import subprocess
@@ -27,9 +32,18 @@ import urllib.request
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
-# The exact wrangler the workflow pins in its env (WRANGLER); the default
-# is the same version, for a run outside the workflow.
-WRANGLER = os.environ.get("WRANGLER") or "wrangler@3.114.17"
+# The workflow runs this file by path; upominka_faktury.py and the tests
+# import it by path too.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import email_obal  # noqa: E402
+# Free text and personal data come from the event file, masked first —
+# never through the step's environment, which the public log shows.
+from over_pokyn import vstup  # noqa: E402
+
+# The wrangler the workflow installed from the pinned lockfile
+# (.github/nastroje/wrangler.lock.json, npm ci --ignore-scripts) and put on
+# PATH: nothing is fetched from the registry at run time.
+WRANGLER = "wrangler"
 VYSTUP = Path("vystup")
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -100,7 +114,7 @@ def cz_datum(iso: str) -> str:
 
 def d1(db: str, sql: str) -> list[dict]:
     run = subprocess.run(
-        ["npx", "--yes", WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
+        [WRANGLER, "d1", "execute", db, "--remote", "--json", "--command", sql],
         capture_output=True, text=True, encoding="utf-8",
     )
     if run.returncode != 0:
@@ -205,15 +219,65 @@ def render_pdf(path: Path, f: dict) -> None:
     c.save()
 
 
+# ── The archive's copy ────────────────────────────────────────────────
+# RSA-OAEP with SHA-256 in the block format SimteGen's klic_schranky.rozsifruj
+# reads (the same one the products' mailbox uses from WebCrypto). Encrypting
+# needs only the public half: a hash, two XORs and pow() — no dependency.
+
+SIFRA_ZACATEK = "-----SIMTEGEN SIFRA v1-----"
+SIFRA_KONEC = "-----KONEC SIFRY-----"
+
+
+def _mgf1(seed: bytes, delka: int) -> bytes:
+    vystup = b""
+    citac = 0
+    while len(vystup) < delka:
+        vystup += hashlib.sha256(seed + citac.to_bytes(4, "big")).digest()
+        citac += 1
+    return vystup[:delka]
+
+
+def zasifruj(data: bytes, n_hex: str, e: int = 65537) -> str:
+    """`data` encrypted block by block with the public key (n in hex)."""
+    n = int(n_hex, 16)
+    if n.bit_length() < 2048:
+        raise ValueError("archivní klíč je moc krátký")
+    k = (n.bit_length() + 7) // 8
+    h = hashlib.sha256(b"").digest()
+    kus = k - 2 * len(h) - 2
+    bloky = []
+    for i in range(0, len(data), kus):
+        zprava = data[i:i + kus]
+        db_ = h + b"\x00" * (kus - len(zprava)) + b"\x01" + zprava
+        seed = os.urandom(len(h))
+        maskovana_db = bytes(a ^ b for a, b in zip(db_, _mgf1(seed, k - len(h) - 1)))
+        maskovany_seed = bytes(a ^ b for a, b in zip(seed, _mgf1(maskovana_db, len(h))))
+        c = pow(int.from_bytes(b"\x00" + maskovany_seed + maskovana_db, "big"), e, n)
+        bloky.append(base64.b64encode(c.to_bytes(k, "big")).decode("ascii"))
+    return SIFRA_ZACATEK + "\n" + "\n".join(bloky) + "\n" + SIFRA_KONEC + "\n"
+
+
+def archivni_kopie(cislo: str, pdf: Path, n_hex: str) -> Path:
+    """vystup/archiv.sifra — the number rides inside, so SimteGen files the
+    copy only under the invoice it belongs to."""
+    obsah = json.dumps({"cislo": cislo, "pdf": base64.b64encode(pdf.read_bytes()).decode("ascii")})
+    cil = VYSTUP / "archiv.sifra"
+    cil.write_text(zasifruj(obsah.encode("utf-8"), n_hex), encoding="ascii")
+    return cil
+
+
 # ── Mail ──────────────────────────────────────────────────────────────
 
 def posli(api_key: str, odesilatel: str, komu: str, kopie: str | None, predmet: str, text: str,
-          priloha: Path) -> None:
+          priloha: Path, html: str | None = None) -> None:
     payload = {
         "from": odesilatel, "to": [komu], "subject": predmet, "text": text,
         "attachments": [{"filename": priloha.name,
                          "content": base64.b64encode(priloha.read_bytes()).decode()}],
     }
+    if html:
+        payload["html"] = html
+        email_obal.s_logem(payload)
     if kopie and kopie.lower() != komu.lower():
         payload["bcc"] = [kopie]
     req = urllib.request.Request(
@@ -235,7 +299,7 @@ def main() -> int:
             return 1
     projekt, objednavka, cislo = env["PROJEKT"], int(env["OBJEDNAVKA"]), env["CISLO"]
     castka, mesice = int(env["CASTKA_CZK"]), int(env["MESICE"])
-    dodavatel = json.loads(env["DODAVATEL"])
+    dodavatel = json.loads(vstup("dodavatel") or "{}")
     db = f"{projekt}-db"
 
     rows = d1(db, "SELECT o.id, o.mesice, o.varianta, o.cena_czk, o.fakturace, o.stav, u.email "
@@ -268,7 +332,7 @@ def main() -> int:
     amounts = castky(castka, int(dodavatel.get("dph_sazba") or 0))
     f = {
         "cislo": cislo, "dodavatel": dodavatel, "odberatel": o.get("fakturace") or "", "email": o["email"],
-        "vystaveno": env["VYSTAVENO"], "splatnost": env["SPLATNOST"], "popis": env["POPIS"],
+        "vystaveno": env["VYSTAVENO"], "splatnost": env["SPLATNOST"], "popis": vstup("popis"),
         "mesice": mesice, "castky": amounts, "iban": iban, "vs": vs,
         "spayd": spayd(iban, amounts["celkem"], vs, f"Faktura {cislo}"),
     }
@@ -283,10 +347,24 @@ def main() -> int:
         "nebo načtěte QR kód z faktury.\n\nPo připsání platby zapíšeme zaplacené období k vašemu účtu "
         "a dáme vědět e-mailem.\n\n" + str(dodavatel.get("nazev") or "") + "\n"
     )
+    predmet = f"Faktura č. {cislo}"
+    # The HTML part: the same text in the product's dress (email_obal) —
+    # the product's name and colour from its public repo, else the repo
+    # name and ink; never a reason not to send the invoice.
+    produkt, barva = email_obal.nacti_znacku(email_obal.vlastnik(env), projekt)
     posli(env["RESEND_API_KEY"], env["EMAIL_ODESILATEL"], o["email"], dodavatel.get("email"),
-          f"Faktura č. {cislo}", text, pdf)
+          predmet, text, pdf, email_obal.html_emailu(predmet, text, produkt, barva))
     d1(db, f"UPDATE objednavky SET stav = 'fakturovana' WHERE id = {objednavka}")
     print(f"Faktura {cislo} na {kc(amounts['celkem'])} odeslána; objednávka {objednavka} fakturována.")
+    # Never fails the run: the invoice is out, the customer has it, and the
+    # e-mail copy still reaches the firm. SimteGen notices the missing copy.
+    klic = str(dodavatel.get("archiv_klic") or "")
+    if klic:
+        try:
+            archivni_kopie(cislo, pdf, klic)
+            print("Šifrovaná kopie pro účetní archiv připravená.")
+        except (ValueError, OSError) as e:
+            print(f"::warning::Kopii pro účetní archiv se nepodařilo zašifrovat: {e}")
     return 0
 
 
